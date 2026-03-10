@@ -45,6 +45,12 @@ MESSAGE_COOLDOWN = 60
 TAX_THRESHOLD = 10000
 TAX_RATE = 0.01
 
+# ───────────────────────────────────────────────
+# КУРС MORTISCOIN (1 MC = X обычных монет)
+# ───────────────────────────────────────────────
+MORTIS_COIN_RATE = 1.0                  # Начальный курс 1:1
+MORTIS_COIN_LAST_CHANGED = None         # timestamp последнего изменения
+
 def format_number(num: int) -> str:
     return f"{num:,}".replace(",", " ")
 
@@ -3166,7 +3172,7 @@ async def voice_income_task():
                     minutes_in_voice = (now - voice_start_time[user_id]) / 60
                     if minutes_in_voice < VOICE_MIN_SESSION_MINUTES:
                         continue
-                    earn = VOICE_INCOME_PER_30MIN
+                    earn = int(VOICE_INCOME_PER_30MIN * MORTIS_COIN_RATE)
                     if is_vip(member):
                         earn = int(earn * 2)
                     if user_id not in daily_voice_earned:
@@ -3561,7 +3567,7 @@ async def on_message(message):
         if user_id not in economy_data:
             economy_data[user_id] = {"balance": 0, "last_daily": 0, "last_message": 0, "investments": []}
         if now - economy_data[user_id].get("last_message", 0) >= MESSAGE_COOLDOWN:
-            earn_coins = random.randint(1, 5)
+            earn_coins = int(random.randint(1, 5) * MORTIS_COIN_RATE)
             economy_data[user_id]["balance"] += earn_coins
             economy_data[user_id]["last_message"] = now
             save_economy()
@@ -4422,6 +4428,108 @@ async def valute(ctx: commands.Context):
     except Exception as e:
         await send_error_embed(ctx, str(e))
 
+@bot.hybrid_command(name="mortiscoin", description="Управление курсом MortisCoin")
+@app_commands.describe(
+    action="show / set / reset",
+    new_rate="Новый курс (например 1.45)"
+)
+async def mortiscoin_cmd(ctx: commands.Context, action: str, new_rate: float = None):
+    global MORTIS_COIN_RATE, MORTIS_COIN_LAST_CHANGED
+
+    action = action.lower().strip()
+
+    # Показ текущего курса (доступно всем)
+    if action in ("show", ""):
+        embed = discord.Embed(
+            title="📈 Текущий курс MortisCoin",
+            color=0x2ecc71,
+            timestamp=datetime.now(timezone.utc)
+        )
+        embed.add_field(
+            name="Курс",
+            value=f"1 MortisCoin = **{MORTIS_COIN_RATE:.3f}** обычных монет 🪙",
+            inline=False
+        )
+        if MORTIS_COIN_LAST_CHANGED:
+            embed.add_field(
+                name="Последнее изменение",
+                value=f"<t:{int(MORTIS_COIN_LAST_CHANGED)}:R>",
+                inline=False
+            )
+        embed.set_footer(text="Используй /mortiscoin set <число> для изменения (админ)")
+        return await ctx.send(embed=embed, ephemeral=True)
+
+    # Дальше только админы
+    if not is_moderator(ctx.author):
+        await check_unauthorized_commands(ctx.author)
+        return await ctx.send("❌ Только модераторы и владелец могут менять курс.", ephemeral=True)
+
+    if action == "reset":
+        old_rate = MORTIS_COIN_RATE
+        MORTIS_COIN_RATE = 1.0
+        MORTIS_COIN_LAST_CHANGED = datetime.now(timezone.utc).timestamp()
+        
+        embed = discord.Embed(
+            title="🔄 Курс MortisCoin сброшен",
+            description=f"Новый курс: **1.000** (было {old_rate:.3f})",
+            color=0x3498db
+        )
+        await ctx.send(embed=embed, ephemeral=False)
+        
+        # Лог в мод-канал
+        if MOD_LOG_CHANNEL_ID:
+            log_ch = bot.get_channel(MOD_LOG_CHANNEL_ID)
+            if log_ch:
+                log_embed = discord.Embed(
+                    title="Курс MortisCoin сброшен",
+                    color=0x5865f2,
+                    timestamp=datetime.now(timezone.utc)
+                )
+                log_embed.add_field(name="Было → Стало", value=f"{old_rate:.3f} → 1.000", inline=False)
+                log_embed.add_field(name="Админ", value=ctx.author.mention, inline=False)
+                await log_ch.send(embed=log_embed)
+        
+        return
+
+    if action == "set":
+        if new_rate is None or new_rate <= 0:
+            return await ctx.send("❌ Укажи положительный курс (пример: 1.45)", ephemeral=True)
+
+        old_rate = MORTIS_COIN_RATE
+        MORTIS_COIN_RATE = round(new_rate, 3)
+        MORTIS_COIN_LAST_CHANGED = datetime.now(timezone.utc).timestamp()
+
+        embed = discord.Embed(
+            title="📈 Курс MortisCoin изменён!",
+            color=0xffd700,
+            timestamp=datetime.now(timezone.utc)
+        )
+        embed.add_field(name="Было", value=f"{old_rate:.3f}", inline=True)
+        embed.add_field(name="Стало", value=f"**{MORTIS_COIN_RATE:.3f}**", inline=True)
+        embed.add_field(
+            name="Теперь 1 MortisCoin =",
+            value=f"**{MORTIS_COIN_RATE:.3f}** обычных монет 🪙",
+            inline=False
+        )
+        embed.set_footer(text=f"Изменил: {ctx.author}")
+        await ctx.send(embed=embed, ephemeral=False)
+
+        # Лог в мод-канал
+        if MOD_LOG_CHANNEL_ID:
+            log_ch = bot.get_channel(MOD_LOG_CHANNEL_ID)
+            if log_ch:
+                log_embed = discord.Embed(
+                    title="Изменён курс MortisCoin",
+                    color=0xffd700,
+                    timestamp=datetime.now(timezone.utc)
+                )
+                log_embed.add_field(name="Было → Стало", value=f"{old_rate:.3f} → {MORTIS_COIN_RATE:.3f}", inline=False)
+                log_embed.add_field(name="Админ", value=ctx.author.mention, inline=False)
+                await log_ch.send(embed=log_embed)
+        return
+
+    await ctx.send("❌ Доступные действия: `show`, `set <курс>`, `reset`", ephemeral=True)        
+
 # ───────────────────────────────────────────────
 # МОДЕРАЦИЯ
 # ───────────────────────────────────────────────
@@ -4798,6 +4906,11 @@ async def balance(ctx: commands.Context, member: discord.Member = None):
         )
         embed.set_thumbnail(url=member.display_avatar.url)
         embed.add_field(
+            name="📈 Курс MortisCoin",
+            value=f"1 MC = **{MORTIS_COIN_RATE:.2f}** обычных монет",
+            inline=True
+         )
+        embed.add_field(
             name=f"{ECONOMY_EMOJIS['balance']} Монеты",
             value=f"**`{format_number(bal)}`** {ECONOMY_EMOJIS['coin']}",
             inline=True
@@ -4883,6 +4996,11 @@ async def daily(ctx: commands.Context):
             )
             embed.add_field(name="Прогресс", value=f"`{bar}` **{int(progress * 100)}%**", inline=False)
             embed.set_footer(text=f"Баланс: {format_number(economy_data[user_id]['balance'])} {ECONOMY_EMOJIS['coin']}")
+            embed.add_field(
+            name="📈 Курс MortisCoin",
+            value=f"Награда × {MORTIS_COIN_RATE:.2f}",
+            inline=True
+            )
             return await ctx.send(embed=embed, ephemeral=True)
         tax = await apply_wealth_tax(user_id)
         roll = random.randint(1, 100)
@@ -4916,6 +5034,9 @@ async def daily(ctx: commands.Context):
             if (today_date - last_date).days == 1:
                 bonus = int(reward * 0.1)
                 reward += bonus
+        # Применяем курс MortisCoin к ежедневной награде
+        reward = int(reward * MORTIS_COIN_RATE)
+        
         economy_data[user_id]["balance"] += reward
         economy_data[user_id]["last_daily"] = now
         save_economy()
