@@ -1,0 +1,33 @@
+{
+  "server_vault": 76138,
+  "765476979792150549": {
+    "balance": 28333,
+    "last_daily": 1773116238.472339,
+    "last_message": 1773032499.36321,
+    "multiplier_end": 1773291740.933695,
+    "inventory": {
+      "gift_box": 2
+    },
+    "active_effects": [],
+    "investments": [],
+    "last_tax_time": 1773116238.472339
+  },
+  "1034765820464746576": {
+    "balance": 200,
+    "last_daily": 0,
+    "last_message": 0,
+    "multiplier_end": 0,
+    "inventory": {},
+    "active_effects": [],
+    "investments": []
+  },
+  "1191348523900350566": {
+    "balance": 7000,
+    "last_daily": 0,
+    "last_message": 0,
+    "investments": []
+  },
+  "696486192778182716": {
+    "balance": 7000
+  }
+}
