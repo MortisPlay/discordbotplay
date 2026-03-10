@@ -488,7 +488,7 @@ daily_voice_earned = {}
 # ───────────────────────────────────────────────
 # SQLITE — ЭКОНОМИКА (НОВЫЙ НАДЁЖНЫЙ СОХРАНЯЛКА)
 # ───────────────────────────────────────────────
-DB_FILE = "/data/economy.db"
+DB_FILE = "/app/data/economy.db"
 
 def init_db():
     conn = sqlite3.connect(DB_FILE)
@@ -3279,6 +3279,95 @@ async def on_ready():
     
     bot.launch_time = datetime.now(timezone.utc)
     print("✅ Бот полностью готов к работе")
+
+# ───────────────────────────────────────────────
+# ГЛОБАЛЬНЫЙ АУДИТ-ЛОГ (ловит ВСЕ действия из журнала аудита)
+# ───────────────────────────────────────────────
+@bot.event
+async def on_audit_log_entry_create(entry: discord.AuditLogEntry):
+    """Логирует создание/удаление/изменение ролей, выдачу ролей, удаление сообщений и другие действия"""
+    if not MOD_LOG_CHANNEL_ID:
+        return
+
+    log_channel = bot.get_channel(MOD_LOG_CHANNEL_ID)
+    if not log_channel:
+        return
+
+    # Какие действия нас интересуют (можно дополнять)
+    watched_actions = {
+        discord.AuditLogAction.role_create,
+        discord.AuditLogAction.role_delete,
+        discord.AuditLogAction.role_update,
+        discord.AuditLogAction.member_update,         # выдача/снятие ролей, таймаут, смена ника
+        discord.AuditLogAction.message_delete,        # кто удалил сообщение
+        discord.AuditLogAction.member_ban,
+        discord.AuditLogAction.member_unban,
+        discord.AuditLogAction.member_kick,
+        discord.AuditLogAction.channel_create,
+        discord.AuditLogAction.channel_delete,
+        discord.AuditLogAction.channel_update,
+        discord.AuditLogAction.guild_update,          # изменение настроек сервера
+    }
+
+    if entry.action not in watched_actions:
+        return  # пропускаем неинтересные события
+
+    # ──────────────────────────────
+    # Формируем красивое сообщение
+    # ──────────────────────────────
+    embed = discord.Embed(
+        title=f"Журнал аудита • {entry.action.name.replace('_', ' ').title()}",
+        color=0x5865F2,
+        timestamp=entry.created_at
+    )
+
+    # Кто сделал
+    embed.add_field(
+        name="Исполнитель",
+        value=f"{entry.user.mention if entry.user else 'Неизвестно'} ({entry.user.id if entry.user else '—'})",
+        inline=True
+    )
+
+    # На кого/что
+    if entry.target:
+        target_mention = entry.target.mention if hasattr(entry.target, "mention") else str(entry.target)
+        embed.add_field(
+            name="Цель",
+            value=f"{target_mention} ({entry.target.id})",
+            inline=True
+        )
+
+    # Конкретные изменения (если есть)
+    if entry.changes:
+        changes_text = []
+        for change in entry.changes:
+            key = change.key.replace("_", " ").title()
+            before = change.before if change.before is not None else "—"
+            after = change.after if change.after is not None else "—"
+            changes_text.append(f"**{key}**: {before} → {after}")
+        embed.add_field(
+            name="Изменения",
+            value="\n".join(changes_text)[:1024] or "—",
+            inline=False
+        )
+
+    # Причина (если указана)
+    if entry.reason:
+        embed.add_field(name="Причина", value=entry.reason, inline=False)
+
+    # Дополнительно для некоторых действий
+    if entry.action == discord.AuditLogAction.message_delete:
+        if hasattr(entry.extra, "count"):
+            embed.add_field(name="Удалено сообщений", value=entry.extra.count, inline=True)
+        if hasattr(entry.extra, "channel"):
+            embed.add_field(name="Канал", value=entry.extra.channel.mention, inline=True)
+
+    embed.set_footer(text=f"ID записи: {entry.id} • {entry.action.name}")
+
+    try:
+        await log_channel.send(embed=embed)
+    except Exception as e:
+        print(f"[AUDIT LOG ERROR] Не удалось отправить: {e}")    
 # ───────────────────────────────────────────────
 # ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ДЛЯ ГОЛОСА
 # ───────────────────────────────────────────────
