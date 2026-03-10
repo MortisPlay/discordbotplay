@@ -1,12 +1,12 @@
 {
   "server_vault": 76138,
   "765476979792150549": {
-    "balance": 28334,
+    "balance": 30012,
     "last_daily": 1773116238.472339,
     "last_message": 1773117126.001864,
     "multiplier_end": 1773291740.933695,
     "inventory": {
-      "gift_box": 2
+      "gift_box": 1
     },
     "active_effects": [],
     "investments": [],
