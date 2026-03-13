@@ -5217,6 +5217,12 @@ async def shop(ctx: commands.Context, category: str = None):
                 value="Скидка -20% на VIP и бусты",
                 inline=False
             )
+        if is_friday13_event_active():
+              embed.add_field(
+               name="🖤 Пятница 13-е!",
+               value=f"Сегодня действует **-{FRIDAY_13_DISCOUNT_PERCENT}%** на весь магазин! 🖤",
+               inline=False
+            )    
        
         view = ShopCategoryView(ctx.author.id)
         await ctx.send(embed=embed, view=view, ephemeral=True)
