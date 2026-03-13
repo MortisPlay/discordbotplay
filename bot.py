@@ -2830,6 +2830,12 @@ class ShopConfirmModal(Modal, title="Подтверждение покупки")
        
         # Сохраняем все изменения
         save_economy()
+
+                # Уменьшаем stock для лимитированных товаров
+        if SHOP_ITEMS[self.item_key].get("limited", False):
+            current_stock = SHOP_ITEMS[self.item_key].get("stock", 0)
+            if current_stock > 0:
+                SHOP_ITEMS[self.item_key]["stock"] = current_stock - 1
        
         # Отслеживаем покупку для динамических цен
         track_purchase(self.item_key)
@@ -2912,6 +2918,40 @@ class ShopCategorySelect(Select):
             description=f"**Ваш баланс:** {format_number(balance)} {ECONOMY_EMOJIS['coin']}\n\n",
             color=COLORS["economy"]
         )
+        
+                # ─── Акционное выделение и таймер ───────────────────────────────────────
+        if is_friday13_event_active():
+            # Пятница 13 заканчивается в 23:59:59 того же дня
+            end_of_day = datetime.now(timezone.utc).replace(
+                hour=23, minute=59, second=59, microsecond=999999
+            )
+            remaining = end_of_day - datetime.now(timezone.utc)
+            hours = remaining.seconds // 3600
+            minutes = (remaining.seconds % 3600) // 60
+
+            embed.insert_field_at(
+                0,
+                name="🖤 Пятница 13-е — СКИДКА -10% НА ВСЁ!",
+                value=f"**Осталось {hours} ч {minutes} мин** 🔥\nПоторопись, акция до полуночи!",
+                inline=False
+            )
+            embed.color = 0xFF1493  # ярко-розовый/пурпурный
+
+        elif is_march8_event_active():
+            remaining = MARCH_8_DISCOUNT_END - datetime.now(timezone.utc)
+            if remaining.total_seconds() > 0:
+                days = remaining.days
+                hours = remaining.seconds // 3600
+                minutes = (remaining.seconds % 3600) // 60
+                timer_text = f"{days} дн {hours} ч {minutes} мин" if days > 0 else f"{hours} ч {minutes} мин"
+
+                embed.insert_field_at(
+                    0,
+                    name="🎀 Акция 8 марта — -20% на VIP и бусты!",
+                    value=f"Осталось **{timer_text}**\nТолько для обладателей роли <@&{MARCH_8_DISCOUNT_ROLE_ID}>",
+                    inline=False
+                )
+                embed.color = 0xFF69B4  # горячий розовый
        
         for key, item in items_in_category.items():
             # Проверка "уже куплено"
@@ -2931,18 +2971,17 @@ class ShopCategorySelect(Select):
            
             # Динамическая цена
             base_price = item["price"]
-            display_price = get_dynamic_price(key, base_price)
-           
-            # Скидочная карта
-            display_price = get_discounted_price(display_price, key, interaction.user)
-           
-            # Скидка при акции
-            if is_march8_event_active() and key in DISCOUNTED_ITEMS:
-                original = display_price
-                display_price = int(display_price * 0.8)
-                price_text = f"**{format_number(display_price)}** ~~{format_number(original)}~~ (-20%)"
+            dynamic_price = get_dynamic_price(key, base_price)
+            final_price = get_discounted_price(dynamic_price, key, interaction.user)
+
+            # Показываем перечёркнутую цену ТОЛЬКО если есть реальная скидка
+            if final_price < base_price:
+                # Если была динамическая наценка — показываем базовую как старую
+                # Если скидка после динамики — показываем динамическую как старую
+                old_price_shown = base_price if final_price == dynamic_price else dynamic_price
+                price_text = f"**{format_number(final_price)}** ~~{format_number(old_price_shown)}~~ {ECONOMY_EMOJIS['coin']}"
             else:
-                price_text = f"**{format_number(display_price)}** {ECONOMY_EMOJIS['coin']}"
+                price_text = f"**{format_number(final_price)}** {ECONOMY_EMOJIS['coin']}"
            
             status = "✅ Уже куплено" if owned else f"Цена: {price_text}"
            
@@ -2972,11 +3011,27 @@ class ShopItemsView(View):
        
         row = 0
         for i, (key, item) in enumerate(list(items.items())[:5]): # Макс 5 кнопок
+            label = f"{item.get('emoji', '📦')} {item['name'][:18]}"  # чуть короче, чтобы влез остаток
+            style = discord.ButtonStyle.blurple
+            disabled = False
+
+            if item.get("limited", False):
+                stock = item.get("stock", 0)
+                if stock <= 0:
+                    label = f"❌ {item['name'][:15]} (закончился)"
+                    style = discord.ButtonStyle.grey
+                    disabled = True
+                elif stock <= 3:
+                    label += f" ({stock}) 🔥"   # выделяем, когда мало осталось
+                else:
+                    label += f" ({stock})"
+
             button = Button(
-                label=f"{item.get('emoji', '📦')} {item['name'][:20]}",
-                style=discord.ButtonStyle.blurple,
+                label=label,
+                style=style,
                 custom_id=f"shop_item_{key}",
-                row=row
+                row=row,
+                disabled=disabled
             )
            
             async def handle_purchase(interaction: discord.Interaction, item_key=key):
