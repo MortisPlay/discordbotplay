@@ -3089,7 +3089,7 @@ class ShopItemsView(View):
             )
 
         # ─── Расчёт цены ─────────────────────────────────────────────────────
-        base_price = item["price"]  # всегда из конфига — это важно!
+        base_price = item["price"]
 
         # 1. Динамическая цена (спрос/предложение)
         dynamic_price = get_dynamic_price(item_key, base_price)
@@ -3098,7 +3098,8 @@ class ShopItemsView(View):
         final_price = get_discounted_price(base_price, item_key, interaction.user)
 
         # Для красивого отображения показываем самую высокую цену как старую
-        show_strikethrough = final_price < dynamic_price or final_price < base_price
+        show_strikethrough = final_price < base_price
+        
         if show_strikethrough:
             old_price = max(base_price, dynamic_price)
             price_display = f"**{format_number(final_price)}** ~~{format_number(old_price)}~~ {ECONOMY_EMOJIS['coin']}"
