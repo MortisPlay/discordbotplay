@@ -495,25 +495,25 @@ def is_march8_event_active() -> bool:
     now = datetime.now(timezone.utc)
     return MARCH_8_DISCOUNT_START <= now < MARCH_8_DISCOUNT_END
 
-def get_discounted_price(original_price: int, item_key: str, member: discord.Member) -> int:
-    if not original_price:
-        return original_price
+def get_discounted_price(base_price: int, item_key: str, member: discord.Member) -> int:
+    """
+    Принимает БАЗОВУЮ цену (из SHOP_ITEMS["price"])
+    Возвращает цену с учётом всех скидок и акций
+    """
+    price = base_price  # всегда начинаем с базовой!
 
-    # Сначала проверяем новую акцию Пятница 13-е (приоритет выше)
+    # 1. Пятница 13-е — глобальная скидка на всё
     if is_friday13_event_active():
-        discount = int(original_price * (FRIDAY_13_DISCOUNT_PERCENT / 100))
-        return original_price - discount
+        return int(price * (1 - FRIDAY_13_DISCOUNT_PERCENT / 100))
 
-    # Потом старая акция 8 марта
-    if not is_march8_event_active():
-        return original_price
-    if item_key not in DISCOUNTED_ITEMS:
-        return original_price
-    has_discount_role = any(role.id == MARCH_8_DISCOUNT_ROLE_ID for role in member.roles)
-    if not has_discount_role:
-        return original_price
-    discount = int(original_price * (MARCH_8_DISCOUNT_PERCENT / 100))
-    return original_price - discount
+    # 2. Акция 8 марта — только на определённые товары и при наличии роли
+    if is_march8_event_active() and item_key in DISCOUNTED_ITEMS:
+        has_role = any(role.id == MARCH_8_DISCOUNT_ROLE_ID for role in member.roles)
+        if has_role:
+            return int(price * (1 - MARCH_8_DISCOUNT_PERCENT / 100))
+
+    # 3. Нет активных акций → возвращаем базовую цену
+    return price
 
 # ───────────────────────────────────────────────
 # ГЛОБАЛЬНЫЕ ДАННЫЕ
@@ -2971,15 +2971,15 @@ class ShopCategorySelect(Select):
            
             # Динамическая цена
             base_price = item["price"]
-            dynamic_price = get_dynamic_price(key, base_price)
-            final_price = get_discounted_price(dynamic_price, key, interaction.user)
+            dynamic_price = get_dynamic_price(key, base_price)          # может быть выше или ниже base
+            final_price = get_discounted_price(base_price, key, interaction.user)  # ← важно: передаём base_price!
 
-            # Показываем перечёркнутую цену ТОЛЬКО если есть реальная скидка
-            if final_price < base_price:
-                # Если была динамическая наценка — показываем базовую как старую
-                # Если скидка после динамики — показываем динамическую как старую
-                old_price_shown = base_price if final_price == dynamic_price else dynamic_price
-                price_text = f"**{format_number(final_price)}** ~~{format_number(old_price_shown)}~~ {ECONOMY_EMOJIS['coin']}"
+            show_strikethrough = final_price < base_price or dynamic_price != base_price
+
+            if show_strikethrough:
+                # Показываем самую высокую цену как старую
+                old_price = max(base_price, dynamic_price)
+                price_text = f"**{format_number(final_price)}** ~~{format_number(old_price)}~~ {ECONOMY_EMOJIS['coin']}"
             else:
                 price_text = f"**{format_number(final_price)}** {ECONOMY_EMOJIS['coin']}"
            
