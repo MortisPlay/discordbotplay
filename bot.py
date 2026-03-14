@@ -2886,7 +2886,6 @@ intents = discord.Intents(
     moderation=True,  # для модерации
     guild_messages=True,
     dm_messages=False,
-    audit_log=True,  # ← ВАЖНО для журнала аудита!
 )
 bot = commands.Bot(
     command_prefix=PREFIX,
