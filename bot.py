@@ -3008,10 +3008,11 @@ class ShopItemsView(View):
         self.category = category
         self.items = items
         self.author_id = author_id
-       
+        
         row = 0
-        for i, (key, item) in enumerate(list(items.items())[:5]): # Макс 5 кнопок
-            label = f"{item.get('emoji', '📦')} {item['name'][:18]}"  # чуть короче, чтобы влез остаток
+        for i, (key, item) in enumerate(list(items.items())[:10]):  # увеличил до 10 кнопок (по желанию)
+            label = f"{item.get('emoji', '📦')} {item['name'][:20]}"  # чуть больше символов
+            
             style = discord.ButtonStyle.blurple
             disabled = False
 
@@ -3022,9 +3023,9 @@ class ShopItemsView(View):
                     style = discord.ButtonStyle.grey
                     disabled = True
                 elif stock <= 3:
-                    label += f" ({stock}) 🔥"   # выделяем, когда мало осталось
+                    label += f"  ({stock}) 🔥"
                 else:
-                    label += f" ({stock})"
+                    label += f"  ({stock})"
 
             button = Button(
                 label=label,
@@ -3033,66 +3034,94 @@ class ShopItemsView(View):
                 row=row,
                 disabled=disabled
             )
-           
-            async def handle_purchase(interaction: discord.Interaction, item_key=key):
-                await self._handle_purchase(interaction, item_key)
-           
-            button.callback = handle_purchase
+            
+            # Важно: используем partial или lambda с захватом item_key
+            button.callback = self.create_purchase_callback(key)
+            
             self.add_item(button)
-           
+            
             if (i + 1) % 2 == 0:
                 row += 1
-   
+
+    def create_purchase_callback(self, item_key: str):
+        """Создаёт callback для конкретного товара"""
+        async def callback(interaction: discord.Interaction):
+            await self._handle_purchase(interaction, item_key)
+        return callback
+
     async def _handle_purchase(self, interaction: discord.Interaction, item_key: str):
-        """Обработка покупки товара"""
+        """Обработка покупки конкретного товара"""
         if interaction.user.id != self.author_id:
             return await interaction.response.send_message(
                 "❌ Это не твой магазин!",
                 ephemeral=True
             )
-       
+
         if item_key not in SHOP_ITEMS:
             return await interaction.response.send_message(
-                "❌ Товар не найден!",
+                "❌ Товар не найден в магазине!",
                 ephemeral=True
             )
-       
+
         item = SHOP_ITEMS[item_key]
         user_id = str(interaction.user.id)
-       
-        # Инициализация
+
+        # Инициализация пользователя, если его нет
         if user_id not in economy_data:
             economy_data[user_id] = {"balance": 0}
             save_economy()
-       
+
         balance = economy_data[user_id].get("balance", 0)
-       
-        # Проверка "уже куплено"
+
+        # ─── Проверка "уже куплено" для одноразовых/постоянных вещей ───
         already_owned = False
         if item_key == "vip":
             role = discord.utils.get(interaction.guild.roles, name="VIP")
-            already_owned = role in interaction.user.roles if role else False
-       
+            already_owned = bool(role and role in interaction.user.roles)
+        elif item_key == "vip_permanent":
+            already_owned = economy_data[user_id].get("vip_permanent", False)
+        # Можно добавить другие проверки для косметики, скидочных карт и т.д.
+
         if already_owned:
             return await interaction.response.send_message(
                 f"{ECONOMY_EMOJIS['warning']} У тебя уже есть **{item['name']}**!",
                 ephemeral=True
             )
-       
-        # Динамическая цена + скидки
-        base_price = item["price"]                           # всегда берём из конфига
+
+        # ─── Расчёт цены ─────────────────────────────────────────────────────
+        base_price = item["price"]  # всегда из конфига — это важно!
+
+        # 1. Динамическая цена (спрос/предложение)
         dynamic_price = get_dynamic_price(item_key, base_price)
+
+        # 2. Акции и персональные скидки — применяем к БАЗОВОЙ цене
         final_price = get_discounted_price(base_price, item_key, interaction.user)
-       
+
+        # Для красивого отображения показываем самую высокую цену как старую
+        show_strikethrough = final_price < dynamic_price or final_price < base_price
+        if show_strikethrough:
+            old_price = max(base_price, dynamic_price)
+            price_display = f"**{format_number(final_price)}** ~~{format_number(old_price)}~~ {ECONOMY_EMOJIS['coin']}"
+        else:
+            price_display = f"**{format_number(final_price)}** {ECONOMY_EMOJIS['coin']}"
+
+        # Проверка баланса
         if balance < final_price:
             return await interaction.response.send_message(
                 f"{ECONOMY_EMOJIS['error']} Недостаточно монет!\n"
-                f"Нужно: **{format_number(final_price)}**, у вас: **{format_number(balance)}**",
+                f"Нужно: {price_display}\n"
+                f"У тебя: **{format_number(balance)}** {ECONOMY_EMOJIS['coin']}",
                 ephemeral=True
             )
-      
-        # Подтверждение
-        modal = ShopConfirmModal(item_key, item["name"], item["price"], final_price)
+
+        # ─── Подтверждение покупки ───────────────────────────────────────────
+        modal = ShopConfirmModal(
+            item_key=item_key,
+            item_name=item["name"],
+            price=base_price,           # передаём базовую цену
+            final_price=final_price     # передаём итоговую со всеми скидками
+        )
+        
         await interaction.response.send_modal(modal)
 
 class ShopCategoryView(View):
