@@ -1,9 +1,9 @@
 {
   "server_vault": 76454,
   "765476979792150549": {
-    "balance": 27458,
+    "balance": 30656,
     "last_daily": 1773383481.814972,
-    "last_message": 1773383490.69189,
+    "last_message": 1773408981.972768,
     "multiplier_end": 1773291740.933695,
     "inventory": {},
     "active_effects": [],
@@ -20,13 +20,13 @@
     "investments": []
   },
   "1191348523900350566": {
-    "balance": 7214,
+    "balance": 7278,
     "last_daily": 0,
     "last_message": 1773366587.125157,
     "investments": []
   },
   "696486192778182716": {
-    "balance": 7164,
+    "balance": 7212,
     "last_message": 1773374252.226203
   },
   "1401355255912071238": {
@@ -39,6 +39,36 @@
     "balance": 2,
     "last_daily": 0,
     "last_message": 1773366247.5123,
+    "investments": []
+  },
+  "1346431119775502356": {
+    "balance": 1,
+    "last_daily": 0,
+    "last_message": 1773408924.550487,
+    "investments": []
+  },
+  "1346446343345799198": {
+    "balance": 5,
+    "last_daily": 0,
+    "last_message": 1773408945.829741,
+    "investments": []
+  },
+  "1340511301931110432": {
+    "balance": 2,
+    "last_daily": 0,
+    "last_message": 1773408946.128602,
+    "investments": []
+  },
+  "1340512338687688714": {
+    "balance": 1,
+    "last_daily": 0,
+    "last_message": 1773408947.495913,
+    "investments": []
+  },
+  "1340501178362105979": {
+    "balance": 3,
+    "last_daily": 0,
+    "last_message": 1773408952.917551,
     "investments": []
   }
 }
