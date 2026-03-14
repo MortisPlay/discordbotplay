@@ -297,39 +297,9 @@ SHOP_ITEMS = {
         ]
     }
 }
-# ОТСЛЕЖИВАНИЕ ПОКУПОК (для динамических цен)
-item_purchase_tracking = {}
-def get_dynamic_price(item_key: str, base_price: int) -> int:
-    """Динамическая цена на основе спроса"""
-    purchase_count = item_purchase_tracking.get(item_key, {}).get("count", 0)
- 
-    # Если много купили в последние 7 дней → цена растёт
-    if purchase_count > 50:
-        return int(base_price * 1.3) # +30%
-    elif purchase_count > 30:
-        return int(base_price * 1.15) # +15%
-    elif purchase_count < 5:
-        return int(base_price * 0.85) # -15% (стимулируем покупки)
- 
-    return base_price
-def track_purchase(item_key: str):
-    """Отслеживать покупку"""
-    now = datetime.now(timezone.utc).timestamp()
- 
-    if item_key not in item_purchase_tracking:
-        item_purchase_tracking[item_key] = {
-            "count": 0,
-            "first_purchase": now
-        }
- 
-    item_purchase_tracking[item_key]["count"] += 1
- 
-    # Сбрасываем счётчик каждые 7 дней
-    if now - item_purchase_tracking[item_key]["first_purchase"] > 7 * 86400:
-        item_purchase_tracking[item_key] = {
-            "count": 1,
-            "first_purchase": now
-        }
+# ⚠️ ПОЛНОСТЬЮ УДАЛЕНА функция get_dynamic_price и track_purchase
+# ⚠️ ПОЛНОСТЬЮ УДАЛЕН словарь item_purchase_tracking
+
 # ───────────────────────────────────────────────
 # ПРЕДМЕТЫ ИНВЕНТАРЯ (расширяй по желанию)
 # ───────────────────────────────────────────────
@@ -2674,14 +2644,7 @@ class ShopConfirmModal(Modal, title="Подтверждение покупки")
      
         # Сохраняем все изменения
         save_economy()
-                # Уменьшаем stock для лимитированных товаров
-        if SHOP_ITEMS[self.item_key].get("limited", False):
-            current_stock = SHOP_ITEMS[self.item_key].get("stock", 0)
-            if current_stock > 0:
-                SHOP_ITEMS[self.item_key]["stock"] = current_stock - 1
-     
-        # Отслеживаем покупку для динамических цен
-        track_purchase(self.item_key)
+        # ⚠️ УДАЛЕНА функция track_purchase (больше не нужна)
      
         # Отправляем сообщение об успехе
         embed = discord.Embed(
@@ -2778,16 +2741,9 @@ class ShopCategorySelect(Select):
                     owned = any(d.get("type") == key for d in discounts)
                 owned_text = " ✅" if owned else ""
          
-            # Динамическая цена
-            base_price = item["price"]
-            dynamic_price = get_dynamic_price(key, base_price) # может быть выше или ниже base
-            final_price = dynamic_price  # ← теперь ТОЛЬКО динамическая цена, БЕЗ сезонных скидок!
-            show_strikethrough = dynamic_price != base_price
-            if show_strikethrough:
-                # Показываем базовую цену как старую
-                price_text = f"**{format_number(final_price)}** ~~{format_number(base_price)}~~ {ECONOMY_EMOJIS['coin']}"
-            else:
-                price_text = f"**{format_number(final_price)}** {ECONOMY_EMOJIS['coin']}"
+            # ⚠️ ТЕПЕРЬ ТОЛЬКО БАЗОВАЯ ЦЕНА ИЗ SHOP_ITEMS!
+            final_price = item["price"]
+            price_text = f"**{format_number(final_price)}** {ECONOMY_EMOJIS['coin']}"
          
             status = "✅ Уже куплено" if owned else f"Цена: {price_text}"
          
@@ -2883,17 +2839,9 @@ class ShopItemsView(View):
                 ephemeral=True
             )
         # ─── Расчёт цены ─────────────────────────────────────────────────────
-        base_price = item["price"]
-        # 1. Динамическая цена (спрос/предложение)
-        final_price = get_dynamic_price(item_key, base_price)
-        # 2. УБРАНЫ ВСЕ СЕЗОННЫЕ АКЦИИ (ПЯТНИЦА 13, 8 МАРТА)
-        # Для красивого отображения показываем базовую цену как старую, если динамическая отличается
-        show_strikethrough = final_price != base_price
-      
-        if show_strikethrough:
-            price_display = f"**{format_number(final_price)}** ~~{format_number(base_price)}~~ {ECONOMY_EMOJIS['coin']}"
-        else:
-            price_display = f"**{format_number(final_price)}** {ECONOMY_EMOJIS['coin']}"
+        # ⚠️ ТЕПЕРЬ ТОЛЬКО БАЗОВАЯ ЦЕНА ИЗ SHOP_ITEMS!
+        final_price = item["price"]
+        price_display = f"**{format_number(final_price)}** {ECONOMY_EMOJIS['coin']}"
         # Проверка баланса
         if balance < final_price:
             return await interaction.response.send_message(
@@ -2906,8 +2854,8 @@ class ShopItemsView(View):
         modal = ShopConfirmModal(
             item_key=item_key,
             item_name=item["name"],
-            price=base_price, # передаём базовую цену
-            final_price=final_price # передаём итоговую (только динамическая)
+            price=final_price, # передаём базовую цену
+            final_price=final_price # передаём базовую цену
         )
       
         await interaction.response.send_modal(modal)
@@ -4995,9 +4943,8 @@ async def shop(ctx: commands.Context, category: str = None):
                     role = discord.utils.get(ctx.guild.roles, name="VIP")
                     owned = role in ctx.author.roles if role else False
              
-                price = get_dynamic_price(key, item["price"])
-                price = price  # УБРАНЫ СЕЗОННЫЕ СКИДКИ
-             
+                # ⚠️ ТЕПЕРЬ ТОЛЬКО БАЗОВАЯ ЦЕНА ИЗ SHOP_ITEMS!
+                price = item["price"]
                 price_text = f"**{format_number(price)}** {ECONOMY_EMOJIS['coin']}"
                 status = "✅ Куплено" if owned else f"Цена: {price_text}"
              
