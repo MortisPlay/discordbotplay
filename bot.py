@@ -3080,18 +3080,19 @@ class ShopItemsView(View):
             )
        
         # Динамическая цена + скидки
-        price = get_dynamic_price(item_key, item["price"])
-        price = get_discounted_price(price, item_key, interaction.user)
+        base_price = item["price"]                           # всегда берём из конфига
+        dynamic_price = get_dynamic_price(item_key, base_price)
+        final_price = get_discounted_price(base_price, item_key, interaction.user)
        
-        if balance < price:
+        if balance < final_price:
             return await interaction.response.send_message(
                 f"{ECONOMY_EMOJIS['error']} Недостаточно монет!\n"
-                f"Нужно: **{format_number(price)}**, у вас: **{format_number(balance)}**",
+                f"Нужно: **{format_number(final_price)}**, у вас: **{format_number(balance)}**",
                 ephemeral=True
             )
-       
+      
         # Подтверждение
-        modal = ShopConfirmModal(item_key, item["name"], item["price"], price)
+        modal = ShopConfirmModal(item_key, item["name"], item["price"], final_price)
         await interaction.response.send_modal(modal)
 
 class ShopCategoryView(View):
