@@ -33,7 +33,7 @@ GOODBYE_CHANNEL_ID = 1475048502370500639
 TICKET_ARCHIVE_CHANNEL_ID = 1475338423513649347
 PREFIX = "!"
 WARNINGS_FILE = "warnings.json"
-ECONOMY_FILE = "economy.json"  # ← ТЕПЕРЬ ТОЛЬКО JSON!
+ECONOMY_FILE = "economy.json" # ← ТЕПЕРЬ ТОЛЬКО JSON!
 CASES_FILE = "cases.json"
 TICKET_CATEGORY_ID = 1475334525344157807
 SUPPORT_ROLE_ID = 1475331888163066029
@@ -44,16 +44,13 @@ DAILY_COOLDOWN = 86400
 MESSAGE_COOLDOWN = 60
 TAX_THRESHOLD = 10000
 TAX_RATE = 0.01
-
 # ───────────────────────────────────────────────
 # КУРС MORTISCOIN (1 MC = X обычных монет)
 # ───────────────────────────────────────────────
-MORTIS_COIN_RATE = 2.0                  # Начальный курс 1:1
-MORTIS_COIN_LAST_CHANGED = None         # timestamp последнего изменения
-
+MORTIS_COIN_RATE = 2.0 # Начальный курс 1:2
+MORTIS_COIN_LAST_CHANGED = None # timestamp последнего изменения
 def format_number(num: int) -> str:
     return f"{num:,}".replace(",", " ")
-
 # НАСТРОЙКИ ДЛЯ АВТОМОДЕРАЦИИ
 WARN_AUTO_MUTE_THRESHOLD = 3 # 3 варна → мут 1ч
 WARN_AUTO_LONG_MUTE_THRESHOLD = 6 # 6 варнов → мут 24ч
@@ -65,7 +62,6 @@ NEW_ACCOUNT_DAYS = 7 # возраст нового аккаунта
 VIP_ROLE_NAMES = ["VIP", "Premium", "Vip", "vip"]
 VIP_SPAM_MULTIPLIER = 2
 VIP_MENTION_MULTIPLIER = 3
-
 # НОВЫЕ НАСТРОЙКИ
 INACTIVE_TICKET_HOURS = 24
 INVESTMENT_MIN_AMOUNT = 1000
@@ -73,7 +69,6 @@ INVESTMENT_MAX_DAYS = 30
 INVESTMENT_BASE_RATE = 0.05
 UNAUTHORIZED_CMD_LIMIT = 3
 UNAUTHORIZED_MUTE_MINUTES = 1
-
 # ───────────────────────────────────────────────
 # НОВЫЕ НАСТРОЙКИ ЭКОНОМИКИ
 # ───────────────────────────────────────────────
@@ -83,7 +78,6 @@ VOICE_DAILY_MAX = 300 # Максимум от войса в сутки
 SUPER_DROP_CHANCE = 2 # Шанс супер-дропа в daily (%)
 SUPER_DROP_MIN = 50000
 SUPER_DROP_MAX = 150000
-
 # ───────────────────────────────────────────────
 # РАСШИРЕННЫЙ МАГАЗИН С КАТЕГОРИЯМИ
 # ───────────────────────────────────────────────
@@ -119,7 +113,6 @@ SHOP_CATEGORIES = {
         "description": "Лутбоксы с лотереей"
     }
 }
-
 # ТОВАРЫ ПО КАТЕГОРИЯМ
 SHOP_ITEMS = {
     # ─ БУСТЫ ─
@@ -155,7 +148,7 @@ SHOP_ITEMS = {
         "emoji": "🍀",
         "type": "effect"
     },
-   
+ 
     # ─ ПРЕДМЕТЫ ─
     "gift_box": {
         "category": "предметы",
@@ -175,7 +168,7 @@ SHOP_ITEMS = {
         "item_id": "lucky_spin",
         "emoji": "🎰"
     },
-   
+ 
     # ─ РОЛИ ─
     "vip": {
         "category": "роли",
@@ -195,7 +188,7 @@ SHOP_ITEMS = {
         "description": "Вечный VIP статус (только 5 доступно!)",
         "emoji": "👑"
     },
-   
+ 
     # ─ КОСМЕТИКА ─
     "custom_title": {
         "category": "косметика",
@@ -223,7 +216,7 @@ SHOP_ITEMS = {
         "discount": 0.15,
         "duration_days": 7
     },
-   
+ 
     # ─ ПАКЕТЫ ─
     "starter_pack": {
         "category": "пакеты",
@@ -262,7 +255,7 @@ SHOP_ITEMS = {
         "includes": ["vip", "custom_title"],
         "bonus_coins": 10000
     },
-   
+ 
     # ─ ЯЩИКИ ─
     "lucky_box_small": {
         "category": "ящики",
@@ -304,14 +297,12 @@ SHOP_ITEMS = {
         ]
     }
 }
-
 # ОТСЛЕЖИВАНИЕ ПОКУПОК (для динамических цен)
 item_purchase_tracking = {}
-
 def get_dynamic_price(item_key: str, base_price: int) -> int:
     """Динамическая цена на основе спроса"""
     purchase_count = item_purchase_tracking.get(item_key, {}).get("count", 0)
-   
+ 
     # Если много купили в последние 7 дней → цена растёт
     if purchase_count > 50:
         return int(base_price * 1.3) # +30%
@@ -319,28 +310,26 @@ def get_dynamic_price(item_key: str, base_price: int) -> int:
         return int(base_price * 1.15) # +15%
     elif purchase_count < 5:
         return int(base_price * 0.85) # -15% (стимулируем покупки)
-   
+ 
     return base_price
-
 def track_purchase(item_key: str):
     """Отслеживать покупку"""
     now = datetime.now(timezone.utc).timestamp()
-   
+ 
     if item_key not in item_purchase_tracking:
         item_purchase_tracking[item_key] = {
             "count": 0,
             "first_purchase": now
         }
-   
+ 
     item_purchase_tracking[item_key]["count"] += 1
-   
+ 
     # Сбрасываем счётчик каждые 7 дней
     if now - item_purchase_tracking[item_key]["first_purchase"] > 7 * 86400:
         item_purchase_tracking[item_key] = {
             "count": 1,
             "first_purchase": now
         }
-
 # ───────────────────────────────────────────────
 # ПРЕДМЕТЫ ИНВЕНТАРЯ (расширяй по желанию)
 # ───────────────────────────────────────────────
@@ -369,7 +358,6 @@ INVENTORY_ITEMS = {
         "value": 2.0
     }
 }
-
 # Добавляем в начало файла (после настроек)
 GIFT_BOX_RANGES = [
     (70, 500, 1200), # 70% — 500–1200
@@ -377,7 +365,6 @@ GIFT_BOX_RANGES = [
     (8, 1801, 2200), # 8% — 1801–2200
     (2, 2201, 2500), # 2% — 2201–2500
 ]
-
 # Новая функция
 def open_gift_box():
     roll = random.randint(1, 100)
@@ -387,31 +374,6 @@ def open_gift_box():
         if roll <= cumulative:
             return random.randint(min_val, max_val)
     return random.randint(500, 2500) # fallback
-
-# ───────────────────────────────────────────────
-# АКЦИЯ 8 МАРТА
-# ───────────────────────────────────────────────
-MARCH_8_DISCOUNT_START = datetime(2026, 3, 7, 0, 0, tzinfo=timezone.utc)
-MARCH_8_DISCOUNT_END = datetime(2026, 3, 10, 0, 0, tzinfo=timezone.utc) # до 10 марта 00:00
-MARCH_8_DISCOUNT_PERCENT = 20
-MARCH_8_DISCOUNT_ROLE_ID = 1477476358710890629 # ← замени на реальный ID роли, которой даётся скидка
-DISCOUNTED_ITEMS = {"vip", "multiplier"} # какие товары участвуют в скидке
-
-# ───────────────────────────────────────────────
-# АКЦИЯ ПЯТНИЦА 13-е (временная — только сегодня)
-# ───────────────────────────────────────────────
-FRIDAY_13_DISCOUNT_ACTIVE = False
-FRIDAY_13_DISCOUNT_PERCENT = 10
-FRIDAY_13_DATE = datetime(2026, 3, 13, 0, 0, tzinfo=timezone.utc)  # ← поменяй дату при необходимости
-
-def is_friday13_event_active() -> bool:
-    now = datetime.now(timezone.utc)
-    # Активируется ровно на 24 часа (00:00 → 23:59:59)
-    return (
-        FRIDAY_13_DISCOUNT_ACTIVE or
-        (now.date() == FRIDAY_13_DATE.date())
-    )
-
 # ───────────────────────────────────────────────
 # НАСТРОЙКИ ДЛЯ FAQ
 # ───────────────────────────────────────────────
@@ -423,7 +385,6 @@ FAQ_CATEGORIES = {
     "модерация": "🛡️ Модерация",
     "техника": "🔧 Технические вопросы"
 }
-
 # НОВОЕ ОФОРМЛЕНИЕ ДЛЯ ЭКОНОМИКИ
 ECONOMY_EMOJIS = {
     "balance": "💰",
@@ -451,32 +412,27 @@ ECONOMY_EMOJIS = {
     "risk": "⚠️",
     "calendar": "📅"
 }
-
 RARITIES = [
     ("Обычная", 70, 15, 35, 0xA8A8A8, "🪙"),
     ("Редкая", 20, 50, 70, 0x3498DB, "💎"),
     ("Эпическая", 9, 200, 350, 0x9B59B6, "🌟"),
     ("Легендарная", 1, 500,1000, 0xF1C40F, "🔥")
 ]
-
 RARITY_STYLE = {
     "common": {"color": 0x95a5a6, "emoji": "⬜", "name": "Обычная"},
     "rare": {"color": 0x3498db, "emoji": "💎", "name": "Редкая"},
     "epic": {"color": 0x9b59b6, "emoji": "🌟", "name": "Эпическая"},
     "legendary": {"color": 0xf1c40f, "emoji": "🔥", "name": "Легендарная"},
 }
-
 BAD_WORDS = [
     "пидор", "пидорас", "пидрила", "пидр", "гей", "хуесос", "ебанат", "дебил", "идиот",
     "тупой", "чмо", "чмошник", "сука", "блядь", "еблан", "мудак", "тварь", "урод"
 ]
-
 INSULT_PATTERNS = [
     r"\b(ты|тебе|тобой)\s*(пидор|дебил|идиот|тупой|чмо|хуесос|ебанат)\b",
     r"\b(иди|пошёл|пиздец)\s*(нахуй|в пизду|в жопу)\b",
     r"\b(заткнись|заткнулся|молчи)\s*(сука|блядь|ебанат)\b"
 ]
-
 # ЦВЕТА ДЛЯ ОФОРМЛЕНИЯ
 COLORS = {
     "welcome": 0x57F287, # Зеленый
@@ -487,34 +443,6 @@ COLORS = {
     "ticket": 0x9B59B6, # Фиолетовый
     "faq": 0x3498DB # Голубой
 }
-
-# ───────────────────────────────────────────────
-# ФУНКЦИИ ДЛЯ АКЦИИ
-# ───────────────────────────────────────────────
-def is_march8_event_active() -> bool:
-    now = datetime.now(timezone.utc)
-    return MARCH_8_DISCOUNT_START <= now < MARCH_8_DISCOUNT_END
-
-def get_discounted_price(base_price: int, item_key: str, member: discord.Member) -> int:
-    """
-    Принимает БАЗОВУЮ цену (из SHOP_ITEMS["price"])
-    Возвращает цену с учётом всех скидок и акций
-    """
-    price = base_price  # всегда начинаем с базовой!
-
-    # 1. Пятница 13-е — глобальная скидка на всё
-    if is_friday13_event_active():
-        return int(price * (1 - FRIDAY_13_DISCOUNT_PERCENT / 100))
-
-    # 2. Акция 8 марта — только на определённые товары и при наличии роли
-    if is_march8_event_active() and item_key in DISCOUNTED_ITEMS:
-        has_role = any(role.id == MARCH_8_DISCOUNT_ROLE_ID for role in member.roles)
-        if has_role:
-            return int(price * (1 - MARCH_8_DISCOUNT_PERCENT / 100))
-
-    # 3. Нет активных акций → возвращаем базовую цену
-    return price
-
 # ───────────────────────────────────────────────
 # ГЛОБАЛЬНЫЕ ДАННЫЕ
 # ───────────────────────────────────────────────
@@ -528,7 +456,6 @@ unauthorized_attempts = defaultdict(list)
 faq_data = {}
 voice_start_time = {}
 daily_voice_earned = {}
-
 # ───────────────────────────────────────────────
 # ЗАГРУЗКА / СОХРАНЕНИЕ В JSON (ЭКОНОМИКА!)
 # ───────────────────────────────────────────────
@@ -536,7 +463,7 @@ def load_economy():
     """Загружает данные экономики из JSON"""
     global economy_data
     economy_data = {"server_vault": 0}
-   
+ 
     if os.path.exists(ECONOMY_FILE) and os.path.getsize(ECONOMY_FILE) > 0:
         try:
             with open(ECONOMY_FILE, "r", encoding="utf-8") as f:
@@ -558,12 +485,11 @@ def load_economy():
     else:
         print(f"📁 [ECONOMY] Файл не найден, создаём новую БД")
         economy_data = {"server_vault": 0}
-   
+ 
     # Подсчёт игроков
     players = sum(1 for k in economy_data.keys() if k != "server_vault")
     vault = economy_data.get("server_vault", 0)
     print(f"✅ [ECONOMY] Загружено {players} игроков | Казна: {format_number(vault)} 🪙")
-
 def save_economy():
     """Сохраняет данные экономики в JSON"""
     try:
@@ -576,16 +502,16 @@ def save_economy():
                 os.rename(ECONOMY_FILE, backup_file)
             except:
                 pass
-       
+     
         # Сохраняем в новый файл
         with open(ECONOMY_FILE + ".tmp", "w", encoding="utf-8") as f:
             json.dump(economy_data, f, ensure_ascii=False, indent=2)
-       
+     
         # Переименовываем временный файл в основной
         if os.path.exists(ECONOMY_FILE):
             os.remove(ECONOMY_FILE)
         os.rename(ECONOMY_FILE + ".tmp", ECONOMY_FILE)
-       
+     
         # Удаляем резервную копию при успехе
         backup_file = ECONOMY_FILE + ".backup"
         if os.path.exists(backup_file):
@@ -593,11 +519,11 @@ def save_economy():
                 os.remove(backup_file)
             except:
                 pass
-       
+     
         players = sum(1 for k in economy_data.keys() if k != "server_vault")
         vault = economy_data.get("server_vault", 0)
         print(f"💾 [SAVE] Сохранено {players} игроков | Казна: {format_number(vault)} 🪙")
-       
+     
     except Exception as e:
         print(f"❌ [SAVE ERROR] {e}")
         # Пробуем восстановить из резервной копии
@@ -608,7 +534,6 @@ def save_economy():
                 print("🔄 [SAVE] Восстановлено из резервной копии")
             except:
                 pass
-
 # ───────────────────────────────────────────────
 # МИГРАЦИЯ ИЗ SQLITE В JSON (ЕСЛИ НУЖНО)
 # ───────────────────────────────────────────────
@@ -616,35 +541,35 @@ def migrate_from_sqlite_if_needed():
     """Если у вас были данные в SQLite, переносим их в JSON"""
     db_file = "/app/data/economy.db"
     migration_flag = "migration_to_json.flag"
-   
+ 
     if os.path.exists(migration_flag):
         print("[MIGRATION] Уже переносили данные из SQLite")
         return
-   
+ 
     if not os.path.exists(db_file):
         print("[MIGRATION] SQLite база не найдена")
         return
-   
+ 
     try:
         import sqlite3
         print("[MIGRATION] Перенос данных из SQLite в JSON...")
-       
+     
         conn = sqlite3.connect(db_file)
         c = conn.cursor()
-       
+     
         # Загружаем казну
         c.execute("SELECT value FROM server_vault WHERE key = 'vault'")
         row = c.fetchone()
         if row:
             economy_data["server_vault"] = row[0]
-       
+     
         # Загружаем игроков
         c.execute("""
             SELECT user_id, balance, last_daily, last_message, multiplier_end,
                    inventory, active_effects, investments
             FROM economy
         """)
-       
+     
         migrated = 0
         for row in c.fetchall():
             uid = row[0]
@@ -658,24 +583,23 @@ def migrate_from_sqlite_if_needed():
                 "investments": json.loads(row[7] or '[]')
             }
             migrated += 1
-       
+     
         conn.close()
-       
+     
         # Сохраняем в JSON
         save_economy()
-       
+     
         # Ставим флаг, что миграция выполнена
         with open(migration_flag, "w") as f:
             f.write("done")
-       
+     
         print(f"✅ [MIGRATION] Перенесено {migrated} игроков в JSON")
-       
+     
         # Переименовываем старую базу, чтобы не мешала
         os.rename(db_file, db_file + ".migrated")
-       
+     
     except Exception as e:
         print(f"❌ [MIGRATION ERROR] {e}")
-
 # ───────────────────────────────────────────────
 # ЗАГРУЗКА / СОХРАНЕНИЕ ОСТАЛЬНЫХ ФАЙЛОВ (faq, warnings, cases)
 # ───────────────────────────────────────────────
@@ -692,14 +616,12 @@ def load_faq():
     else:
         faq_data = {}
         print("[FAQ] Файл не найден → создан пустой")
-
 def save_faq():
     try:
         with open(FAQ_FILE, "w", encoding="utf-8") as f:
             json.dump(faq_data, f, ensure_ascii=False, indent=2)
     except Exception as e:
         print(f"[SAVE FAQ] Ошибка: {e}")
-
 def load_warnings():
     global warnings_data
     if os.path.exists(WARNINGS_FILE):
@@ -712,11 +634,9 @@ def load_warnings():
             warnings_data = {}
     else:
         warnings_data = {}
-
 def save_warnings():
     with open(WARNINGS_FILE, "w", encoding="utf-8") as f:
         json.dump(warnings_data, f, ensure_ascii=False, indent=2)
-
 def load_cases():
     global cases_data
     if os.path.exists(CASES_FILE):
@@ -728,20 +648,16 @@ def load_cases():
             cases_data = {}
     else:
         cases_data = {}
-
 def save_cases():
     with open(CASES_FILE, "w", encoding="utf-8") as f:
         json.dump(cases_data, f, ensure_ascii=False, indent=2)
-
 # Загружаем все данные
 load_economy()
 load_faq()
 load_warnings()
 load_cases()
-
 # Выполняем миграцию если нужно
 migrate_from_sqlite_if_needed()
-
 # ───────────────────────────────────────────────
 # ФУНКЦИИ ДЛЯ ПРОВЕРКИ ПРАВ
 # ───────────────────────────────────────────────
@@ -763,14 +679,12 @@ def is_moderator(ctx_or_member) -> bool:
         member.guild_permissions.administrator or
         member.id == OWNER_ID
     )
-
 def is_protected_from_automod(member: discord.Member) -> bool:
     return (member.guild_permissions.administrator or
             member.guild_permissions.manage_messages or
             member.guild_permissions.manage_guild or
             member.id == OWNER_ID or
             member.top_role.permissions.administrator)
-
 def can_punish(executor: discord.Member, target: discord.Member) -> bool:
     if not executor or not target:
         return False
@@ -785,7 +699,6 @@ def can_punish(executor: discord.Member, target: discord.Member) -> bool:
     if target.top_role >= executor.top_role and executor.id != OWNER_ID:
         return False
     return True
-
 # ───────────────────────────────────────────────
 # ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
 # ───────────────────────────────────────────────
@@ -812,7 +725,6 @@ async def check_unauthorized_commands(user: discord.Member):
         except:
             pass
     return False
-
 def get_rank_emoji(balance: int) -> str:
     if balance >= 100000:
         return "👑"
@@ -828,17 +740,14 @@ def get_rank_emoji(balance: int) -> str:
         return "🥉"
     else:
         return "🥚"
-
 def create_progress_bar(current: int, max_value: int, length: int = 10) -> str:
     if max_value <= 0:
         return "█" * length
     progress = min(current / max_value, 1.0)
     filled = int(progress * length)
     return "█" * filled + "░" * (length - filled)
-
 def generate_case_id() -> str:
     return str(uuid.uuid4())[:8]
-
 async def create_case(member: discord.Member, moderator: discord.User, action: str, reason: str, duration: str = None):
     case_id = generate_case_id()
     cases_data[case_id] = {
@@ -854,15 +763,12 @@ async def create_case(member: discord.Member, moderator: discord.User, action: s
     }
     save_cases()
     return case_id
-
 async def get_case(case_id: str) -> dict:
     return cases_data.get(case_id)
-
 def is_vip(member: discord.Member) -> bool:
     if not member:
         return False
     return any(role.name in VIP_ROLE_NAMES for role in member.roles)
-
 def clean_old_warnings(user_id: str):
     if user_id not in warnings_data:
         return
@@ -879,11 +785,9 @@ def clean_old_warnings(user_id: str):
     if not fresh_warnings:
         del warnings_data[user_id]
     save_warnings()
-
 def get_warning_count(user_id: str) -> int:
     clean_old_warnings(user_id)
     return len(warnings_data.get(user_id, []))
-
 async def check_auto_punishment(member: discord.Member, reason: str = "Автоматически"):
     if not member or is_protected_from_automod(member):
         return
@@ -931,7 +835,6 @@ async def check_auto_punishment(member: discord.Member, reason: str = "Авто�
             )
         except:
             pass
-
 async def send_punishment_log(member: discord.Member, punishment_type: str, duration: str, reason: str, moderator: discord.User, case_id: str = None):
     if not MOD_LOG_CHANNEL_ID:
         return
@@ -954,7 +857,6 @@ async def send_punishment_log(member: discord.Member, punishment_type: str, dura
     embed.set_footer(text=f"ID: {member.id}")
     view = ModActionView(member)
     await log_ch.send(embed=embed, view=view)
-
 async def send_mod_log(title: str, description: str = None, color: int = COLORS["audit"], fields: list = None):
     if not MOD_LOG_CHANNEL_ID:
         return
@@ -967,7 +869,6 @@ async def send_mod_log(title: str, description: str = None, color: int = COLORS[
             embed.add_field(name=name, value=value, inline=inline)
     embed.set_footer(text=f"Время: {datetime.now().strftime('%H:%M:%S')}")
     await log_ch.send(embed=embed)
-
 async def send_error_embed(ctx, error_msg: str):
     embed = discord.Embed(
         title="❌ Ошибка",
@@ -976,7 +877,6 @@ async def send_error_embed(ctx, error_msg: str):
         timestamp=datetime.now(timezone.utc)
     )
     await ctx.send(embed=embed, ephemeral=True)
-
 def is_toxic(content: str) -> bool:
     if not content:
         return False
@@ -991,46 +891,44 @@ def is_toxic(content: str) -> bool:
                 if w == word and i > 0 and words[i-1] in ["ты", "тебе", "тобой", "твой", "твоя", "твоё"]:
                     return True
     return False
-
 def has_full_access(guild_id: int) -> bool:
     return guild_id == FULL_ACCESS_GUILD_ID
-
 async def apply_wealth_tax(user_id: str) -> int:
     if user_id not in economy_data:
         return 0
-   
+ 
     data = economy_data[user_id]
     balance = data.get("balance", 0)
     if balance <= TAX_THRESHOLD:
         return 0
-   
+ 
     # Проверяем, когда последний раз применяли налог
     last_tax_time = data.get("last_tax_time", 0)
     now = datetime.now(timezone.utc).timestamp()
     if now - last_tax_time < 86400: # уже применяли сегодня
         return 0
-   
+ 
     taxable = balance - TAX_THRESHOLD
     tax = int(taxable * TAX_RATE)
-   
+ 
     # Скидка за недавнюю активность
     last_msg = data.get("last_message", 0)
     if now - last_msg < 86400:
         reduction = random.uniform(0.20, 0.50)
         tax = int(tax * (1 - reduction))
-   
+ 
     if tax <= 0:
         return 0
-   
+ 
     # Применяем налог
     data["balance"] -= tax
     economy_data["server_vault"] = economy_data.get("server_vault", 0) + tax
-   
+ 
     # Запоминаем время последнего налога
     data["last_tax_time"] = now
-   
+ 
     save_economy()
-   
+ 
     # Можно отправить уведомление в ЛС, если хочешь
     try:
         user = bot.get_user(int(user_id))
@@ -1041,9 +939,8 @@ async def apply_wealth_tax(user_id: str) -> int:
             )
     except:
         pass
-   
+ 
     return tax
-
 # ───────────────────────────────────────────────
 # КЛАССЫ ДЛЯ UI
 # ───────────────────────────────────────────────
@@ -1051,7 +948,6 @@ class ModActionView(View):
     def __init__(self, member: discord.Member):
         super().__init__(timeout=180)
         self.member = member
-
     @discord.ui.button(label="Предупредить", style=discord.ButtonStyle.secondary, emoji="⚠️")
     async def warn_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         if not can_punish(interaction.user, self.member):
@@ -1063,7 +959,6 @@ class ModActionView(View):
             return await interaction.response.send_message("❌ Недостаточно прав!", ephemeral=True)
         modal = WarnModal(self.member)
         await interaction.response.send_modal(modal)
-
     @discord.ui.button(label="Замутить", style=discord.ButtonStyle.danger, emoji="🔇")
     async def mute_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         if not can_punish(interaction.user, self.member):
@@ -1075,49 +970,39 @@ class ModActionView(View):
             return await interaction.response.send_message("❌ Недостаточно прав!", ephemeral=True)
         modal = MuteModal(self.member)
         await interaction.response.send_modal(modal)
-
     @discord.ui.button(label="Очистить", style=discord.ButtonStyle.success, emoji="🧹")
     async def clear_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         if not is_moderator(interaction.user):
             return await interaction.response.send_message("❌ Недостаточно прав!", ephemeral=True)
         modal = ClearModal(self.member)
         await interaction.response.send_modal(modal)
-
 class WarnModal(Modal, title="Выдать предупреждение"):
     def __init__(self, member: discord.Member):
         super().__init__()
         self.member = member
-
     reason = TextInput(label="Причина", placeholder="Введите причину предупреждения...", style=discord.TextStyle.paragraph)
-
     async def on_submit(self, interaction: discord.Interaction):
         ctx = await bot.get_context(interaction.message)
         ctx.author = interaction.user
         ctx.send = lambda **kwargs: interaction.response.send_message(**kwargs)
         await warn(ctx, self.member, reason=self.reason.value)
-
 class MuteModal(Modal, title="Замутить пользователя"):
     def __init__(self, member: discord.Member):
         super().__init__()
         self.member = member
-
     duration = TextInput(label="Длительность", placeholder="1h, 1d, 30m", max_length=10)
     reason = TextInput(label="Причина", placeholder="Введите причину мута...", style=discord.TextStyle.paragraph, required=False)
-
     async def on_submit(self, interaction: discord.Interaction):
         ctx = await bot.get_context(interaction.message)
         ctx.author = interaction.user
         ctx.send = lambda **kwargs: interaction.response.send_message(**kwargs)
         reason = self.reason.value or "Не указана"
         await mute(ctx, self.member, duration=self.duration.value, reason=reason)
-
 class ClearModal(Modal, title="Очистить сообщения"):
     def __init__(self, member: discord.Member):
         super().__init__()
         self.member = member
-
     amount = TextInput(label="Количество", placeholder="От 1 до 100", max_length=3)
-
     async def on_submit(self, interaction: discord.Interaction):
         try:
             amount = int(self.amount.value)
@@ -1127,11 +1012,9 @@ class ClearModal(Modal, title="Очистить сообщения"):
             await interaction.response.send_message(f"✅ Удалено {len(deleted)} сообщений {self.member.mention}", ephemeral=True)
         except ValueError:
             await interaction.response.send_message("❌ Введите число!", ephemeral=True)
-
 class WelcomeView(View):
     def __init__(self):
         super().__init__(timeout=None)
-
     @discord.ui.button(label="Правила", style=discord.ButtonStyle.primary, emoji="📜", custom_id="welcome_rules")
     async def rules_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         embed = discord.Embed(
@@ -1147,7 +1030,6 @@ class WelcomeView(View):
         )
         embed.set_footer(text="Нарушение правил = наказание")
         await interaction.response.send_message(embed=embed, ephemeral=True)
-
     @discord.ui.button(label="Команды", style=discord.ButtonStyle.success, emoji="🤖", custom_id="welcome_commands")
     async def commands_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         embed = discord.Embed(
@@ -1169,7 +1051,6 @@ class WelcomeView(View):
             color=COLORS["welcome"]
         )
         await interaction.response.send_message(embed=embed, ephemeral=True)
-
     @discord.ui.button(label="Роли", style=discord.ButtonStyle.secondary, emoji="🏷️", custom_id="welcome_roles")
     async def roles_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         embed = discord.Embed(
@@ -1184,7 +1065,6 @@ class WelcomeView(View):
             color=COLORS["welcome"]
         )
         await interaction.response.send_message(embed=embed, ephemeral=True)
-
 class TicketCategorySelect(Select):
     def __init__(self):
         options = [
@@ -1195,7 +1075,6 @@ class TicketCategorySelect(Select):
             discord.SelectOption(label="Другое", value="other", emoji="📌", description="Другие вопросы")
         ]
         super().__init__(placeholder="Выберите категорию тикета...", options=options, min_values=1, max_values=1)
-
     async def callback(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True)
         guild = interaction.guild
@@ -1247,11 +1126,9 @@ class TicketCategorySelect(Select):
             description=f"**Канал:** {ticket_channel.mention}\n**Автор:** {interaction.user}\n**Категория:** {self.values[0]}",
             color=COLORS["ticket"]
         )
-
 class TicketInactivityCheck:
     def __init__(self):
         self.ticket_channels = {}
-
     async def check_inactive_tickets(self):
         for guild in bot.guilds:
             category = guild.get_channel(TICKET_CATEGORY_ID)
@@ -1283,7 +1160,6 @@ class TicketInactivityCheck:
                                 )
                             break
                     break
-
     async def create_transcript(self, channel) -> str:
         transcript_lines = []
         async for msg in channel.history(limit=100, oldest_first=True):
@@ -1292,11 +1168,9 @@ class TicketInactivityCheck:
             content = msg.content or "[пусто]"
             transcript_lines.append(f"[{timestamp}] {author}: {content}")
         return "\n".join(transcript_lines)
-
 class TicketPanelView(View):
     def __init__(self):
         super().__init__(timeout=None)
-
     @discord.ui.button(label="Создать тикет", style=discord.ButtonStyle.green, emoji="🎟️", custom_id="create_ticket")
     async def create_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
         embed = discord.Embed(
@@ -1307,12 +1181,10 @@ class TicketPanelView(View):
         view = View(timeout=60)
         view.add_item(TicketCategorySelect())
         await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
-
 class TicketControls(View):
     def __init__(self):
         super().__init__(timeout=None)
         self.last_activity = datetime.now(timezone.utc)
-
     @discord.ui.button(label="Закрыть тикет", style=discord.ButtonStyle.red, emoji="🔒", custom_id="close_ticket")
     async def close_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
         if not interaction.user.guild_permissions.manage_channels:
@@ -1342,7 +1214,6 @@ class TicketControls(View):
             await archive_ch.send(embed=short_embed, file=file)
         await asyncio.sleep(5)
         await interaction.channel.delete()
-
     @discord.ui.button(label="Взять тикет", style=discord.ButtonStyle.blurple, emoji="🖐️", custom_id="claim_ticket")
     async def claim_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
         if not interaction.user.guild_permissions.manage_channels:
@@ -1351,7 +1222,6 @@ class TicketControls(View):
         await interaction.response.send_message(f"✅ {interaction.user.mention} взял тикет в работу!", ephemeral=False)
         self.claim_ticket.disabled = True
         await interaction.message.edit(view=self)
-
 class HelpView(View):
     def __init__(self, author: discord.User, is_mod: bool):
         super().__init__(timeout=60)
@@ -1419,7 +1289,6 @@ class HelpView(View):
                     ]
                 }
             ])
-
     def get_embed(self):
         category = self.categories[self.current_page]
         embed = discord.Embed(
@@ -1431,21 +1300,18 @@ class HelpView(View):
             embed.add_field(name=cmd, value=desc, inline=False)
         embed.set_footer(text=f"Страница {self.current_page + 1} из {len(self.categories)}")
         return embed
-
     @discord.ui.button(label="◀️", style=discord.ButtonStyle.secondary)
     async def previous_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user.id != self.author.id:
             return await interaction.response.send_message("❌ Это не твое меню!", ephemeral=True)
         self.current_page = (self.current_page - 1) % len(self.categories)
         await interaction.response.edit_message(embed=self.get_embed(), view=self)
-
     @discord.ui.button(label="▶️", style=discord.ButtonStyle.secondary)
     async def next_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user.id != self.author.id:
             return await interaction.response.send_message("❌ Это не твое меню!", ephemeral=True)
         self.current_page = (self.current_page + 1) % len(self.categories)
         await interaction.response.edit_message(embed=self.get_embed(), view=self)
-
     @discord.ui.button(label="🏠", style=discord.ButtonStyle.success)
     async def home_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user.id != self.author.id:
@@ -1461,7 +1327,6 @@ class HelpView(View):
         embed.set_footer(text="Выбери категорию")
         self.current_page = 0
         await interaction.response.edit_message(embed=embed, view=self)
-
 class FAQCategorySelect(Select):
     def __init__(self):
         options = []
@@ -1469,7 +1334,6 @@ class FAQCategorySelect(Select):
             emoji = "📋" if "общее" in key else "📜" if "правила" in key else "💰" if "экономика" in key else "🛡️" if "модерация" in key else "🔧"
             options.append(discord.SelectOption(label=name, value=key, emoji=emoji))
         super().__init__(placeholder="Выберите категорию...", options=options, min_values=1, max_values=1)
-
     async def callback(self, interaction: discord.Interaction):
         category = self.values[0]
         questions = faq_data.get(category, [])
@@ -1477,7 +1341,6 @@ class FAQCategorySelect(Select):
             return await interaction.response.send_message("❌ В этой категории пока нет вопросов.", ephemeral=True)
         view = FAQQuestionsView(category, questions, interaction.user)
         await interaction.response.edit_message(content=f"**{FAQ_CATEGORIES[category]}**\nВыберите вопрос:", embed=None, view=view)
-
 class FAQQuestionsView(View):
     def __init__(self, category: str, questions: list, author: discord.User):
         super().__init__(timeout=60)
@@ -1487,7 +1350,6 @@ class FAQQuestionsView(View):
         self.current_page = 0
         self.items_per_page = 5
         self.add_question_buttons()
-
     def add_question_buttons(self):
         self.clear_items()
         start = self.current_page * self.items_per_page
@@ -1524,7 +1386,6 @@ class FAQQuestionsView(View):
         back_to_cat = Button(label="🏠 Категории", style=discord.ButtonStyle.success)
         back_to_cat.callback = self.back_to_categories
         self.add_item(back_to_cat)
-
     async def show_questions(self, interaction: discord.Interaction):
         self.add_question_buttons()
         await interaction.response.edit_message(
@@ -1532,21 +1393,18 @@ class FAQQuestionsView(View):
             embed=None,
             view=self
         )
-
     async def prev_page(self, interaction: discord.Interaction):
         if interaction.user.id != self.author.id:
             return await interaction.response.send_message("❌ Это не твое меню!", ephemeral=True)
         self.current_page -= 1
         self.add_question_buttons()
         await interaction.response.edit_message(view=self)
-
     async def next_page(self, interaction: discord.Interaction):
         if interaction.user.id != self.author.id:
             return await interaction.response.send_message("❌ Это не твое меню!", ephemeral=True)
         self.current_page += 1
         self.add_question_buttons()
         await interaction.response.edit_message(view=self)
-
     async def back_to_categories(self, interaction: discord.Interaction):
         if interaction.user.id != self.author.id:
             return await interaction.response.send_message("❌ Это не твое меню!", ephemeral=True)
@@ -1557,13 +1415,11 @@ class FAQQuestionsView(View):
             color=COLORS["faq"]
         )
         await interaction.response.edit_message(embed=embed, view=view)
-
 class FAQView(View):
     def __init__(self, author: discord.User):
         super().__init__(timeout=60)
         self.author = author
         self.add_item(FAQCategorySelect())
-
 class UseItemModal(Modal, title="Используй предмет"):
     """Модальное окно для подтверждения использования"""
     def __init__(self, item_id: str, item_name: str, owner_id: int):
@@ -1571,52 +1427,52 @@ class UseItemModal(Modal, title="Используй предмет"):
         self.item_id = item_id
         self.item_name = item_name
         self.owner_id = owner_id
-       
+     
         self.add_item(TextInput(
             label="Подтвердите использование",
             placeholder=f"Напишите 'да' для использования {item_name}",
             style=discord.TextStyle.short,
             required=True
         ))
-   
+ 
     async def on_submit(self, interaction: discord.Interaction):
         if interaction.user.id != self.owner_id:
             return await interaction.response.send_message(
                 "❌ Это не твой предмет!", ephemeral=True
             )
-       
+     
         confirm_text = self.children[0].value.lower().strip()
         if confirm_text != "да":
             return await interaction.response.send_message(
                 f"❌ Использование {self.item_name} отменено. Нужно написать 'да'.",
                 ephemeral=True
             )
-       
+     
         user_id = str(interaction.user.id)
         if user_id not in economy_data:
             return await interaction.response.send_message(
                 "❌ Пользователь не найден в экономике.", ephemeral=True
             )
-       
+     
         inv = economy_data[user_id].get("inventory", {})
         if self.item_id not in inv or inv[self.item_id] <= 0:
             return await interaction.response.send_message(
                 f"❌ У вас больше нет **{self.item_name}**!", ephemeral=True
             )
-       
+     
         result = await handle_item_use(
             interaction.user,
             self.item_id,
             self.item_name,
             interaction
         )
-       
+     
         if result["success"]:
             inv[self.item_id] -= 1
             if inv[self.item_id] == 0:
                 del inv[self.item_id]
             save_economy()
-           
+         
             await interaction.response.send_message(
                 embed=result["embed"],
                 ephemeral=True
@@ -1626,38 +1482,37 @@ class UseItemModal(Modal, title="Используй предмет"):
                 result["error"],
                 ephemeral=True
             )
-
 class InventoryViewImproved(View):
     """Улучшенный вид инвентаря с кнопками для каждого предмета"""
     def __init__(self, owner_id: int, inventory: dict):
         super().__init__(timeout=300)
         self.owner_id = owner_id
         self.inventory = inventory.copy()
-       
+     
         row = 0
         items_added = 0
         usable_items = ["gift_box", "lucky_spin", "xp_boost_24h"]
-       
+     
         for item_id in usable_items:
             if item_id in self.inventory and self.inventory[item_id] > 0:
                 item = INVENTORY_ITEMS.get(item_id, {})
                 name = item.get("name", item_id)
                 count = self.inventory[item_id]
-               
+             
                 button = Button(
                     label=f"Использовать {name} ×{count}",
                     style=discord.ButtonStyle.green,
                     emoji=item.get("emoji", "🎁"),
                     row=row
                 )
-               
+             
                 button.callback = self.create_use_callback(item_id, name)
                 self.add_item(button)
                 items_added += 1
-               
+             
                 if items_added % 2 == 0:
                     row += 1
-       
+     
         refresh_btn = Button(
             label="🔄 Обновить",
             style=discord.ButtonStyle.grey,
@@ -1665,7 +1520,7 @@ class InventoryViewImproved(View):
         )
         refresh_btn.callback = self.refresh_inventory
         self.add_item(refresh_btn)
-   
+ 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         if interaction.user.id != self.owner_id:
             await interaction.response.send_message(
@@ -1673,14 +1528,14 @@ class InventoryViewImproved(View):
             )
             return False
         return True
-   
+ 
     def create_use_callback(self, item_id: str, item_name: str):
         """Создаёт callback для кнопки использования"""
         async def callback(interaction: discord.Interaction):
             modal = UseItemModal(item_id, item_name, self.owner_id)
             await interaction.response.send_modal(modal)
         return callback
-   
+ 
     async def refresh_inventory(self, interaction: discord.Interaction):
         """Обновить отображение инвентаря"""
         user_id = str(interaction.user.id)
@@ -1688,15 +1543,14 @@ class InventoryViewImproved(View):
             return await interaction.response.send_message(
                 "❌ Пользователь не найден.", ephemeral=True
             )
-       
+     
         data = economy_data[user_id]
         inv = data.get("inventory", {})
-       
+     
         embed = await create_inventory_embed(interaction.user, inv, data)
         new_view = InventoryViewImproved(self.owner_id, inv)
-       
+     
         await interaction.response.edit_message(embed=embed, view=new_view)
-
 class TradeAcceptView(View):
     """Вид для принятия или отклонения трейда"""
     def __init__(self, trade_id: str, initiator_id: int, recipient_id: int):
@@ -1704,7 +1558,7 @@ class TradeAcceptView(View):
         self.trade_id = trade_id
         self.initiator_id = initiator_id
         self.recipient_id = recipient_id
-   
+ 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         if interaction.user.id != self.recipient_id:
             await interaction.response.send_message(
@@ -1713,88 +1567,88 @@ class TradeAcceptView(View):
             )
             return False
         return True
-   
+ 
     @discord.ui.button(label="✅ Принять трейд", style=discord.ButtonStyle.green, emoji="🤝")
     async def accept_trade(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.defer(ephemeral=False)
-       
+     
         if self.trade_id not in active_trades:
             return await interaction.followup.send(
                 "❌ Трейд больше не существует или уже завершён.",
                 ephemeral=True
             )
-       
+     
         trade = active_trades[self.trade_id]
-       
+     
         if trade["status"] != "pending":
             return await interaction.followup.send(
                 "❌ Трейд уже в процессе или завершён.",
                 ephemeral=True
             )
-       
+     
         trade["recipient_confirmed"] = True
         trade["status"] = "both_confirmed"
-       
+     
         embed = discord.Embed(
             title="🤝 Оба игрока согласны!",
             description=f"Обмен будет выполнен в течение 10 секунд...",
             color=0x2ecc71,
             timestamp=datetime.now(timezone.utc)
         )
-       
+     
         await interaction.followup.send(embed=embed)
-       
+     
         await asyncio.sleep(10)
-       
+     
         initiator_id = str(trade["initiator_id"])
         recipient_id = str(trade["recipient_id"])
-       
+     
         try:
             initiator_items = trade["initiator_items"]
             recipient_items = trade["recipient_items"]
-           
+         
             if initiator_id not in economy_data or recipient_id not in economy_data:
                 raise Exception("Один из игроков не найден в экономике")
-           
+         
             initiator_inv = economy_data[initiator_id].get("inventory", {})
             recipient_inv = economy_data[recipient_id].get("inventory", {})
-           
+         
             for item_id, count in initiator_items.items():
                 if initiator_inv.get(item_id, 0) < count:
                     raise Exception(f"У отправителя недостаточно предмета {item_id}")
-           
+         
             for item_id, count in recipient_items.items():
                 if recipient_inv.get(item_id, 0) < count:
                     raise Exception(f"У получателя недостаточно предмета {item_id}")
-           
+         
             for item_id, count in initiator_items.items():
                 initiator_inv[item_id] = initiator_inv.get(item_id, 0) - count
                 if initiator_inv[item_id] == 0:
                     del initiator_inv[item_id]
-               
+             
                 recipient_inv[item_id] = recipient_inv.get(item_id, 0) + count
-           
+         
             for item_id, count in recipient_items.items():
                 recipient_inv[item_id] = recipient_inv.get(item_id, 0) - count
                 if recipient_inv[item_id] == 0:
                     del recipient_inv[item_id]
-               
+             
                 initiator_inv[item_id] = initiator_inv.get(item_id, 0) + count
-           
+         
             save_economy()
-           
+         
             trade["status"] = "completed"
-           
+         
             initiator_user = bot.get_user(int(initiator_id))
             recipient_user = bot.get_user(int(recipient_id))
-           
+         
             success_embed = discord.Embed(
                 title="✅ Трейд успешно завершён!",
                 description=f"**{initiator_user.mention}** ↔️ **{recipient_user.mention}**",
                 color=0x2ecc71,
                 timestamp=datetime.now(timezone.utc)
             )
-           
+         
             initiator_items_text = "\n".join([
                 f" • {INVENTORY_ITEMS.get(iid, {}).get('name', iid)} ×{cnt}"
                 for iid, cnt in initiator_items.items()
@@ -1803,7 +1657,7 @@ class TradeAcceptView(View):
                 f" • {INVENTORY_ITEMS.get(iid, {}).get('name', iid)} ×{cnt}"
                 for iid, cnt in recipient_items.items()
             ])
-           
+         
             success_embed.add_field(
                 name=f"📤 {initiator_user.display_name} отдал",
                 value=initiator_items_text or "Ничего",
@@ -1814,20 +1668,20 @@ class TradeAcceptView(View):
                 value=recipient_items_text or "Ничего",
                 inline=True
             )
-           
+         
             success_embed.set_footer(text=f"Трейд ID: {self.trade_id}")
-           
+         
             await interaction.channel.send(embed=success_embed)
-           
+         
             await send_mod_log(
                 title="🔄 Трейд завершён",
                 description=f"**От:** {initiator_user.mention}\n**Кому:** {recipient_user.mention}\n**ID:** {self.trade_id}",
                 color=0x2ecc71
             )
-           
+         
             if (self.initiator_id, self.recipient_id) in trade_invitations:
                 del trade_invitations[(self.initiator_id, self.recipient_id)]
-       
+     
         except Exception as e:
             error_embed = discord.Embed(
                 title="❌ Ошибка при выполнении трейда",
@@ -1835,23 +1689,23 @@ class TradeAcceptView(View):
                 color=0xe74c3c,
                 timestamp=datetime.now(timezone.utc)
             )
-           
+         
             await interaction.channel.send(embed=error_embed)
             trade["status"] = "failed"
-   
+ 
     @discord.ui.button(label="❌ Отклонить", style=discord.ButtonStyle.red, emoji="✖️")
     async def reject_trade(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.defer(ephemeral=False)
-       
+     
         if self.trade_id not in active_trades:
             return await interaction.followup.send(
                 "❌ Трейд уже не существует.",
                 ephemeral=True
             )
-       
+     
         trade = active_trades[self.trade_id]
         trade["status"] = "rejected"
-       
+     
         initiator_user = bot.get_user(int(trade["initiator_id"]))
         reject_embed = discord.Embed(
             title="❌ Трейд отклонён",
@@ -1859,23 +1713,22 @@ class TradeAcceptView(View):
             color=0xe74c3c,
             timestamp=datetime.now(timezone.utc)
         )
-       
+     
         await interaction.followup.send(embed=reject_embed)
-       
+     
         if (self.initiator_id, self.recipient_id) in trade_invitations:
             del trade_invitations[(self.initiator_id, self.recipient_id)]
-
 class TradeItemSelect(Select):
     """Выбор предметов для трейда"""
     def __init__(self, user_id: int, placeholder: str, custom_id: str):
         self.user_id = user_id
-       
+     
         user_id_str = str(user_id)
         if user_id_str not in economy_data:
             options = [discord.SelectOption(label="Нет предметов", value="none", emoji="🚫")]
         else:
             inv = economy_data[user_id_str].get("inventory", {})
-           
+         
             if not inv:
                 options = [discord.SelectOption(label="Нет предметов", value="none", emoji="🚫")]
             else:
@@ -1885,7 +1738,7 @@ class TradeItemSelect(Select):
                     name = item.get("name", item_id)
                     emoji = item.get("emoji", "📦")
                     label = f"{emoji} {name} ×{count}"[:100]
-                   
+                 
                     options.append(
                         discord.SelectOption(
                             label=label,
@@ -1894,7 +1747,7 @@ class TradeItemSelect(Select):
                             description=f"У тебя есть {count} шт."
                         )
                     )
-       
+     
         super().__init__(
             placeholder=placeholder,
             options=options[:25],
@@ -1902,39 +1755,38 @@ class TradeItemSelect(Select):
             max_values=min(5, len(options)) if options else 1,
             custom_id=custom_id
         )
-   
+ 
     async def callback(self, interaction: discord.Interaction):
         if self.values[0] == "none":
             self.values = []
-       
+     
         await interaction.response.defer()
-
 class TradeItemAmountModal(Modal, title="Укажи количество предметов"):
     """Модальное окно для ввода количества предметов"""
     def __init__(self, trade_id: str, user_role: str):
         super().__init__()
         self.trade_id = trade_id
         self.user_role = user_role
-       
+     
         self.add_item(TextInput(
             label="Предметы для обмена",
             placeholder='Формат: item_id:количество (например: gift_box:2, xp_boost_24h:1)',
             style=discord.TextStyle.paragraph,
             required=False
         ))
-   
+ 
     async def on_submit(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True)
-       
+     
         if self.trade_id not in active_trades:
             return await interaction.followup.send(
                 "❌ Трейд больше не существует.",
                 ephemeral=True
             )
-       
+     
         trade = active_trades[self.trade_id]
         input_text = self.children[0].value.strip()
-       
+     
         items_dict = {}
         if input_text:
             try:
@@ -1942,43 +1794,43 @@ class TradeItemAmountModal(Modal, title="Укажи количество пре�
                 for pair in pairs:
                     if ":" not in pair:
                         raise ValueError(f"Неверный формат: {pair}")
-                   
+                 
                     item_id, count_str = pair.split(":", 1)
                     item_id = item_id.strip()
                     count = int(count_str.strip())
-                   
+                 
                     if count <= 0:
                         raise ValueError(f"Количество должно быть > 0: {pair}")
-                   
+                 
                     if item_id not in INVENTORY_ITEMS:
                         raise ValueError(f"Предмет {item_id} не существует")
-                   
+                 
                     user_id = str(interaction.user.id)
                     user_inv = economy_data.get(user_id, {}).get("inventory", {})
                     if user_inv.get(item_id, 0) < count:
                         raise ValueError(f"У тебя нет {count} шт. {item_id}")
-                   
+                 
                     items_dict[item_id] = count
-           
+         
             except Exception as e:
                 return await interaction.followup.send(
                     f"❌ Ошибка при парсинге: {str(e)}\n\n"
                     f"**Формат:** item_id:количество (например: gift_box:2, xp_boost_24h:1)",
                     ephemeral=True
                 )
-       
+     
         if self.user_role == "initiator":
             trade["initiator_items"] = items_dict
             trade["initiator_confirmed"] = True
         else:
             trade["recipient_items"] = items_dict
             trade["recipient_confirmed"] = True
-       
+     
         items_text = "\n".join([
             f" • {INVENTORY_ITEMS.get(iid, {}).get('name', iid)} ×{cnt}"
             for iid, cnt in items_dict.items()
         ]) or "Ничего"
-       
+     
         confirm_embed = discord.Embed(
             title="✅ Предметы добавлены",
             description=f"Тебе нужно согласиться на трейд",
@@ -1989,9 +1841,8 @@ class TradeItemAmountModal(Modal, title="Укажи количество пре�
             value=items_text,
             inline=False
         )
-       
+     
         await interaction.followup.send(embed=confirm_embed, ephemeral=True)
-
 class TradeConfirmView(View):
     """Вид для подтверждения сторонами трейда"""
     def __init__(self, trade_id: str, user_id: int, user_role: str):
@@ -1999,7 +1850,7 @@ class TradeConfirmView(View):
         self.trade_id = trade_id
         self.user_id = user_id
         self.user_role = user_role
-   
+ 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         if interaction.user.id != self.user_id:
             await interaction.response.send_message(
@@ -2008,92 +1859,92 @@ class TradeConfirmView(View):
             )
             return False
         return True
-   
+ 
     @discord.ui.button(label="📝 Изменить предметы", style=discord.ButtonStyle.blurple, emoji="✏️")
     async def edit_items(self, interaction: discord.Interaction, button: discord.ui.Button):
         modal = TradeItemAmountModal(self.trade_id, self.user_role)
         await interaction.response.send_modal(modal)
-   
+ 
     @discord.ui.button(label="✅ Подтвердить трейд", style=discord.ButtonStyle.green, emoji="🤝")
     async def confirm_trade(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.defer(ephemeral=True)
-       
+     
         if self.trade_id not in active_trades:
             return await interaction.followup.send(
                 "❌ Трейд больше не существует.",
                 ephemeral=True
             )
-       
+     
         trade = active_trades[self.trade_id]
-       
+     
         if self.user_role == "initiator":
             trade["initiator_confirmed"] = True
         else:
             trade["recipient_confirmed"] = True
-       
+     
         if trade.get("initiator_confirmed") and trade.get("recipient_confirmed"):
             trade["status"] = "both_confirmed"
-           
+         
             initiator = bot.get_user(int(trade["initiator_id"]))
             recipient = bot.get_user(int(trade["recipient_id"]))
-           
+         
             ready_embed = discord.Embed(
                 title="🎉 Оба игрока готовы!",
                 description=f"Трейд между **{initiator.mention}** и **{recipient.mention}** будет выполнен в течение 10 секунд...",
                 color=0x2ecc71
             )
-           
+         
             channel = interaction.channel
             msg = await channel.send(embed=ready_embed)
-           
+         
             await asyncio.sleep(10)
-           
+         
             initiator_id = str(trade["initiator_id"])
             recipient_id = str(trade["recipient_id"])
-           
+         
             try:
                 initiator_items = trade.get("initiator_items", {})
                 recipient_items = trade.get("recipient_items", {})
-               
+             
                 if initiator_id not in economy_data or recipient_id not in economy_data:
                     raise Exception("Один из игроков не найден")
-               
+             
                 initiator_inv = economy_data[initiator_id].get("inventory", {})
                 recipient_inv = economy_data[recipient_id].get("inventory", {})
-               
+             
                 for item_id, count in initiator_items.items():
                     if initiator_inv.get(item_id, 0) < count:
                         raise Exception(f"У отправителя недостаточно {item_id}")
-               
+             
                 for item_id, count in recipient_items.items():
                     if recipient_inv.get(item_id, 0) < count:
                         raise Exception(f"У получателя недостаточно {item_id}")
-               
+             
                 for item_id, count in initiator_items.items():
                     initiator_inv[item_id] = initiator_inv.get(item_id, 0) - count
                     if initiator_inv[item_id] == 0:
                         del initiator_inv[item_id]
-                   
+                 
                     recipient_inv[item_id] = recipient_inv.get(item_id, 0) + count
-               
+             
                 for item_id, count in recipient_items.items():
                     recipient_inv[item_id] = recipient_inv.get(item_id, 0) - count
                     if recipient_inv[item_id] == 0:
                         del recipient_inv[item_id]
-                   
+                 
                     initiator_inv[item_id] = initiator_inv.get(item_id, 0) + count
-               
+             
                 save_economy()
-               
+             
                 trade["status"] = "completed"
-               
+             
                 success_embed = discord.Embed(
                     title="✅ Трейд успешно завершён!",
                     description=f"**{initiator.mention}** ↔️ **{recipient.mention}**",
                     color=0x2ecc71,
                     timestamp=datetime.now(timezone.utc)
                 )
-               
+             
                 initiator_items_text = "\n".join([
                     f" • {INVENTORY_ITEMS.get(iid, {}).get('name', iid)} ×{cnt}"
                     for iid, cnt in initiator_items.items()
@@ -2102,7 +1953,7 @@ class TradeConfirmView(View):
                     f" • {INVENTORY_ITEMS.get(iid, {}).get('name', iid)} ×{cnt}"
                     for iid, cnt in recipient_items.items()
                 ]) or "Ничего"
-               
+             
                 success_embed.add_field(
                     name=f"📤 {initiator.display_name} отдал",
                     value=initiator_items_text,
@@ -2113,20 +1964,20 @@ class TradeConfirmView(View):
                     value=recipient_items_text,
                     inline=True
                 )
-               
+             
                 success_embed.set_footer(text=f"Трейд ID: {self.trade_id}")
-               
+             
                 await msg.edit(embed=success_embed)
-               
+             
                 await send_mod_log(
                     title="🔄 Трейд завершён",
                     description=f"**От:** {initiator.mention}\n**Кому:** {recipient.mention}",
                     color=0x2ecc71
                 )
-               
+             
                 if (trade["initiator_id"], trade["recipient_id"]) in trade_invitations:
                     del trade_invitations[(trade["initiator_id"], trade["recipient_id"])]
-           
+         
             except Exception as e:
                 error_embed = discord.Embed(
                     title="❌ Ошибка при трейде",
@@ -2142,32 +1993,31 @@ class TradeConfirmView(View):
                 color=0xf39c12
             )
             await interaction.followup.send(embed=status_embed, ephemeral=True)
-   
+ 
     @discord.ui.button(label="❌ Отменить", style=discord.ButtonStyle.red, emoji="✖️")
     async def cancel_trade(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.defer(ephemeral=True)
-       
+     
         if self.trade_id not in active_trades:
             return await interaction.followup.send(
                 "❌ Трейд уже не существует.",
                 ephemeral=True
             )
-       
+     
         trade = active_trades[self.trade_id]
         trade["status"] = "cancelled"
-       
+     
         cancel_embed = discord.Embed(
             title="❌ Трейд отменён",
             description=f"**{interaction.user.mention}** отменил трейд",
             color=0xe74c3c
         )
-       
+     
         await interaction.channel.send(embed=cancel_embed)
         await interaction.followup.send("✅ Трейд отменён.", ephemeral=True)
-       
+     
         if (trade["initiator_id"], trade["recipient_id"]) in trade_invitations:
             del trade_invitations[(trade["initiator_id"], trade["recipient_id"])]
-
 # ─────────────────────────────────────────────────────────────────────────────
 # ФУНКЦИИ ТРЕЙДИНГА
 # ─────────────────────────────────────────────────────────────────────────────
@@ -2175,43 +2025,41 @@ def generate_trade_id() -> str:
     """Генерирует уникальный ID трейда"""
     import uuid
     return f"trade_{str(uuid.uuid4())[:8]}"
-
 # ─────────────────────────────────────────────────────────────────────────────
 # ОБРАБОТЧИКИ ИСПОЛЬЗОВАНИЯ ПРЕДМЕТОВ
 # ─────────────────────────────────────────────────────────────────────────────
 async def handle_item_use(member: discord.Member, item_id: str, item_name: str, interaction: discord.Interaction) -> dict:
     """Главный обработчик использования любого предмета"""
     user_id = str(member.id)
-   
+ 
     try:
         if item_id == "gift_box":
             return await use_gift_box(member, user_id)
-       
+     
         elif item_id == "lucky_spin":
             return await use_lucky_spin(member, user_id)
-       
+     
         elif item_id == "xp_boost_24h":
             return await use_xp_boost(member, user_id)
-       
+     
         else:
             return {
                 "success": False,
                 "error": f"❌ Неизвестный предмет: {item_id}"
             }
-   
+ 
     except Exception as e:
         print(f"❌ Ошибка при использовании {item_id}: {e}")
         return {
             "success": False,
             "error": f"❌ Ошибка при использовании: {str(e)}"
         }
-
 async def use_gift_box(member: discord.Member, user_id: str) -> dict:
     """Использование подарочной коробки"""
     reward = open_gift_box()
-   
+ 
     economy_data[user_id]["balance"] += reward
-   
+ 
     if reward >= 2200:
         rarity = "🔥 ЛЕГЕНДАРНАЯ!"
         color = 0xF1C40F
@@ -2228,7 +2076,7 @@ async def use_gift_box(member: discord.Member, user_id: str) -> dict:
         rarity = "🪙 Обычная"
         color = 0xA8A8A8
         emoji = "🪙"
-   
+ 
     embed = discord.Embed(
         title=f"{emoji} Коробка открыта!",
         description=f"**+{format_number(reward)}** {ECONOMY_EMOJIS['coin']}",
@@ -2243,74 +2091,73 @@ async def use_gift_box(member: discord.Member, user_id: str) -> dict:
     )
     embed.set_thumbnail(url=member.display_avatar.url)
     embed.set_footer(text="🎁 Подарочная коробка")
-   
+ 
     if reward >= 1500:
         await send_mod_log(
             title="🎁 Крупная награда из коробки!",
             description=f"**Пользователь:** {member.mention}\n**Награда:** {format_number(reward)} {ECONOMY_EMOJIS['coin']}\n**Редкость:** {rarity}",
             color=color
         )
-   
+ 
     save_economy()
     return {"success": True, "embed": embed}
-
 async def use_lucky_spin(member: discord.Member, user_id: str) -> dict:
     """Использование счастливой крутки - открытие кейса с рандомной наградой"""
-   
+ 
     # ───────────────────────────────────────────────
     # ТАБЛИЦА НАГРАД С ВЕРОЯТНОСТЯМИ
     # ───────────────────────────────────────────────
     rewards_table = [
         # (chance%, reward_type, value, name, emoji, color)
-       
+     
         # 🪙 МОНЕТЫ (50% всего)
         (20, "coins", (100, 500), "Горсть монет", "🪙", 0x95a5a6),
         (15, "coins", (500, 1500), "Мешочек монет", "💰", 0x3498db),
         (10, "coins", (1500, 3000), "Сундук монет", "💎", 0x9b59b6),
         (5, "coins", (3000, 5000), "Сокровищница", "👑", 0xf1c40f),
-       
+     
         # 🎁 ПРЕДМЕТЫ (30% всего)
         (12, "item", "gift_box", "Подарочная коробка", "🎁", 0x3498db),
         (8, "item", "lucky_spin", "Ещё одна крутка!", "🎰", 0x9b59b6),
         (5, "item", "xp_boost_24h", "Буст опыта ×2", "⚡", 0xf1c40f),
         (5, "item", "discount_card", "Скидочная карта", "💳", 0x9b59b6),
-       
+     
         # 🚀 БУСТЫ (15% всего)
         (8, "boost", ("multiplier_1x5", 7), "Удвоитель ×1.5", "🚀", 0x00ff9d),
         (5, "boost", ("multiplier_2x", 3), "Удвоитель ×2", "🚀🚀", 0xf1c40f),
         (2, "boost", ("multiplier_3x", 1), "Утроитель ×3", "🚀🚀🚀", 0xff4500),
-       
+     
         # 💎 ДЖЕКПОТ (5% всего)
         (3, "jackpot", (10000, 25000), "ДЖЕКПОТ!", "💥", 0xff0000),
         (1, "mega_jackpot", (50000, 100000), "МЕГА ДЖЕКПОТ!!!", "🌟", 0xffd700),
         (1, "legendary", "vip_7days", "VIP на 7 дней", "👑", 0xffd700),
     ]
-   
+ 
     # ───────────────────────────────────────────────
     # ВЫБОР НАГРАДЫ
     # ───────────────────────────────────────────────
     roll = random.random() * 100
     cumulative = 0
     selected_reward = None
-   
+ 
     for chance, reward_type, value, name, emoji, color in rewards_table:
         cumulative += chance
         if roll <= cumulative:
             selected_reward = (reward_type, value, name, emoji, color)
             break
-   
+ 
     if not selected_reward:
         # Fallback на случай ошибки
         selected_reward = ("coins", (100, 500), "Горсть монет", "🪙", 0x95a5a6)
-   
+ 
     reward_type, value, reward_name, reward_emoji, reward_color = selected_reward
-   
+ 
     # ───────────────────────────────────────────────
     # ПРИМЕНЕНИЕ НАГРАДЫ
     # ───────────────────────────────────────────────
     reward_text = ""
     detailed_reward = ""
-   
+ 
     # 🪙 МОНЕТЫ
     if reward_type == "coins":
         min_coins, max_coins = value
@@ -2318,40 +2165,40 @@ async def use_lucky_spin(member: discord.Member, user_id: str) -> dict:
         economy_data[user_id]["balance"] += coins
         reward_text = f"**+{format_number(coins)}** {ECONOMY_EMOJIS['coin']}"
         detailed_reward = f"Монеты добавлены на баланс"
-   
+ 
     # 🎁 ПРЕДМЕТЫ
     elif reward_type == "item":
         item_id = value
         inv = economy_data[user_id].setdefault("inventory", {})
         inv[item_id] = inv.get(item_id, 0) + 1
-       
+     
         item_info = INVENTORY_ITEMS.get(item_id, {})
         item_emoji = item_info.get("emoji", "📦")
-       
+     
         reward_text = f"{item_emoji} **{reward_name}**"
         detailed_reward = f"Предмет добавлен в инвентарь"
-   
+ 
     # 🚀 БУСТЫ
     elif reward_type == "boost":
         boost_key, days = value
-       
+     
         now = datetime.now(timezone.utc).timestamp()
         duration_sec = days * 86400
         end_time = now + duration_sec
-       
+     
         if "multiplier_end" not in economy_data[user_id]:
             economy_data[user_id]["multiplier_end"] = 0
-       
+     
         # Продлеваем или ставим новый
         if economy_data[user_id]["multiplier_end"] > now:
             economy_data[user_id]["multiplier_end"] += duration_sec
         else:
             economy_data[user_id]["multiplier_end"] = end_time
-       
+     
         multiplier = boost_key.split("_")[1] # "1x5" -> "1.5"
         reward_text = f"🚀 **{reward_name}** ({days}д)"
         detailed_reward = f"Буст активирован до <t:{int(economy_data[user_id]['multiplier_end'])}:R>"
-   
+ 
     # 💥 ДЖЕКПОТ
     elif reward_type == "jackpot":
         min_coins, max_coins = value
@@ -2359,7 +2206,7 @@ async def use_lucky_spin(member: discord.Member, user_id: str) -> dict:
         economy_data[user_id]["balance"] += coins
         reward_text = f"💥 **{format_number(coins)}** {ECONOMY_EMOJIS['coin']}"
         detailed_reward = f"НЕВЕРОЯТНАЯ УДАЧА!"
-   
+ 
     # 🌟 МЕГА ДЖЕКПОТ
     elif reward_type == "mega_jackpot":
         min_coins, max_coins = value
@@ -2367,14 +2214,14 @@ async def use_lucky_spin(member: discord.Member, user_id: str) -> dict:
         economy_data[user_id]["balance"] += coins
         reward_text = f"🌟 **{format_number(coins)}** {ECONOMY_EMOJIS['coin']}"
         detailed_reward = f"ЛЕГЕНДАРНЫЙ ДРОП! ТЫ ОДИН ИЗ НЕМНОГИХ!"
-   
+ 
     # 👑 ЛЕГЕНДАРНАЯ НАГРАДА (VIP)
     elif reward_type == "legendary":
         if value == "vip_7days":
             # Даём VIP роль на 7 дней (если есть на сервере)
             reward_text = f"👑 **VIP статус на 7 дней**"
             detailed_reward = f"Легендарная награда! Проверь свои роли"
-           
+         
             # Пытаемся выдать роль (если бот на сервере)
             try:
                 if member.guild:
@@ -2386,12 +2233,12 @@ async def use_lucky_spin(member: discord.Member, user_id: str) -> dict:
                         )
             except:
                 pass
-   
+ 
     # ───────────────────────────────────────────────
     # СОХРАНЕНИЕ + EMBED
     # ───────────────────────────────────────────────
     save_economy()
-   
+ 
     # Определяем редкость
     if reward_type in ["mega_jackpot", "legendary"]:
         rarity = "🔥 ЛЕГЕНДАРНАЯ"
@@ -2401,24 +2248,24 @@ async def use_lucky_spin(member: discord.Member, user_id: str) -> dict:
         rarity = "💎 РЕДКАЯ"
     else:
         rarity = "🪙 Обычная"
-   
+ 
     embed = discord.Embed(
         title=f"{reward_emoji} {reward_name}",
         description=f"**{reward_text}**\n\n{detailed_reward}",
         color=reward_color,
         timestamp=datetime.now(timezone.utc)
     )
-   
+ 
     embed.add_field(name="🎲 Редкость", value=rarity, inline=True)
     embed.add_field(
         name="💰 Новый баланс",
         value=f"**{format_number(economy_data[user_id]['balance'])}** {ECONOMY_EMOJIS['coin']}",
         inline=True
     )
-   
+ 
     embed.set_thumbnail(url=member.display_avatar.url)
     embed.set_footer(text="🎰 Счастливая крутка • MortisPlay")
-   
+ 
     # ───────────────────────────────────────────────
     # ЛОГ РЕДКИХ ДРОПОВ
     # ───────────────────────────────────────────────
@@ -2431,23 +2278,22 @@ async def use_lucky_spin(member: discord.Member, user_id: str) -> dict:
             )
         except:
             pass
-   
+ 
     return {"success": True, "embed": embed}
-
 async def use_xp_boost(member: discord.Member, user_id: str) -> dict:
     """Использование буста опыта на 24 часа"""
     now_ts = datetime.now(timezone.utc).timestamp()
     end_ts = now_ts + (24 * 3600)
-   
+ 
     effects = economy_data[user_id].get("active_effects", [])
     active_xp_boost = any(e.get("effect_type") == "xp_multiplier" for e in effects)
-   
+ 
     if active_xp_boost:
         return {
             "success": False,
             "error": "❌ У вас уже активен буст опыта! Подожди, пока истечёт."
         }
-   
+ 
     effect = {
         "effect_type": "xp_multiplier",
         "name": "Буст опыта ×2",
@@ -2458,7 +2304,7 @@ async def use_xp_boost(member: discord.Member, user_id: str) -> dict:
     }
     economy_data[user_id].setdefault("active_effects", []).append(effect)
     save_economy()
-   
+ 
     embed = discord.Embed(
         title="⚡ Буст опыта активирован!",
         description="**×2 опыта на 24 часа** 🚀",
@@ -2474,7 +2320,7 @@ async def use_xp_boost(member: discord.Member, user_id: str) -> dict:
     )
     embed.set_thumbnail(url=member.display_avatar.url)
     embed.set_footer(text="⚡ Буст активирован")
-   
+ 
     try:
         await send_mod_log(
             title="⚡ Буст активирован",
@@ -2483,9 +2329,8 @@ async def use_xp_boost(member: discord.Member, user_id: str) -> dict:
         )
     except:
         pass
-   
+ 
     return {"success": True, "embed": embed}
-
 # ─────────────────────────────────────────────────────────────────────────────
 # ПОМОЩНИК ДЛЯ СОЗДАНИЯ EMBED'а ИНВЕНТАРЯ
 # ─────────────────────────────────────────────────────────────────────────────
@@ -2497,33 +2342,33 @@ async def create_inventory_embed(member: discord.Member, inventory: dict, econom
         timestamp=datetime.now(timezone.utc)
     )
     embed.set_thumbnail(url=member.display_avatar.url)
-   
+ 
     # ─ ПРЕДМЕТЫ ─
     if inventory:
         items_lines = []
         rarest_rarity = "common"
         rarity_order = ["common", "rare", "epic", "legendary"]
-       
+     
         for item_id, count in sorted(inventory.items()):
             item = INVENTORY_ITEMS.get(item_id, {})
             rarity = item.get("rarity", "common")
             style = RARITY_STYLE.get(rarity, RARITY_STYLE["common"])
             name = item.get("name", item_id)
             emoji = item.get("emoji", "📦")
-           
+         
             items_lines.append(f"{style['emoji']} **{emoji} {name}** ×{count}")
-           
+         
             if rarity_order.index(rarity) > rarity_order.index(rarest_rarity):
                 rarest_rarity = rarity
-       
+     
         def get_rarity_index(line):
             for r in rarity_order:
                 if RARITY_STYLE[r]["emoji"] in line:
                     return rarity_order.index(r)
             return 0
-       
+     
         items_lines.sort(key=get_rarity_index, reverse=True)
-       
+     
         embed.add_field(
             name="📦 Предметы",
             value="\n".join(items_lines),
@@ -2536,46 +2381,45 @@ async def create_inventory_embed(member: discord.Member, inventory: dict, econom
             value="🚫 Инвентарь пуст!\nСходи в `/shop` 🛒",
             inline=False
         )
-   
+ 
     # ─ АКТИВНЫЕ ЭФФЕКТЫ ─
     now_ts = datetime.now(timezone.utc).timestamp()
     effects = economy_data_user.get("active_effects", [])
     active_lines = []
-   
+ 
     for eff in effects[:10]:
         ends_at = eff.get("end_time", 0)
         if ends_at <= now_ts:
             continue
-       
+     
         time_left_sec = ends_at - now_ts
         hours_left = int(time_left_sec // 3600)
         mins_left = int((time_left_sec % 3600) // 60)
-       
+     
         duration_sec = eff.get("duration_sec", 24 * 3600)
         progress = (time_left_sec / duration_sec) * 100
         progress = max(0, min(100, progress))
-       
+     
         bar = create_progress_bar(int(progress), 100, length=12)
         name = eff.get("name", "Эффект")
         value = eff.get("value", 1)
-       
+     
         line = f"**{name} ×{value}** — <t:{int(ends_at)}:R>\n`{bar}` **{int(progress)}%**"
         active_lines.append(line)
-   
+ 
     embed.add_field(
         name="✨ Активные эффекты",
         value="\n".join(active_lines) if active_lines else "✅ Нет активных эффектов",
         inline=False
     )
-   
+ 
     # ─ СТАТИСТИКА ─
     balance = economy_data_user.get("balance", 0)
     embed.set_footer(
         text=f"Баланс: {format_number(balance)} {ECONOMY_EMOJIS['coin']} • Используй кнопки ниже"
     )
-   
+ 
     return embed
-
 # ───────────────────────────────────────────────
 # Магазин с кнопками, подтверждением, проверкой "уже куплено"
 # ───────────────────────────────────────────────
@@ -2592,32 +2436,32 @@ class ShopConfirmModal(Modal, title="Подтверждение покупки")
             style=discord.TextStyle.short,
             required=True
         ))
-   
+ 
     async def on_submit(self, interaction: discord.Interaction):
         if self.children[0].value.lower().strip() != "подтверждаю":
             return await interaction.response.send_message(
                 "❌ Покупка отменена. Нужно написать 'подтверждаю'.",
                 ephemeral=True
             )
-       
+     
         user_id = str(interaction.user.id)
         if user_id not in economy_data:
             economy_data[user_id] = {"balance": 0}
             save_economy()
-       
+     
         if economy_data[user_id].get("balance", 0) < self.final_price:
             return await interaction.response.send_message(
                 f"{ECONOMY_EMOJIS['error']} Недостаточно монет! Требуется {format_number(self.final_price)}",
                 ephemeral=True
             )
-       
+     
         shop_item = SHOP_ITEMS[self.item_key]
         economy_data[user_id]["balance"] -= self.final_price
-       
+     
         msg = ""
         msg_title = ""
         color = 0x2ecc71
-       
+     
         # ───────────────────────────────────────
         # ВИП РОЛЬ
         # ───────────────────────────────────────
@@ -2637,7 +2481,7 @@ class ShopConfirmModal(Modal, title="Подтверждение покупки")
                 msg = f"{ECONOMY_EMOJIS['error']} Роль VIP не найдена!"
                 color = 0xe74c3c
                 msg_title = "❌ Ошибка"
-       
+     
         # ───────────────────────────────────────
         # ПОСТОЯННЫЙ ВИП
         # ───────────────────────────────────────
@@ -2649,10 +2493,10 @@ class ShopConfirmModal(Modal, title="Подтверждение покупки")
                 temp_roles.setdefault(user_id, {})[str(role.id)] = (
                     datetime.now(timezone.utc).timestamp() + (999 * 365 * 86400)
                 )
-               
+             
                 # Отмечаем как постоянный VIP
                 economy_data[user_id]["vip_permanent"] = True
-               
+             
                 msg = (
                     f"👑 **ВЕЧНЫЙ VIP СТАТУС!**\n"
                     f"Ты один из 5 избранных!\n\n"
@@ -2667,26 +2511,26 @@ class ShopConfirmModal(Modal, title="Подтверждение покупки")
                 msg = f"{ECONOMY_EMOJIS['error']} Роль VIP не найдена!"
                 color = 0xe74c3c
                 msg_title = "❌ Ошибка"
-       
+     
         # ───────────────────────────────────────
         # БУСТЫ (multiplier_1x5, multiplier_2x и т.д.)
         # ───────────────────────────────────────
         elif shop_item.get("duration_days"):
             if "multiplier_end" not in economy_data[user_id]:
                 economy_data[user_id]["multiplier_end"] = 0
-           
+         
             economy_data[user_id]["multiplier_end"] = (
                 datetime.now(timezone.utc).timestamp() + (shop_item["duration_days"] * 86400)
             )
-           
+         
             # Парсим множитель из имени
             multiplier_text = shop_item["name"].split("×")[1].split()[0] if "×" in shop_item["name"] else "1.5"
             days = shop_item["duration_days"]
-           
+         
             msg = f"×{multiplier_text} ко ВСЕМ доходам\nДействует {days} {'день' if days == 1 else 'дня' if days < 5 else 'дней'}"
             msg_title = f"🚀 Буст ×{multiplier_text} активирован!"
             color = 0x00FF9D
-       
+     
         # ───────────────────────────────────────
         # ЭФФЕКТ (lucky_day и прочее)
         # ───────────────────────────────────────
@@ -2694,7 +2538,7 @@ class ShopConfirmModal(Modal, title="Подтверждение покупки")
             now_ts = datetime.now(timezone.utc).timestamp()
             duration_sec = shop_item.get("duration_hours", 24) * 3600
             end_ts = now_ts + duration_sec
-           
+         
             effect = {
                 "effect_type": "special_bonus",
                 "name": shop_item["name"],
@@ -2703,13 +2547,13 @@ class ShopConfirmModal(Modal, title="Подтверждение покупки")
                 "end_time": end_ts,
                 "duration_sec": duration_sec
             }
-           
+         
             economy_data[user_id].setdefault("active_effects", []).append(effect)
-           
+         
             msg = f"Бонус действует 24 часа\n<t:{int(end_ts)}:R>"
             msg_title = f"🍀 {shop_item['name']} активирован!"
             color = 0x2ECC71
-       
+     
         # ───────────────────────────────────────
         # ПРЕДМЕТЫ ИНВЕНТАРЯ
         # ───────────────────────────────────────
@@ -2717,37 +2561,37 @@ class ShopConfirmModal(Modal, title="Подтверждение покупки")
             item_id = shop_item.get("item_id", self.item_key)
             inv = economy_data[user_id].setdefault("inventory", {})
             inv[item_id] = inv.get(item_id, 0) + 1
-           
+         
             item_info = INVENTORY_ITEMS.get(item_id, {})
             emoji = item_info.get("emoji", "📦")
-           
+         
             msg = f"Добавлено в инвентарь\nИспользуй `/inventory` для активации"
             msg_title = f"{emoji} {shop_item['name']} получен!"
             color = 0x3498DB
-       
+     
         # ───────────────────────────────────────
         # ЛУТБОКСЫ
         # ───────────────────────────────────────
         elif shop_item.get("type") == "lootbox":
             pool = shop_item.get("pool", [])
-           
+         
             # Крутим лотерею
             roll = random.random()
             cumulative = 0
             selected_item = pool[0][0]
-           
+         
             for item_id, chance in pool:
                 cumulative += chance
                 if roll <= cumulative:
                     selected_item = item_id
                     break
-           
+         
             inv = economy_data[user_id].setdefault("inventory", {})
             inv[selected_item] = inv.get(selected_item, 0) + 1
-           
+         
             item_name = INVENTORY_ITEMS.get(selected_item, {}).get("name", selected_item)
             item_emoji = INVENTORY_ITEMS.get(selected_item, {}).get("emoji", "📦")
-           
+         
             # Определяем редкость
             if roll > 0.7:
                 rarity_text = "🔥 РЕДКИЙ ДРОП!"
@@ -2758,10 +2602,10 @@ class ShopConfirmModal(Modal, title="Подтверждение покупки")
             else:
                 rarity_text = "🪙 Обычный дроп"
                 color = 0x95a5a6
-           
+         
             msg = f"{item_emoji} **{item_name}**\n{rarity_text}"
             msg_title = f"🎰 Ящик открыт!"
-       
+     
         # ───────────────────────────────────────
         # СКИДОЧНАЯ КАРТА
         # ───────────────────────────────────────
@@ -2769,44 +2613,44 @@ class ShopConfirmModal(Modal, title="Подтверждение покупки")
             now_ts = datetime.now(timezone.utc).timestamp()
             duration_sec = shop_item.get("duration_days", 7) * 86400
             end_ts = now_ts + duration_sec
-           
+         
             discount = {
                 "type": self.item_key,
                 "discount_percent": int(shop_item.get("discount", 0.15) * 100),
                 "start_time": now_ts,
                 "end_time": end_ts
             }
-           
+         
             economy_data[user_id].setdefault("active_discounts", []).append(discount)
-           
+         
             discount_percent = int(shop_item.get("discount", 0.15) * 100)
             msg = f"-{discount_percent}% на весь магазин\nДействует до <t:{int(end_ts)}:D>"
             msg_title = f"💳 Скидочная карта активирована!"
             color = 0x9B59B6
-       
+     
         # ───────────────────────────────────────
         # ПАКЕТЫ (BUNDLE)
         # ───────────────────────────────────────
         elif shop_item.get("type") == "bundle":
             inv = economy_data[user_id].setdefault("inventory", {})
-           
+         
             # Добавляем предметы из пакета
             items_added = []
             for item_id, count in shop_item.get("items", {}).items():
                 inv[item_id] = inv.get(item_id, 0) + count
                 item_name = INVENTORY_ITEMS.get(item_id, {}).get("name", item_id)
                 items_added.append(f" • {item_name} ×{count}")
-           
+         
             # Добавляем бонусные монеты
             bonus_coins = shop_item.get("bonus_coins", 0)
             if bonus_coins > 0:
                 economy_data[user_id]["balance"] += bonus_coins
                 items_added.append(f" • {format_number(bonus_coins)} 🪙")
-           
+         
             msg = "Предметы добавлены в инвентарь:\n" + "\n".join(items_added)
             msg_title = f"📦 {shop_item['name']}!"
             color = 0x2ECC71
-       
+     
         # ───────────────────────────────────────
         # КОСМЕТИКА (ТИТУЛ, КОРОНА)
         # ───────────────────────────────────────
@@ -2814,32 +2658,31 @@ class ShopConfirmModal(Modal, title="Подтверждение покупки")
             now_ts = datetime.now(timezone.utc).timestamp()
             duration_sec = shop_item.get("duration_days", 30) * 86400
             end_ts = now_ts + duration_sec
-           
+         
             cosmetic = {
                 "type": self.item_key,
                 "name": shop_item["name"],
                 "start_time": now_ts,
                 "end_time": end_ts
             }
-           
+         
             economy_data[user_id].setdefault("cosmetics", []).append(cosmetic)
-           
+         
             msg = f"Активирован на {shop_item.get('duration_days', 30)} дней\nДействует до <t:{int(end_ts)}:D>"
             msg_title = f"🎨 {shop_item['name']}!"
             color = 0xE74C3C
-       
+     
         # Сохраняем все изменения
         save_economy()
-
                 # Уменьшаем stock для лимитированных товаров
         if SHOP_ITEMS[self.item_key].get("limited", False):
             current_stock = SHOP_ITEMS[self.item_key].get("stock", 0)
             if current_stock > 0:
                 SHOP_ITEMS[self.item_key]["stock"] = current_stock - 1
-       
+     
         # Отслеживаем покупку для динамических цен
         track_purchase(self.item_key)
-       
+     
         # Отправляем сообщение об успехе
         embed = discord.Embed(
             title=f"{ECONOMY_EMOJIS['success']} {msg_title}",
@@ -2849,9 +2692,9 @@ class ShopConfirmModal(Modal, title="Подтверждение покупки")
         )
         embed.set_thumbnail(url=interaction.user.display_avatar.url)
         embed.set_footer(text=f"Баланс: {format_number(economy_data[user_id]['balance'])} {ECONOMY_EMOJIS['coin']}")
-       
+     
         await interaction.response.send_message(embed=embed, ephemeral=True)
-       
+     
         # Логируем покупку
         log_desc = (
             f"**Пользователь:** {interaction.user.mention}\n"
@@ -2863,7 +2706,6 @@ class ShopConfirmModal(Modal, title="Подтверждение покупки")
             description=log_desc,
             color=COLORS["economy"]
         )
-
 # ───────────────────────────────────────────────
 # НОВЫЙ КЛАСС ДЛЯ ВЫБОРА КАТЕГОРИЙ
 # ───────────────────────────────────────────────
@@ -2879,7 +2721,7 @@ class ShopCategorySelect(Select):
             )
             for cat in SHOP_CATEGORIES.keys()
         ]
-       
+     
         super().__init__(
             placeholder="Выберите категорию товаров...",
             options=options,
@@ -2887,120 +2729,83 @@ class ShopCategorySelect(Select):
             max_values=1,
             custom_id="shop_category_select"
         )
-   
+ 
     async def callback(self, interaction: discord.Interaction):
         category = self.values[0]
-       
+     
         # Получаем все товары в категории
         items_in_category = {
             key: item for key, item in SHOP_ITEMS.items()
             if item.get("category") == category
         }
-       
+     
         if not items_in_category:
             return await interaction.response.send_message(
                 f"{ECONOMY_EMOJIS['error']} В этой категории нет товаров!",
                 ephemeral=True
             )
-       
+     
         # Показываем товары
         await interaction.response.defer(ephemeral=True)
-       
+     
         user_id = str(interaction.user.id)
         if user_id not in economy_data:
             economy_data[user_id] = {"balance": 0}
             save_economy()
-       
+     
         balance = economy_data[user_id].get("balance", 0)
-       
+     
         embed = discord.Embed(
             title=f"{SHOP_CATEGORIES[category]['emoji']} {SHOP_CATEGORIES[category]['name']}",
             description=f"**Ваш баланс:** {format_number(balance)} {ECONOMY_EMOJIS['coin']}\n\n",
             color=COLORS["economy"]
         )
-        
-                # ─── Акционное выделение и таймер ───────────────────────────────────────
-        if is_friday13_event_active():
-            # Пятница 13 заканчивается в 23:59:59 того же дня
-            end_of_day = datetime.now(timezone.utc).replace(
-                hour=23, minute=59, second=59, microsecond=999999
-            )
-            remaining = end_of_day - datetime.now(timezone.utc)
-            hours = remaining.seconds // 3600
-            minutes = (remaining.seconds % 3600) // 60
-
-            embed.insert_field_at(
-                0,
-                name="🖤 Пятница 13-е — СКИДКА -10% НА ВСЁ!",
-                value=f"**Осталось {hours} ч {minutes} мин** 🔥\nПоторопись, акция до полуночи!",
-                inline=False
-            )
-            embed.color = 0xFF1493  # ярко-розовый/пурпурный
-
-        elif is_march8_event_active():
-            remaining = MARCH_8_DISCOUNT_END - datetime.now(timezone.utc)
-            if remaining.total_seconds() > 0:
-                days = remaining.days
-                hours = remaining.seconds // 3600
-                minutes = (remaining.seconds % 3600) // 60
-                timer_text = f"{days} дн {hours} ч {minutes} мин" if days > 0 else f"{hours} ч {minutes} мин"
-
-                embed.insert_field_at(
-                    0,
-                    name="🎀 Акция 8 марта — -20% на VIP и бусты!",
-                    value=f"Осталось **{timer_text}**\nТолько для обладателей роли <@&{MARCH_8_DISCOUNT_ROLE_ID}>",
-                    inline=False
-                )
-                embed.color = 0xFF69B4  # горячий розовый
-       
+        # УБРАНЫ ВСЕ СЕЗОННЫЕ АКЦИИ
+     
         for key, item in items_in_category.items():
             # Проверка "уже куплено"
             owned = False
             owned_text = ""
-           
+         
             if key == "vip":
                 role = discord.utils.get(interaction.guild.roles, name="VIP")
                 owned = role in interaction.user.roles if role else False
                 owned_text = " ✅" if owned else ""
-           
+         
             elif item.get("type") == "discount":
                 if "active_discounts" in economy_data.get(user_id, {}):
                     discounts = economy_data[user_id]["active_discounts"]
                     owned = any(d.get("type") == key for d in discounts)
                 owned_text = " ✅" if owned else ""
-           
+         
             # Динамическая цена
             base_price = item["price"]
-            dynamic_price = get_dynamic_price(key, base_price)          # может быть выше или ниже base
-            final_price = get_discounted_price(base_price, key, interaction.user)  # ← важно: передаём base_price!
-
-            show_strikethrough = final_price < base_price or dynamic_price != base_price
-
+            dynamic_price = get_dynamic_price(key, base_price) # может быть выше или ниже base
+            final_price = dynamic_price  # ← теперь ТОЛЬКО динамическая цена, БЕЗ сезонных скидок!
+            show_strikethrough = dynamic_price != base_price
             if show_strikethrough:
-                # Показываем самую высокую цену как старую
-                old_price = max(base_price, dynamic_price)
-                price_text = f"**{format_number(final_price)}** ~~{format_number(old_price)}~~ {ECONOMY_EMOJIS['coin']}"
+                # Показываем базовую цену как старую
+                price_text = f"**{format_number(final_price)}** ~~{format_number(base_price)}~~ {ECONOMY_EMOJIS['coin']}"
             else:
                 price_text = f"**{format_number(final_price)}** {ECONOMY_EMOJIS['coin']}"
-           
+         
             status = "✅ Уже куплено" if owned else f"Цена: {price_text}"
-           
+         
             # Ограниченный товар
             limited_text = ""
             if item.get("limited"):
                 stock = item.get("stock", 0)
                 limited_text = f"\n⚠️ **Осталось: {stock}**"
-           
+         
             embed.add_field(
                 name=f"{item.get('emoji', '📦')} {item['name']}{owned_text}{limited_text}",
                 value=f"{status}\n{item['description']}",
                 inline=False
             )
-       
+     
         # Кнопки для покупки (по одной для каждого товара)
         view = ShopItemsView(category, items_in_category, interaction.user.id)
         await interaction.followup.send(embed=embed, view=view, ephemeral=True)
-
 class ShopItemsView(View):
     """Вид с кнопками для покупки товаров в категории"""
     def __init__(self, category: str, items: dict, author_id: int):
@@ -3008,14 +2813,13 @@ class ShopItemsView(View):
         self.category = category
         self.items = items
         self.author_id = author_id
-        
+      
         row = 0
-        for i, (key, item) in enumerate(list(items.items())[:10]):  # увеличил до 10 кнопок (по желанию)
-            label = f"{item.get('emoji', '📦')} {item['name'][:20]}"  # чуть больше символов
-            
+        for i, (key, item) in enumerate(list(items.items())[:10]): # увеличил до 10 кнопок (по желанию)
+            label = f"{item.get('emoji', '📦')} {item['name'][:20]}" # чуть больше символов
+          
             style = discord.ButtonStyle.blurple
             disabled = False
-
             if item.get("limited", False):
                 stock = item.get("stock", 0)
                 if stock <= 0:
@@ -3023,10 +2827,9 @@ class ShopItemsView(View):
                     style = discord.ButtonStyle.grey
                     disabled = True
                 elif stock <= 3:
-                    label += f"  ({stock}) 🔥"
+                    label += f" ({stock}) 🔥"
                 else:
-                    label += f"  ({stock})"
-
+                    label += f" ({stock})"
             button = Button(
                 label=label,
                 style=style,
@@ -3034,21 +2837,19 @@ class ShopItemsView(View):
                 row=row,
                 disabled=disabled
             )
-            
+          
             # Важно: используем partial или lambda с захватом item_key
             button.callback = self.create_purchase_callback(key)
-            
+          
             self.add_item(button)
-            
+          
             if (i + 1) % 2 == 0:
                 row += 1
-
     def create_purchase_callback(self, item_key: str):
         """Создаёт callback для конкретного товара"""
         async def callback(interaction: discord.Interaction):
             await self._handle_purchase(interaction, item_key)
         return callback
-
     async def _handle_purchase(self, interaction: discord.Interaction, item_key: str):
         """Обработка покупки конкретного товара"""
         if interaction.user.id != self.author_id:
@@ -3056,23 +2857,18 @@ class ShopItemsView(View):
                 "❌ Это не твой магазин!",
                 ephemeral=True
             )
-
         if item_key not in SHOP_ITEMS:
             return await interaction.response.send_message(
                 "❌ Товар не найден в магазине!",
                 ephemeral=True
             )
-
         item = SHOP_ITEMS[item_key]
         user_id = str(interaction.user.id)
-
         # Инициализация пользователя, если его нет
         if user_id not in economy_data:
             economy_data[user_id] = {"balance": 0}
             save_economy()
-
         balance = economy_data[user_id].get("balance", 0)
-
         # ─── Проверка "уже куплено" для одноразовых/постоянных вещей ───
         already_owned = False
         if item_key == "vip":
@@ -3081,31 +2877,23 @@ class ShopItemsView(View):
         elif item_key == "vip_permanent":
             already_owned = economy_data[user_id].get("vip_permanent", False)
         # Можно добавить другие проверки для косметики, скидочных карт и т.д.
-
         if already_owned:
             return await interaction.response.send_message(
                 f"{ECONOMY_EMOJIS['warning']} У тебя уже есть **{item['name']}**!",
                 ephemeral=True
             )
-
         # ─── Расчёт цены ─────────────────────────────────────────────────────
         base_price = item["price"]
-
         # 1. Динамическая цена (спрос/предложение)
-        dynamic_price = get_dynamic_price(item_key, base_price)
-
-        # 2. Акции и персональные скидки — применяем к БАЗОВОЙ цене
-        final_price = get_discounted_price(base_price, item_key, interaction.user)
-
-        # Для красивого отображения показываем самую высокую цену как старую
-        show_strikethrough = final_price < base_price
-        
+        final_price = get_dynamic_price(item_key, base_price)
+        # 2. УБРАНЫ ВСЕ СЕЗОННЫЕ АКЦИИ (ПЯТНИЦА 13, 8 МАРТА)
+        # Для красивого отображения показываем базовую цену как старую, если динамическая отличается
+        show_strikethrough = final_price != base_price
+      
         if show_strikethrough:
-            old_price = max(base_price, dynamic_price)
-            price_display = f"**{format_number(final_price)}** ~~{format_number(old_price)}~~ {ECONOMY_EMOJIS['coin']}"
+            price_display = f"**{format_number(final_price)}** ~~{format_number(base_price)}~~ {ECONOMY_EMOJIS['coin']}"
         else:
             price_display = f"**{format_number(final_price)}** {ECONOMY_EMOJIS['coin']}"
-
         # Проверка баланса
         if balance < final_price:
             return await interaction.response.send_message(
@@ -3114,24 +2902,22 @@ class ShopItemsView(View):
                 f"У тебя: **{format_number(balance)}** {ECONOMY_EMOJIS['coin']}",
                 ephemeral=True
             )
-
         # ─── Подтверждение покупки ───────────────────────────────────────────
         modal = ShopConfirmModal(
             item_key=item_key,
             item_name=item["name"],
-            price=base_price,           # передаём базовую цену
-            final_price=final_price     # передаём итоговую со всеми скидками
+            price=base_price, # передаём базовую цену
+            final_price=final_price # передаём итоговую (только динамическая)
         )
-        
+      
         await interaction.response.send_modal(modal)
-
 class ShopCategoryView(View):
     """Вид с выбором категории в магазине"""
     def __init__(self, author_id: int):
         super().__init__(timeout=300)
         self.author_id = author_id
         self.add_item(ShopCategorySelect())
-   
+ 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         if interaction.user.id != self.author_id:
             await interaction.response.send_message(
@@ -3140,7 +2926,6 @@ class ShopCategoryView(View):
             )
             return False
         return True
-
 # ───────────────────────────────────────────────
 # ИНИЦИАЛИЗАЦИЯ БОТА
 # ───────────────────────────────────────────────
@@ -3161,7 +2946,6 @@ bot = commands.Bot(
     case_insensitive=True,
     owner_id=OWNER_ID
 )
-
 # ───────────────────────────────────────────────
 # ФОНОВЫЕ ЗАДАЧИ
 # ───────────────────────────────────────────────
@@ -3172,7 +2956,6 @@ async def autosave_economy_task():
         save_economy()
     except Exception as e:
         print(f"❌ [AUTOSAVE ERROR] {e}")
-
 @tasks.loop(hours=1)
 async def clean_old_warnings_task():
     global warnings_data
@@ -3196,7 +2979,6 @@ async def clean_old_warnings_task():
     if changed:
         save_warnings()
         print("[AUTO] Старые варны очищены")
-
 @tasks.loop(minutes=1)
 async def check_temp_roles_task():
     for guild in bot.guilds:
@@ -3223,7 +3005,6 @@ async def check_temp_roles_task():
                     del temp_roles[user_id][role_id]
                 if not temp_roles[user_id]:
                     del temp_roles[user_id]
-
 @tasks.loop(hours=6)
 async def check_investments_task():
     now = datetime.now(timezone.utc).timestamp()
@@ -3252,12 +3033,10 @@ async def check_investments_task():
         data["investments"] = active
     save_economy()
     print("[AUTO] Инвестиции проверены")
-
 @tasks.loop(hours=1)
 async def check_inactive_tickets_task():
     checker = TicketInactivityCheck()
     await checker.check_inactive_tickets()
-
 @tasks.loop(minutes=30)
 async def voice_income_task():
     now = datetime.now(timezone.utc).timestamp()
@@ -3312,7 +3091,6 @@ async def voice_income_task():
                     economy_data[user_id]["balance"] += earn
                     daily_voice_earned[user_id] += earn
                     save_economy()
-
 # ───────────────────────────────────────────────
 # СОБЫТИЯ
 # ───────────────────────────────────────────────
@@ -3323,29 +3101,29 @@ async def on_ready():
     print(f"│ ID {bot.user.id} │")
     print(f"│ Время запуска {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')} │")
     print(f"└──────────────────────────────────────────────┘")
-   
+ 
     await bot.change_presence(
         status=discord.Status.dnd,
         activity=discord.Activity(type=discord.ActivityType.watching, name="mortisplay.ru")
     )
-   
+ 
     try:
         synced = await bot.tree.sync()
         print(f"Команды синхронизированы: {len(synced)} шт")
     except Exception as e:
         print(f"Ошибка синхронизации: {e}")
-   
+ 
     # ✅ ПРОВЕРКА JSON ФАЙЛА
     if os.path.exists(ECONOMY_FILE):
         size = os.path.getsize(ECONOMY_FILE)
         print(f"✅ [JSON CHECK] Файл economy.json существует, размер: {size} байт")
     else:
         print(f"⚠️ [JSON CHECK] Файл economy.json не найден, будет создан при первом сохранении")
-   
+ 
     # ✅ ЗАГРУЗКА ЭКОНОМИКИ
     load_economy()
     save_economy() # Проверяем, что сохранение работает
-   
+ 
     for guild in bot.guilds:
         await guild.chunk()
         if guild.id == FULL_ACCESS_GUILD_ID:
@@ -3356,7 +3134,7 @@ async def on_ready():
                     print(f"⚠️ НЕТ ПРАВА VIEW_AUDIT_LOG на сервере {guild.name}!")
                 else:
                     print(f"✅ Право VIEW_AUDIT_LOG есть на сервере {guild.name}")
-   
+ 
     bot.add_view(TicketPanelView())
     bot.add_view(TicketControls())
     async def reset_voice_earned():
@@ -3365,11 +3143,11 @@ async def on_ready():
             # Следующий день в 00:00
             tomorrow = (now + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
             wait_seconds = (tomorrow - now).total_seconds()
-           
+         
             await asyncio.sleep(wait_seconds)
             daily_voice_earned.clear()
             print("✅ [VOICE] Дневной лимит сброшен")
-   
+ 
     # ✅ ЗАПУСК ФОНОВЫХ ЗАДАЧ (измененный интервал для autosave)
     autosave_economy_task.start()
     clean_old_warnings_task.start()
@@ -3378,7 +3156,7 @@ async def on_ready():
     check_inactive_tickets_task.start()
     bot.loop.create_task(reset_voice_earned())
     voice_income_task.start()
-   
+ 
     # ✅ ПРОВЕРКА ЦЕЛОСТНОСТИ ЭКОНОМИКИ КАЖДЫЙ ЧАС
     async def verify_economy():
         while True:
@@ -3387,24 +3165,23 @@ async def on_ready():
                 if not economy_data or economy_data == {"server_vault": 0}:
                     print("⚠️ [VERIFY] Экономика пуста, перезагружаю...")
                     load_economy()
-               
+             
                 players = len([k for k in economy_data.keys() if k != "server_vault"])
                 vault = economy_data.get("server_vault", 0)
-               
+             
                 if players > 0:
                     print(f"✅ [VERIFY] Экономика в порядке: {players} игроков, казна {format_number(vault)}")
-               
+             
                 # Сохраняем для подстраховки
                 save_economy()
-               
+             
             except Exception as e:
                 print(f"❌ [VERIFY ERROR] {e}")
-   
+ 
     bot.loop.create_task(verify_economy())
-   
+ 
     bot.launch_time = datetime.now(timezone.utc)
     print("✅ Бот полностью готов к работе")
-
 # ───────────────────────────────────────────────
 # ГЛОБАЛЬНЫЙ АУДИТ-ЛОГ (ловит ВСЕ действия из журнала аудита)
 # ───────────────────────────────────────────────
@@ -3482,20 +3259,17 @@ async def on_audit_log_entry_create(entry: discord.AuditLogEntry):
         await log_channel.send(embed=embed)
     except Exception as e:
         print(f"[AUDIT LOG ERROR] Не удалось отправить: {e}")
-
 # ───────────────────────────────────────────────
 # ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ДЛЯ ГОЛОСА
 # ───────────────────────────────────────────────
 voice_start_time = {}
 daily_voice_earned = {}
 daily_voice_reset = {}
-
 # ─────────────────────────────────────────────────────────────────────────────
 # ГЛОБАЛЬНАЯ ПЕРЕМЕННАЯ ДЛЯ АКТИВНЫХ ТРЕЙДОВ
 # ─────────────────────────────────────────────────────────────────────────────
 active_trades = {} # {trade_id: trade_data}
 trade_invitations = {} # {(user1_id, user2_id): trade_id}
-
 # ───────────────────────────────────────────────
 # СОБЫТИЯ (продолжение)
 # ───────────────────────────────────────────────
@@ -3681,7 +3455,6 @@ async def on_message(message):
             economy_data[user_id]["last_message"] = now
             save_economy()
     await bot.process_commands(message)
-
 # ───────────────────────────────────────────────
 # ПРИВЕТСТВИЯ И ПРОЩАНИЯ
 # ───────────────────────────────────────────────
@@ -3732,7 +3505,6 @@ async def on_member_join(member):
             await welcome_ch.send(embed=embed, view=view)
     except Exception as e:
         print(f"Ошибка в on_member_join: {e}")
-
 @bot.event
 async def on_member_remove(member):
     try:
@@ -3770,14 +3542,12 @@ async def on_member_remove(member):
             await goodbye_ch.send(embed=embed)
     except Exception as e:
         print(f"Ошибка в on_member_remove: {e}")
-
 def _plural(count, one, few, many):
     if count % 10 == 1 and count % 100 != 11:
         return one
     elif 2 <= count % 10 <= 4 and (count % 100 < 10 or count % 100 >= 20):
         return few
     return many
-
 # ───────────────────────────────────────────────
 # УЛУЧШЕННЫЙ АУДИТ-ЛОГ (оставлен без изменений)
 # ───────────────────────────────────────────────
@@ -3799,7 +3569,6 @@ async def get_audit_info(guild, action, target_id=None, limit=5):
     except:
         pass
     return None
-
 # (все on_message_delete, on_message_edit, on_member_update, on_member_ban и т.д. оставлены без изменений — они не связаны с сезоном)
 @bot.event
 async def on_message_delete(message):
@@ -3844,7 +3613,6 @@ async def on_message_delete(message):
         await log_ch.send(embed=embed)
     except Exception as e:
         print(f"Ошибка в on_message_delete: {e}")
-
 # (остальные аудит-события оставлены полностью — они не касаются сезона)
 @bot.event
 async def on_voice_state_update(member, before, after):
@@ -3896,9 +3664,7 @@ async def on_voice_state_update(member, before, after):
                     del voice_start_time[user_id]
     except Exception as e:
         print(f"Ошибка в on_voice_state_update (лог): {e}")
-
 # (все остальные on_* события оставлены без изменений)
-
 # ───────────────────────────────────────────────
 # КОМАНДЫ (без сезонных)
 # ───────────────────────────────────────────────
@@ -4026,7 +3792,6 @@ async def ping(ctx: commands.Context):
         await ctx.send(embed=embed, view=view, ephemeral=True)
     except Exception as e:
         await send_error_embed(ctx, str(e))
-
 @bot.hybrid_command(name="avatar", description="Показать аватар")
 @app_commands.describe(member="Пользователь")
 async def avatar(ctx: commands.Context, member: discord.Member = None):
@@ -4038,7 +3803,6 @@ async def avatar(ctx: commands.Context, member: discord.Member = None):
         await ctx.send(embed=embed, ephemeral=True)
     except Exception as e:
         await send_error_embed(ctx, str(e))
-
 @bot.hybrid_command(name="userinfo", description="Информация о пользователе")
 @app_commands.describe(member="Пользователь")
 async def userinfo(ctx: commands.Context, member: discord.Member = None):
@@ -4083,7 +3847,6 @@ async def userinfo(ctx: commands.Context, member: discord.Member = None):
         await ctx.send(embed=embed, ephemeral=True)
     except Exception as e:
         await send_error_embed(ctx, f"Не удалось загрузить информацию: {str(e)}")
-
 @bot.hybrid_command(name="stats", description="Статистика сервера")
 async def stats(ctx: commands.Context):
     try:
@@ -4114,7 +3877,6 @@ async def stats(ctx: commands.Context):
         await ctx.send(embed=embed, ephemeral=True)
     except Exception as e:
         await send_error_embed(ctx, str(e))
-
 @bot.hybrid_command(name="say", description="Написать от лица бота")
 @app_commands.describe(
     text="Текст сообщения",
@@ -4154,7 +3916,6 @@ async def say(
         await ctx.send(f"✅ Отправлено в {target.mention}", ephemeral=True)
     except Exception as e:
         await send_error_embed(ctx, str(e))
-
 # ───────────────────────────────────────────────
 # ЭКОНОМИКА
 # ───────────────────────────────────────────────
@@ -4297,7 +4058,6 @@ async def pay(ctx: commands.Context, member: discord.Member, amount: int, commen
         await ctx.send(embed=preview_embed, view=view)
     except Exception as e:
         await send_error_embed(ctx, f"Ошибка при подготовке перевода: {str(e)}")
-
 @bot.hybrid_command(name="invest", description="📈 Инвестировать монеты")
 @app_commands.describe(amount="Сумма", days="Количество дней (1-30)")
 async def invest(ctx: commands.Context, amount: int, days: int):
@@ -4346,7 +4106,6 @@ async def invest(ctx: commands.Context, amount: int, days: int):
         )
     except Exception as e:
         await send_error_embed(ctx, str(e))
-
 @bot.hybrid_command(name="investments", description="📊 Мои инвестиции")
 async def my_investments(ctx: commands.Context):
     try:
@@ -4391,7 +4150,6 @@ async def my_investments(ctx: commands.Context):
         await ctx.send(embed=embed, ephemeral=True)
     except Exception as e:
         await send_error_embed(ctx, str(e))
-
 @bot.hybrid_command(name="case", description="🔍 Информация о кейсе")
 @app_commands.describe(case_id="ID кейса")
 @commands.has_permissions(manage_messages=True)
@@ -4420,7 +4178,6 @@ async def case_info(ctx: commands.Context, case_id: str):
         await ctx.send(embed=embed, ephemeral=True)
     except Exception as e:
         await send_error_embed(ctx, str(e))
-
 @bot.hybrid_command(name="help", description="📚 Список команд")
 async def help_command(ctx: commands.Context):
     try:
@@ -4436,7 +4193,6 @@ async def help_command(ctx: commands.Context):
         await ctx.send(embed=embed, view=view, ephemeral=True)
     except Exception as e:
         await send_error_embed(ctx, str(e))
-
 @bot.hybrid_command(name="faq", description="📚 Часто задаваемые вопросы")
 async def faq(ctx: commands.Context):
     try:
@@ -4449,7 +4205,6 @@ async def faq(ctx: commands.Context):
         await ctx.send(embed=embed, view=view, ephemeral=True)
     except Exception as e:
         await send_error_embed(ctx, str(e))
-
 @bot.hybrid_command(name="faqadd", description="📚 Добавить вопрос в FAQ")
 @app_commands.describe(category="Категория", question="Вопрос", answer="Ответ")
 @commands.has_permissions(manage_messages=True)
@@ -4472,7 +4227,6 @@ async def faq_add(ctx: commands.Context, category: str, question: str, *, answer
         await ctx.send(embed=embed, ephemeral=True)
     except Exception as e:
         await send_error_embed(ctx, str(e))
-
 @bot.hybrid_command(name="iq", description="Узнать свой IQ")
 async def iq(ctx: commands.Context):
     try:
@@ -4495,7 +4249,6 @@ async def iq(ctx: commands.Context):
         await ctx.send(embed=embed, ephemeral=True)
     except Exception as e:
         await send_error_embed(ctx, str(e))
-
 @bot.hybrid_command(name="valute", description="Курсы валют + курс внутреннего коина")
 async def valute(ctx: commands.Context):
     try:
@@ -4536,7 +4289,6 @@ async def valute(ctx: commands.Context):
         await ctx.send(embed=embed, ephemeral=True)
     except Exception as e:
         await send_error_embed(ctx, str(e))
-
 @bot.hybrid_command(name="mortiscoin", description="Управление курсом MortisCoin")
 @app_commands.describe(
     action="show / set / reset",
@@ -4544,9 +4296,7 @@ async def valute(ctx: commands.Context):
 )
 async def mortiscoin_cmd(ctx: commands.Context, action: str, new_rate: float = None):
     global MORTIS_COIN_RATE, MORTIS_COIN_LAST_CHANGED
-
     action = action.lower().strip()
-
     # Показ текущего курса (доступно всем)
     if action in ("show", ""):
         embed = discord.Embed(
@@ -4567,24 +4317,22 @@ async def mortiscoin_cmd(ctx: commands.Context, action: str, new_rate: float = N
             )
         embed.set_footer(text="Используй /mortiscoin set <число> для изменения (админ)")
         return await ctx.send(embed=embed, ephemeral=True)
-
     # Дальше только админы
     if not is_moderator(ctx.author):
         await check_unauthorized_commands(ctx.author)
         return await ctx.send("❌ Только модераторы и владелец могут менять курс.", ephemeral=True)
-
     if action == "reset":
         old_rate = MORTIS_COIN_RATE
         MORTIS_COIN_RATE = 1.0
         MORTIS_COIN_LAST_CHANGED = datetime.now(timezone.utc).timestamp()
-        
+      
         embed = discord.Embed(
             title="🔄 Курс MortisCoin сброшен",
             description=f"Новый курс: **1.000** (было {old_rate:.3f})",
             color=0x3498db
         )
         await ctx.send(embed=embed, ephemeral=False)
-        
+      
         # Лог в мод-канал
         if MOD_LOG_CHANNEL_ID:
             log_ch = bot.get_channel(MOD_LOG_CHANNEL_ID)
@@ -4597,17 +4345,14 @@ async def mortiscoin_cmd(ctx: commands.Context, action: str, new_rate: float = N
                 log_embed.add_field(name="Было → Стало", value=f"{old_rate:.3f} → 1.000", inline=False)
                 log_embed.add_field(name="Админ", value=ctx.author.mention, inline=False)
                 await log_ch.send(embed=log_embed)
-        
+      
         return
-
     if action == "set":
         if new_rate is None or new_rate <= 0:
             return await ctx.send("❌ Укажи положительный курс (пример: 1.45)", ephemeral=True)
-
         old_rate = MORTIS_COIN_RATE
         MORTIS_COIN_RATE = round(new_rate, 3)
         MORTIS_COIN_LAST_CHANGED = datetime.now(timezone.utc).timestamp()
-
         embed = discord.Embed(
             title="📈 Курс MortisCoin изменён!",
             color=0xffd700,
@@ -4622,7 +4367,6 @@ async def mortiscoin_cmd(ctx: commands.Context, action: str, new_rate: float = N
         )
         embed.set_footer(text=f"Изменил: {ctx.author}")
         await ctx.send(embed=embed, ephemeral=False)
-
         # Лог в мод-канал
         if MOD_LOG_CHANNEL_ID:
             log_ch = bot.get_channel(MOD_LOG_CHANNEL_ID)
@@ -4636,9 +4380,7 @@ async def mortiscoin_cmd(ctx: commands.Context, action: str, new_rate: float = N
                 log_embed.add_field(name="Админ", value=ctx.author.mention, inline=False)
                 await log_ch.send(embed=log_embed)
         return
-
-    await ctx.send("❌ Доступные действия: `show`, `set <курс>`, `reset`", ephemeral=True)        
-
+    await ctx.send("❌ Доступные действия: `show`, `set <курс>`, `reset`", ephemeral=True)
 # ───────────────────────────────────────────────
 # МОДЕРАЦИЯ
 # ───────────────────────────────────────────────
@@ -4678,7 +4420,6 @@ async def warn(ctx: commands.Context, member: discord.Member, *, reason: str = "
         await check_auto_punishment(member, reason)
     except Exception as e:
         await send_error_embed(ctx, str(e))
-
 @bot.hybrid_command(name="warnings", description="Список предупреждений")
 @app_commands.describe(member="Пользователь")
 @commands.has_permissions(manage_messages=True)
@@ -4708,7 +4449,6 @@ async def warnings(ctx: commands.Context, member: discord.Member):
         await ctx.send(embed=embed, ephemeral=True)
     except Exception as e:
         await send_error_embed(ctx, str(e))
-
 @bot.hybrid_command(name="clearwarn", description="Очистить предупреждения")
 @app_commands.describe(member="Пользователь", warn_id="all или номер")
 @commands.has_permissions(administrator=True)
@@ -4735,7 +4475,6 @@ async def clearwarn(ctx: commands.Context, member: discord.Member, warn_id: str 
             await ctx.send("❌ Удаление конкретного предупреждения пока не реализовано.", ephemeral=True)
     except Exception as e:
         await send_error_embed(ctx, str(e))
-
 @bot.hybrid_command(name="mute", description="Замутить пользователя")
 @app_commands.describe(member="Пользователь", duration="1h, 1d, 30m", reason="Причина")
 @commands.has_permissions(manage_messages=True)
@@ -4781,7 +4520,6 @@ async def mute(ctx: commands.Context, member: discord.Member, duration: str, *, 
         await ctx.send(embed=embed, ephemeral=True)
     except Exception as e:
         await send_error_embed(ctx, str(e))
-
 @bot.hybrid_command(name="unmute", description="Снять мут")
 @app_commands.describe(member="Пользователь", reason="Причина")
 @commands.has_permissions(manage_messages=True)
@@ -4810,7 +4548,6 @@ async def unmute(ctx: commands.Context, member: discord.Member, *, reason: str =
         await ctx.send(embed=embed, ephemeral=True)
     except Exception as e:
         await send_error_embed(ctx, str(e))
-
 @bot.hybrid_command(name="temprole", description="Временная роль")
 @app_commands.describe(member="Пользователь", role="Роль", duration="1h, 1d, 30m")
 @commands.has_permissions(manage_roles=True)
@@ -4853,7 +4590,6 @@ async def temprole(ctx: commands.Context, member: discord.Member, role: discord.
         )
     except Exception as e:
         await send_error_embed(ctx, str(e))
-
 @bot.hybrid_command(name="ticket", description="Управление тикетами")
 @app_commands.describe(action="setup / close")
 @commands.has_permissions(manage_channels=True)
@@ -4884,7 +4620,6 @@ async def ticket(ctx: commands.Context, action: str = "setup"):
             await ctx.send("Использование: `/ticket setup` или `/ticket close`")
     except Exception as e:
         await send_error_embed(ctx, str(e))
-
 @bot.hybrid_command(name="ban", description="Забанить пользователя")
 @app_commands.describe(member="Пользователь", reason="Причина", delete_message_days="Удалить сообщения за N дней")
 @commands.has_permissions(ban_members=True)
@@ -4913,7 +4648,6 @@ async def ban(ctx: commands.Context, member: discord.Member, reason: str = "Не
         await ctx.send(embed=embed, ephemeral=True)
     except Exception as e:
         await send_error_embed(ctx, str(e))
-
 @bot.hybrid_command(name="unwarn", description="Удалить предупреждение")
 @app_commands.describe(member="Пользователь", warn_index="Номер предупреждения")
 @commands.has_permissions(manage_messages=True)
@@ -4941,7 +4675,6 @@ async def unwarn(ctx: commands.Context, member: discord.Member, warn_index: int)
         await ctx.send(f"✅ Предупреждение #{warn_index} для {member.mention} удалено.", ephemeral=True)
     except Exception as e:
         await send_error_embed(ctx, str(e))
-
 @bot.hybrid_command(name="vault", description="🏦 Казна сервера")
 async def vault(ctx: commands.Context):
     try:
@@ -4969,7 +4702,6 @@ async def vault(ctx: commands.Context):
         await ctx.send(embed=embed, ephemeral=True)
     except Exception as e:
         await send_error_embed(ctx, str(e))
-
 @bot.hybrid_command(name="balance", description="💰 Посмотреть баланс")
 @app_commands.describe(member="Пользователь")
 async def balance(ctx: commands.Context, member: discord.Member = None):
@@ -5081,7 +4813,6 @@ async def balance(ctx: commands.Context, member: discord.Member = None):
     except Exception as e:
         await send_error_embed(ctx, f"Ошибка при проверке баланса: {str(e)}")
         print(f"[BALANCE ERROR] {e}")
-
 @bot.hybrid_command(name="daily", description="🎁 Ежедневный бонус")
 async def daily(ctx: commands.Context):
     try:
@@ -5145,7 +4876,7 @@ async def daily(ctx: commands.Context):
                 reward += bonus
         # Применяем курс MortisCoin к ежедневной награде
         reward = int(reward * MORTIS_COIN_RATE)
-        
+      
         economy_data[user_id]["balance"] += reward
         economy_data[user_id]["last_daily"] = now
         save_economy()
@@ -5184,7 +4915,6 @@ async def daily(ctx: commands.Context):
     except Exception as e:
         await send_error_embed(ctx, str(e))
         print(f"❌ Ошибка в daily: {e}")
-
 @bot.hybrid_command(name="top", description="🏆 Топ богачей")
 async def top(ctx: commands.Context):
     try:
@@ -5227,7 +4957,6 @@ async def top(ctx: commands.Context):
     except Exception as e:
         await send_error_embed(ctx, f"Ошибка в /top: {str(e)}")
         print(f"Ошибка в /top: {e}")
-
 @bot.hybrid_command(name="shop", description="🛒 Магазин с категориями")
 @app_commands.describe(category="Выбрать категорию (опционально)")
 async def shop(ctx: commands.Context, category: str = None):
@@ -5238,14 +4967,14 @@ async def shop(ctx: commands.Context, category: str = None):
                 f"{ECONOMY_EMOJIS['error']} Экономика доступна только на основном сервере.",
                 ephemeral=True
             )
-       
+     
         user_id = str(ctx.author.id)
         if user_id not in economy_data:
             economy_data[user_id] = {"balance": 0}
             save_economy()
-       
+     
         balance = economy_data[user_id].get("balance", 0)
-       
+     
         # Если категория указана
         if category and category.lower() in SHOP_CATEGORIES:
             cat = category.lower()
@@ -5253,34 +4982,34 @@ async def shop(ctx: commands.Context, category: str = None):
                 key: item for key, item in SHOP_ITEMS.items()
                 if item.get("category") == cat
             }
-           
+         
             embed = discord.Embed(
                 title=f"{SHOP_CATEGORIES[cat]['emoji']} {SHOP_CATEGORIES[cat]['name']}",
                 description=f"**Ваш баланс:** {format_number(balance)} {ECONOMY_EMOJIS['coin']}\n\n",
                 color=COLORS["economy"]
             )
-           
+         
             for key, item in items_in_category.items():
                 owned = False
                 if key == "vip":
                     role = discord.utils.get(ctx.guild.roles, name="VIP")
                     owned = role in ctx.author.roles if role else False
-               
+             
                 price = get_dynamic_price(key, item["price"])
-                price = get_discounted_price(price, key, ctx.author)
-               
+                price = price  # УБРАНЫ СЕЗОННЫЕ СКИДКИ
+             
                 price_text = f"**{format_number(price)}** {ECONOMY_EMOJIS['coin']}"
                 status = "✅ Куплено" if owned else f"Цена: {price_text}"
-               
+             
                 embed.add_field(
                     name=f"{item.get('emoji', '📦')} {item['name']}",
                     value=f"{status}\n{item['description']}",
                     inline=False
                 )
-           
+         
             view = ShopItemsView(cat, items_in_category, ctx.author.id)
             return await ctx.send(embed=embed, view=view, ephemeral=True)
-       
+     
         # Иначе показываем выбор категорий
         embed = discord.Embed(
             title="🛒 Магазин MortisPlay",
@@ -5288,7 +5017,7 @@ async def shop(ctx: commands.Context, category: str = None):
                        "Выберите категорию товаров ниже:",
             color=COLORS["economy"]
         )
-       
+     
         for cat_key, cat_info in SHOP_CATEGORIES.items():
             count = len([i for i in SHOP_ITEMS.values() if i.get("category") == cat_key])
             embed.add_field(
@@ -5296,27 +5025,15 @@ async def shop(ctx: commands.Context, category: str = None):
                 value=f"{cat_info['description']}\n({count} товаров)",
                 inline=False
             )
-       
-        if is_march8_event_active():
-            embed.add_field(
-                name="🎀 Идёт акция 8 марта!",
-                value="Скидка -20% на VIP и бусты",
-                inline=False
-            )
-        if is_friday13_event_active():
-              embed.add_field(
-               name="🖤 Пятница 13-е!",
-               value=f"Сегодня действует **-{FRIDAY_13_DISCOUNT_PERCENT}%** на весь магазин! 🖤",
-               inline=False
-            )    
-       
+     
+        # УБРАНЫ СЕЗОННЫЕ АКЦИИ (ПЯТНИЦА 13, 8 МАРТА)
+     
         view = ShopCategoryView(ctx.author.id)
         await ctx.send(embed=embed, view=view, ephemeral=True)
-   
+ 
     except Exception as e:
         await send_error_embed(ctx, f"Ошибка в магазине: {str(e)}")
         print(f"[SHOP ERROR] {e}")
-
 @bot.hybrid_command(name="admin_coins", description="⚙️ Изменить количество монет у пользователя (только для админов)")
 @app_commands.describe(
     member="Кому изменить баланс (можно указать себя)",
@@ -5393,33 +5110,30 @@ async def admin_coins(ctx: commands.Context, member: discord.Member, amount: int
         log_ch = bot.get_channel(MOD_LOG_CHANNEL_ID)
         if log_ch:
             await log_ch.send(embed=log_embed)
-
 @bot.hybrid_command(name="migration_status", description="Статус миграции экономики")
 async def migration_status(ctx):
     if ctx.author.id != OWNER_ID:
         return await ctx.send("Только владелец может смотреть.", ephemeral=True)
-   
+ 
     json_exists = os.path.exists(ECONOMY_FILE)
     json_size = os.path.getsize(ECONOMY_FILE) if json_exists else 0
-   
+ 
     count = len(economy_data) - 1 if "server_vault" in economy_data else 0
-   
+ 
     embed = discord.Embed(title="Статус экономики (JSON)", color=0x00ff9d)
     embed.add_field(name="Файл economy.json", value=f"Существует: {'✅' if json_exists else '❌'}", inline=False)
     if json_exists:
         embed.add_field(name="Размер файла", value=f"{json_size:,} байт", inline=False)
     embed.add_field(name="Игроков в памяти", value=f"{count}", inline=False)
-   
+ 
     # Проверяем наличие флага миграции
     migration_flag = "migration_to_json.flag"
     if os.path.exists(migration_flag):
         embed.add_field(name="Миграция из SQLite", value="✅ Выполнена", inline=False)
-   
+ 
     await ctx.send(embed=embed, ephemeral=True)
-
 import signal
 import atexit
-
 # ───────────────────────────────────────────────
 # Сохранение при выключении / Ctrl+C / SIGTERM
 # ───────────────────────────────────────────────
@@ -5430,7 +5144,6 @@ def graceful_shutdown():
     save_cases()
     save_faq()
     print("[SHUTDOWN] Данные сохранены. Выход.")
-
 # Регистрируем обработчики
 atexit.register(graceful_shutdown)
 # Для Ctrl+C и SIGTERM (в linux/docker чаще всего SIGTERM)
@@ -5438,10 +5151,8 @@ def signal_handler(sig, frame):
     print(f"[SHUTDOWN] Получен сигнал {sig}")
     graceful_shutdown()
     sys.exit(0)
-
 signal.signal(signal.SIGINT, signal_handler)
 signal.signal(signal.SIGTERM, signal_handler)
-
 @bot.hybrid_command(name="inventory", description="🎒 Ваш инвентарь с использованием предметов")
 async def inventory(ctx: commands.Context):
     """Показывает инвентарь с кнопками для использования"""
@@ -5450,11 +5161,11 @@ async def inventory(ctx: commands.Context):
             f"{ECONOMY_EMOJIS['error']} Экономика только на сервере разработчика.",
             ephemeral=True
         )
-   
+ 
     await ctx.defer(ephemeral=True)
-   
+ 
     user_id = str(ctx.author.id)
-   
+ 
     if user_id not in economy_data:
         economy_data[user_id] = {
             "balance": 0,
@@ -5465,20 +5176,19 @@ async def inventory(ctx: commands.Context):
             "investments": []
         }
         save_economy()
-   
+ 
     data = economy_data[user_id]
     inv = data.get("inventory", {})
-   
+ 
     try:
         embed = await create_inventory_embed(ctx.author, inv, data)
         view = InventoryViewImproved(ctx.author.id, inv)
-       
+     
         await ctx.send(embed=embed, view=view, ephemeral=True)
-   
+ 
     except Exception as e:
         await send_error_embed(ctx, f"Ошибка при загрузке инвентаря: {str(e)}")
         print(f"[INVENTORY ERROR] {e}")
-
 @bot.hybrid_command(name="use", description="Использовать предмет из инвентаря")
 @app_commands.describe(item="Название или ID предмета (gift_box, lucky_spin, xp_boost_24h)")
 async def use_item_command(ctx: commands.Context, item: str):
@@ -5488,48 +5198,47 @@ async def use_item_command(ctx: commands.Context, item: str):
             f"{ECONOMY_EMOJIS['error']} Только на сервере разработчика.",
             ephemeral=True
         )
-   
+ 
     await ctx.defer(ephemeral=True)
-   
+ 
     user_id = str(ctx.author.id)
-   
+ 
     if user_id not in economy_data or "inventory" not in economy_data[user_id]:
         return await ctx.send("❌ Ваш инвентарь пуст.", ephemeral=True)
-   
+ 
     inv = economy_data[user_id]["inventory"]
     item_id = item.lower().strip()
-   
+ 
     found_item = None
     for iid, item_obj in INVENTORY_ITEMS.items():
         if iid == item_id or item_obj.get("name", "").lower() == item_id:
             found_item = iid
             break
-   
+ 
     if not found_item:
         return await ctx.send(
             f"❌ Предмет **{item}** не найден.\nДоступные: gift_box, lucky_spin, xp_boost_24h",
             ephemeral=True
         )
-   
+ 
     if found_item not in inv or inv[found_item] <= 0:
         return await ctx.send(
             f"❌ У вас нет предмета **{item}**.",
             ephemeral=True
         )
-   
+ 
     item_name = INVENTORY_ITEMS.get(found_item, {}).get("name", found_item)
     result = await handle_item_use(ctx.author, found_item, item_name, ctx.interaction)
-   
+ 
     if result["success"]:
         inv[found_item] -= 1
         if inv[found_item] == 0:
             del inv[found_item]
         save_economy()
-       
+     
         await ctx.send(embed=result["embed"], ephemeral=True)
     else:
         await ctx.send(result["error"], ephemeral=True)
-
 @bot.hybrid_command(name="trade", description="🔄 Предложить трейд другому игроку")
 @app_commands.describe(member="Игрок для обмена")
 async def trade(ctx: commands.Context, member: discord.Member):
@@ -5539,35 +5248,35 @@ async def trade(ctx: commands.Context, member: discord.Member):
             f"{ECONOMY_EMOJIS['error']} Трейдинг только на сервере разработчика.",
             ephemeral=True
         )
-   
+ 
     if member.id == ctx.author.id:
         return await ctx.send(
             f"{ECONOMY_EMOJIS['error']} Нельзя торговать с собой!",
             ephemeral=True
         )
-   
+ 
     if member.bot:
         return await ctx.send(
             f"{ECONOMY_EMOJIS['error']} Нельзя торговать с ботами!",
             ephemeral=True
         )
-   
+ 
     initiator_id = ctx.author.id
     recipient_id = member.id
-   
+ 
     if (initiator_id, recipient_id) in trade_invitations:
         return await ctx.send(
             f"{ECONOMY_EMOJIS['warning']} У вас уже есть активный трейд с этим игроком!",
             ephemeral=True
         )
-   
+ 
     initiator_inv = economy_data.get(str(initiator_id), {}).get("inventory", {})
     if not initiator_inv:
         return await ctx.send(
             f"{ECONOMY_EMOJIS['error']} У тебя нет предметов в инвентаре!",
             ephemeral=True
         )
-   
+ 
     trade_id = generate_trade_id()
     active_trades[trade_id] = {
         "trade_id": trade_id,
@@ -5580,11 +5289,11 @@ async def trade(ctx: commands.Context, member: discord.Member):
         "status": "pending",
         "created_at": datetime.now(timezone.utc).timestamp()
     }
-   
+ 
     trade_invitations[(initiator_id, recipient_id)] = trade_id
-   
+ 
     await ctx.defer(ephemeral=True)
-   
+ 
     trade_embed = discord.Embed(
         title="🔄 Предложение трейда",
         description=f"**{ctx.author.mention}** предлагает трейд **{member.mention}**",
@@ -5597,11 +5306,11 @@ async def trade(ctx: commands.Context, member: discord.Member):
         inline=False
     )
     trade_embed.set_footer(text=f"Трейд ID: {trade_id}")
-   
+ 
     view = TradeConfirmView(trade_id, initiator_id, "initiator")
-   
+ 
     await ctx.send(embed=trade_embed, view=view, ephemeral=True)
-   
+ 
     invite_embed = discord.Embed(
         title="🔄 Тебе предлагают трейд!",
         description=f"**{ctx.author.mention}** хочет торговать с тобой",
@@ -5609,9 +5318,9 @@ async def trade(ctx: commands.Context, member: discord.Member):
         timestamp=datetime.now(timezone.utc)
     )
     invite_embed.set_footer(text=f"Трейд ID: {trade_id}")
-   
+ 
     recipient_view = TradeConfirmView(trade_id, recipient_id, "recipient")
-   
+ 
     try:
         await member.send(embed=invite_embed, view=recipient_view)
     except:
@@ -5620,7 +5329,6 @@ async def trade(ctx: commands.Context, member: discord.Member):
             f"Проверь, открыты ли тебе ДМ от участников сервера.",
             ephemeral=True
         )
-
 @bot.hybrid_command(name="tradelist", description="📋 Список активных трейдов")
 async def tradelist(ctx: commands.Context):
     """Показать список активных трейдов"""
@@ -5629,28 +5337,28 @@ async def tradelist(ctx: commands.Context):
             f"{ECONOMY_EMOJIS['error']} Команда только на сервере разработчика.",
             ephemeral=True
         )
-   
+ 
     user_trades = [
         t for t in active_trades.values()
         if t["initiator_id"] == ctx.author.id or t["recipient_id"] == ctx.author.id
     ]
-   
+ 
     if not user_trades:
         return await ctx.send(
             f"{ECONOMY_EMOJIS['warning']} У тебя нет активных трейдов.",
             ephemeral=True
         )
-   
+ 
     embed = discord.Embed(
         title="📋 Твои трейды",
         color=0x3498db,
         timestamp=datetime.now(timezone.utc)
     )
-   
+ 
     for trade in user_trades[:10]:
         initiator = bot.get_user(int(trade["initiator_id"]))
         recipient = bot.get_user(int(trade["recipient_id"]))
-       
+     
         status_emoji = {
             "pending": "⏳",
             "both_confirmed": "✅",
@@ -5659,14 +5367,13 @@ async def tradelist(ctx: commands.Context):
             "rejected": "👎",
             "failed": "💥"
         }.get(trade["status"], "❓")
-       
+     
         field_name = f"{status_emoji} {initiator.display_name} ↔️ {recipient.display_name}"
         field_value = f"**Статус:** {trade['status']}\n**ID:** `{trade['trade_id']}`"
-       
+     
         embed.add_field(name=field_name, value=field_value, inline=False)
-   
+ 
     await ctx.send(embed=embed, ephemeral=True)
-
 @bot.hybrid_command(name="tradeinfo", description="ℹ️ Информация о трейде")
 @app_commands.describe(trade_id="ID трейда")
 async def tradeinfo(ctx: commands.Context, trade_id: str):
@@ -5676,29 +5383,29 @@ async def tradeinfo(ctx: commands.Context, trade_id: str):
             f"{ECONOMY_EMOJIS['error']} Команда только на сервере разработчика.",
             ephemeral=True
         )
-   
+ 
     trade = active_trades.get(trade_id)
     if not trade:
         return await ctx.send(
             f"{ECONOMY_EMOJIS['error']} Трейд `{trade_id}` не найден.",
             ephemeral=True
         )
-   
+ 
     if trade["initiator_id"] != ctx.author.id and trade["recipient_id"] != ctx.author.id:
         return await ctx.send(
             f"{ECONOMY_EMOJIS['error']} Это не твой трейд!",
             ephemeral=True
         )
-   
+ 
     initiator = bot.get_user(int(trade["initiator_id"]))
     recipient = bot.get_user(int(trade["recipient_id"]))
-   
+ 
     embed = discord.Embed(
         title=f"🔄 Трейд {trade_id}",
         color=0x3498db,
         timestamp=datetime.now(timezone.utc)
     )
-   
+ 
     embed.add_field(
         name="👤 Отправитель",
         value=f"{initiator.mention}\nПодтверждение: {'✅' if trade['initiator_confirmed'] else '❌'}",
@@ -5709,17 +5416,17 @@ async def tradeinfo(ctx: commands.Context, trade_id: str):
         value=f"{recipient.mention}\nПодтверждение: {'✅' if trade['recipient_confirmed'] else '❌'}",
         inline=True
     )
-   
+ 
     initiator_items_text = "\n".join([
         f" • {INVENTORY_ITEMS.get(iid, {}).get('name', iid)} ×{cnt}"
         for iid, cnt in trade.get("initiator_items", {}).items()
     ]) or "Не выбрано"
-   
+ 
     recipient_items_text = "\n".join([
         f" • {INVENTORY_ITEMS.get(iid, {}).get('name', iid)} ×{cnt}"
         for iid, cnt in trade.get("recipient_items", {}).items()
     ]) or "Не выбрано"
-   
+ 
     embed.add_field(
         name=f"📤 {initiator.display_name} отдаёт",
         value=initiator_items_text,
@@ -5730,7 +5437,7 @@ async def tradeinfo(ctx: commands.Context, trade_id: str):
         value=recipient_items_text,
         inline=False
     )
-   
+ 
     status_emoji = {
         "pending": "⏳",
         "both_confirmed": "✅",
@@ -5739,11 +5446,10 @@ async def tradeinfo(ctx: commands.Context, trade_id: str):
         "rejected": "👎",
         "failed": "💥"
     }.get(trade["status"], "❓")
-   
+ 
     embed.add_field(name="📊 Статус", value=f"{status_emoji} {trade['status']}", inline=False)
-   
+ 
     await ctx.send(embed=embed, ephemeral=True)
-
 @bot.hybrid_command(name="tradecancel", description="❌ Отменить трейд")
 @app_commands.describe(trade_id="ID трейда")
 async def tradecancel(ctx: commands.Context, trade_id: str):
@@ -5753,31 +5459,31 @@ async def tradecancel(ctx: commands.Context, trade_id: str):
             f"{ECONOMY_EMOJIS['error']} Команда только на сервере разработчика.",
             ephemeral=True
         )
-   
+ 
     trade = active_trades.get(trade_id)
     if not trade:
         return await ctx.send(
             f"{ECONOMY_EMOJIS['error']} Трейд `{trade_id}` не найден.",
             ephemeral=True
         )
-   
+ 
     if trade["initiator_id"] != ctx.author.id and trade["recipient_id"] != ctx.author.id:
         return await ctx.send(
             f"{ECONOMY_EMOJIS['error']} Это не твой трейд!",
             ephemeral=True
         )
-   
+ 
     if trade["status"] in ["completed", "cancelled", "failed"]:
         return await ctx.send(
             f"{ECONOMY_EMOJIS['error']} Этот трейд уже завершён или отменён.",
             ephemeral=True
         )
-   
+ 
     trade["status"] = "cancelled"
-   
+ 
     initiator = bot.get_user(int(trade["initiator_id"]))
     recipient = bot.get_user(int(trade["recipient_id"]))
-   
+ 
     cancel_embed = discord.Embed(
         title="❌ Трейд отменён",
         description=f"**{ctx.author.mention}** отменил трейд между **{initiator.mention}** и **{recipient.mention}**",
@@ -5785,12 +5491,11 @@ async def tradecancel(ctx: commands.Context, trade_id: str):
         timestamp=datetime.now(timezone.utc)
     )
     cancel_embed.set_footer(text=f"Трейд ID: {trade_id}")
-   
+ 
     await ctx.send(embed=cancel_embed, ephemeral=True)
-   
+ 
     if (trade["initiator_id"], trade["recipient_id"]) in trade_invitations:
         del trade_invitations[(trade["initiator_id"], trade["recipient_id"])]
-
 # ───────────────────────────────────────────────
 # ЗАПУСК
 # ───────────────────────────────────────────────
