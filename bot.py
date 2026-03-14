@@ -2883,9 +2883,10 @@ intents = discord.Intents(
     presences=True,
     message_content=True,
     voice_states=True,
-    moderation=True,
+    moderation=True,  # для модерации
     guild_messages=True,
-    dm_messages=False
+    dm_messages=False,
+    audit_log=True,  # ← ВАЖНО для журнала аудита!
 )
 bot = commands.Bot(
     command_prefix=PREFIX,
