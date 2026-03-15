@@ -1006,62 +1006,6 @@ class ClearModal(Modal, title="Очистить сообщения"):
         except ValueError:
             await interaction.response.send_message("❌ Введите число!", ephemeral=True)
 
-class WelcomeView(View):
-    def __init__(self):
-        super().__init__(timeout=None)
-
-    @discord.ui.button(label="Правила", style=discord.ButtonStyle.primary, emoji="📜", custom_id="welcome_rules")
-    async def rules_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        embed = discord.Embed(
-            title="📜 Правила сервера",
-            description="""**1.** Уважайте других участников
-            **2.** Не спамьте и не флудите
-            **3.** Не рекламируйте без разрешения
-            **4.** Соблюдайте тематику каналов
-            **5.** Слушайтесь модераторов
-            **6.** Не используйте оскорбления
-            **7.** Запрещен контент 18+""",
-            color=COLORS["welcome"]
-        )
-        embed.set_footer(text="Нарушение правил = наказание")
-        await interaction.response.send_message(embed=embed, ephemeral=True)
-
-    @discord.ui.button(label="Команды", style=discord.ButtonStyle.success, emoji="🤖", custom_id="welcome_commands")
-    async def commands_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        embed = discord.Embed(
-            title="🤖 Основные команды",
-            description="""**Для всех:**
-            `/help` - помощь по командам
-            `/balance` - проверить баланс
-            `/daily` - ежедневный бонус
-            `/userinfo` - информация о пользователе
-            `/stats` - статистика сервера
-            `/faq` - частые вопросы
-            `/iq` - узнать свой IQ
-            `/valute` - курсы валют
-            **Экономика:**
-            `/pay` - перевести монеты
-            `/top` - топ богачей
-            `/invest` - инвестировать
-            `/investments` - мои инвестиции""",
-            color=COLORS["welcome"]
-        )
-        await interaction.response.send_message(embed=embed, ephemeral=True)
-
-    @discord.ui.button(label="Роли", style=discord.ButtonStyle.secondary, emoji="🏷️", custom_id="welcome_roles")
-    async def roles_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        embed = discord.Embed(
-            title="🏷️ Доступные роли",
-            description="""**Вы можете получить роли в канале <#РОЛИ>**
-            🎮 **Игроки** - @Игрок
-            💎 **VIP** - @VIP (требуется поддержка)
-            🎨 **Креатив** - @Творец
-            🎵 **Музыкант** - @Music Lover
-            🎥 **Стример** - @Streamer""",
-            color=COLORS["welcome"]
-        )
-        await interaction.response.send_message(embed=embed, ephemeral=True)
-
 class TicketCategorySelect(Select):
     def __init__(self):
         options = [
@@ -3563,88 +3507,298 @@ async def on_message(message):
 @bot.event
 async def on_member_join(member):
     try:
+        # Лог в модерацию
         log_ch = bot.get_channel(MOD_LOG_CHANNEL_ID)
         if log_ch:
-            embed = discord.Embed(
-                title="📥 Участник зашёл",
-                color=COLORS["welcome"],
-                timestamp=datetime.now(timezone.utc)
-            )
-            embed.add_field(name="Пользователь", value=member.mention, inline=True)
-            embed.add_field(name="ID", value=f"`{member.id}`", inline=True)
-            embed.add_field(name="Аккаунт создан", value=f"<t:{int(member.created_at.timestamp())}:R>", inline=True)
+            # Создаём красивый лог для модерации
             account_age = datetime.now(timezone.utc) - member.created_at
-            if account_age.days < NEW_ACCOUNT_DAYS:
-                embed.add_field(name="⚠️ Внимание", value="Новый аккаунт!", inline=False)
-            await log_ch.send(embed=embed)
-
-        welcome_ch = bot.get_channel(WELCOME_CHANNEL_ID)
-        if welcome_ch:
-            total = member.guild.member_count
-            humans = len([m for m in member.guild.members if not m.bot])
-            bots = total - humans
+            account_emoji = "🆕" if account_age.days < NEW_ACCOUNT_DAYS else "✅"
+            
             embed = discord.Embed(
-                title="🎉 Новый участник!",
-                description=f"**{member.mention}**, добро пожаловать на сервер!",
-                color=COLORS["welcome"],
+                title="📥 Участник зашёл на сервер",
+                color=0x57F287,  # Зелёный
                 timestamp=datetime.now(timezone.utc)
             )
             embed.set_thumbnail(url=member.display_avatar.url)
-            embed.add_field(name="📝 Имя", value=member.name, inline=True)
-            embed.add_field(name="🆔 ID", value=f"`{member.id}`", inline=True)
-            embed.add_field(name="📅 Регистрация", value=f"<t:{int(member.created_at.timestamp())}:D>", inline=True)
+            
             embed.add_field(
-                name="👥 Статистика",
-                value=f"**Всего:** {total}\n👤 **Людей:** {humans}\n🤖 **Ботов:** {bots}",
+                name="👤 Пользователь",
+                value=f"{member.mention}\n{member}",
                 inline=True
             )
             embed.add_field(
-                name="📋 Быстрый старт",
-                value="• Ознакомься с правилами\n• Получи роли\n• Начни общаться",
+                name="🆔 ID",
+                value=f"`{member.id}`",
                 inline=True
             )
-            embed.set_footer(text="Спасибо что выбрали нас! 💫", icon_url=member.guild.icon.url if member.guild.icon else None)
-            view = WelcomeView()
-            await welcome_ch.send(embed=embed, view=view)
+            embed.add_field(
+                name=f"{account_emoji} Аккаунт создан",
+                value=f"<t:{int(member.created_at.timestamp())}:R>",
+                inline=True
+            )
+            
+            if account_age.days < NEW_ACCOUNT_DAYS:
+                embed.add_field(
+                    name="⚠️ Внимание",
+                    value="🎭 **Новый аккаунт!**\nВозможен альт или бот",
+                    inline=False
+                )
+            
+            embed.set_footer(text=f"Участников: {member.guild.member_count}")
+            await log_ch.send(embed=embed)
+
+        # Приветствие в общий чат
+        welcome_ch = bot.get_channel(WELCOME_CHANNEL_ID)
+        if welcome_ch:
+            # Получаем статистику
+            total = member.guild.member_count
+            humans = len([m for m in member.guild.members if not m.bot])
+            bots = total - humans
+            
+            # Создаём красивый приветственный embed
+            embed = discord.Embed(
+                title="🎉 **Новый участник!**",
+                description=(
+                    f"┌─────────────────────────┐\n"
+                    f"│  {member.mention}      │\n"
+                    f"│  **Добро пожаловать**  │\n"
+                    f"│  на сервер **MortisPlay**! │\n"
+                    f"└─────────────────────────┘"
+                ),
+                color=0x5865F2,  # Blurple
+                timestamp=datetime.now(timezone.utc)
+            )
+            
+            # Устанавливаем большой аватар
+            embed.set_thumbnail(url=member.display_avatar.url)
+            
+            # Добавляем информацию в стильных полях
+            embed.add_field(
+                name="📋 **Информация**",
+                value=(
+                    f"```yaml\n"
+                    f"Имя: {member.name}\n"
+                    f"ID: {member.id}\n"
+                    f"```"
+                ),
+                inline=True
+            )
+            
+            embed.add_field(
+                name="📅 **Даты**",
+                value=(
+                    f"```css\n"
+                    f"Регистрация: {member.created_at.strftime('%d.%m.%Y')}\n"
+                    f"Присоединился: {member.joined_at.strftime('%d.%m.%Y') if member.joined_at else 'Сейчас'}\n"
+                    f"```"
+                ),
+                inline=True
+            )
+            
+            # Статистика сервера
+            embed.add_field(
+                name="👥 **Статистика сервера**",
+                value=(
+                    f"```prolog\n"
+                    f"Всего: {total} участников\n"
+                    f"Людей: {humans}\n"
+                    f"Ботов: {bots}\n"
+                    f"```"
+                ),
+                inline=False
+            )
+            
+            # Добавляем красивый прогресс-бар (процент людей/ботов)
+            human_percent = int((humans / total) * 100) if total > 0 else 0
+            bar_length = 20
+            filled = int(human_percent * bar_length / 100)
+            progress_bar = "🟩" * filled + "⬜" * (bar_length - filled)
+            
+            embed.add_field(
+                name="📊 **Соотношение**",
+                value=f"👤 Люди {progress_bar} 🤖 Боты\n└ {human_percent}% людей, {100-human_percent}% ботов",
+                inline=False
+            )
+            
+            # Добавляем полезные советы для новичков
+            embed.add_field(
+                name="🎯 **С чего начать?**",
+                value=(
+                    "• 📜 Ознакомься с правилами в <#1475048502370500639>\n"
+                    "• 💰 Получи бонус: `/daily`\n"
+                    "• 🛒 Посети магазин: `/shop`\n"
+                    "• ❓ Задай вопрос: `/faq`\n"
+                    "• 🎫 Создай тикет если нужна помощь"
+                ),
+                inline=False
+            )
+            
+            # Добавляем забавный факт
+            facts = [
+                "✨ Ты уже **{}-й** участник!".format(total),
+                "🎁 Не забудь забрать ежедневный бонус!",
+                "💬 Будь активен и зарабатывай монеты!",
+                "🎮 У нас много развлечений!",
+                "🤝 Найди друзей для торговли предметами!",
+                f"📊 Сейчас на сервере **{humans}** человек и **{bots}** ботов"
+            ]
+            import random
+            fact = random.choice(facts)
+            
+            embed.set_footer(
+                text=f"💫 {fact} • Присоединился",
+                icon_url=member.guild.icon.url if member.guild.icon else None
+            )
+            
+            # Отправляем приветствие
+            await welcome_ch.send(embed=embed)
+            
+            # Добавляем небольшое персональное сообщение в ЛС (если можно)
+            try:
+                dm_embed = discord.Embed(
+                    title=f"👋 Привет, {member.name}!",
+                    description=(
+                        f"Добро пожаловать на сервер **{member.guild.name}**!\n\n"
+                        f"Я бот **MortisPlay**, помогу тебе освоиться."
+                    ),
+                    color=0x5865F2
+                )
+                dm_embed.set_thumbnail(url=bot.user.display_avatar.url)
+                dm_embed.add_field(
+                    name="📌 **Полезные команды**",
+                    value=(
+                        "`/help` - список всех команд\n"
+                        "`/balance` - твой баланс\n"
+                        "`/daily` - ежедневный бонус\n"
+                        "`/shop` - магазин предметов\n"
+                        "`/faq` - ответы на вопросы"
+                    ),
+                    inline=False
+                )
+                dm_embed.set_footer(text="Желаю приятного времяпрепровождения! 🚀")
+                
+                await member.send(embed=dm_embed)
+            except:
+                pass  # Игнорируем, если нельзя отправить ЛС
+            
     except Exception as e:
         print(f"Ошибка в on_member_join: {e}")
+        # Логируем ошибку для отладки
+        try:
+            error_ch = bot.get_channel(MOD_LOG_CHANNEL_ID)
+            if error_ch:
+                await error_ch.send(f"❌ Ошибка при приветствии: {str(e)}")
+        except:
+            pass
 
 @bot.event
 async def on_member_remove(member):
     try:
+        # Лог в модерацию
         log_ch = bot.get_channel(MOD_LOG_CHANNEL_ID)
         if log_ch:
             embed = discord.Embed(
                 title="📤 Участник вышел",
-                color=COLORS["goodbye"],
+                color=0xF04747,  # Красный
                 timestamp=datetime.now(timezone.utc)
             )
-            embed.add_field(name="Пользователь", value=str(member), inline=True)
-            embed.add_field(name="ID", value=f"`{member.id}`", inline=True)
-            embed.add_field(name="На сервере был", value=f"<t:{int(member.joined_at.timestamp())}:R>" if member.joined_at else "Неизвестно", inline=True)
+            embed.set_thumbnail(url=member.display_avatar.url)
+            
+            embed.add_field(
+                name="👤 Пользователь",
+                value=f"{member}\n{member.mention}",
+                inline=True
+            )
+            embed.add_field(
+                name="🆔 ID",
+                value=f"`{member.id}`",
+                inline=True
+            )
+            
+            if member.joined_at:
+                days_on_server = (datetime.now(timezone.utc) - member.joined_at).days
+                embed.add_field(
+                    name="⏱️ Пробыл на сервере",
+                    value=f"**{days_on_server}** {_plural(days_on_server, 'день', 'дня', 'дней')}",
+                    inline=True
+                )
+                embed.add_field(
+                    name="📅 Присоединился",
+                    value=f"<t:{int(member.joined_at.timestamp())}:R>",
+                    inline=True
+                )
+            
+            embed.set_footer(text=f"Осталось: {member.guild.member_count}")
             await log_ch.send(embed=embed)
 
+        # Прощание в общий чат
         goodbye_ch = bot.get_channel(GOODBYE_CHANNEL_ID)
         if goodbye_ch:
             days_on_server = 0
             if member.joined_at:
                 days_on_server = (datetime.now(timezone.utc) - member.joined_at).days
+            
             total = member.guild.member_count
+            
             embed = discord.Embed(
-                title="👋 Пока...",
-                description=f"**{member.name}** покинул нас",
-                color=COLORS["goodbye"],
+                title="👋 **Пока...**",
+                description=(
+                    f"┌─────────────────────────┐\n"
+                    f"│  **{member.name}**       │\n"
+                    f"│  покинул наш сервер    │\n"
+                    f"└─────────────────────────┘"
+                ),
+                color=0xF04747,
                 timestamp=datetime.now(timezone.utc)
             )
             embed.set_thumbnail(url=member.display_avatar.url)
+            
             if days_on_server > 0:
-                embed.add_field(name="⏱️ Пробыл на сервере", value=f"**{days_on_server}** {_plural(days_on_server, 'день', 'дня', 'дней')}", inline=True)
-            embed.add_field(name="👥 Осталось", value=f"**{total}**", inline=True)
+                embed.add_field(
+                    name="⏱️ **Время на сервере**",
+                    value=f"```fix\nПробыл: {days_on_server} {_plural(days_on_server, 'день', 'дня', 'дней')}\n```",
+                    inline=True
+                )
+            
+            embed.add_field(
+                name="👥 **Осталось участников**",
+                value=f"```css\n[{total} человек]\n```",
+                inline=True
+            )
+            
+            # Эмоциональный комментарий в зависимости от времени
             if days_on_server > 30:
-                embed.add_field(name="💔 Жаль", value="Надеемся, ты вернешься!", inline=False)
+                embed.add_field(
+                    name="💔 **Жаль**",
+                    value="*Надеемся, ты вернёшься!*\nТы был важной частью нашего сообщества.",
+                    inline=False
+                )
             elif days_on_server > 7:
-                embed.add_field(name="😢", value="Будем скучать!", inline=False)
+                embed.add_field(
+                    name="😢 **Грустно**",
+                    value="*Будем скучать!*\nДвери всегда открыты для тебя.",
+                    inline=False
+                )
+            elif days_on_server > 0:
+                embed.add_field(
+                    name="👋 **Пока**",
+                    value="*Заходи ещё!*\nУдачи тебе!",
+                    inline=False
+                )
+            else:
+                embed.add_field(
+                    name="🤔 **Новенький**",
+                    value="*Даже не задержался...*\nМожет, вернёшься позже?",
+                    inline=False
+                )
+            
+            embed.set_footer(
+                text=f"Всего хорошего, {member.name}!",
+                icon_url=member.guild.icon.url if member.guild.icon else None
+            )
+            
             await goodbye_ch.send(embed=embed)
+            
     except Exception as e:
         print(f"Ошибка в on_member_remove: {e}")
 
