@@ -2497,7 +2497,8 @@ class ShopConfirmModal(Modal, title="Подтверждение покупки")
                 color = 0xe74c3c
                 msg_title = "❌ Ошибка"
      
-        elif shop_item.get("duration_days"):
+                # БУСТЫ (multiplier_1x5, multiplier_2x, multiplier_3x) - только если есть duration_days И type не указан
+        elif shop_item.get("duration_days") and not shop_item.get("type"):
             if "multiplier_end" not in economy_data[user_id]:
                 economy_data[user_id]["multiplier_end"] = 0
          
@@ -2512,6 +2513,7 @@ class ShopConfirmModal(Modal, title="Подтверждение покупки")
             msg_title = f"🚀 Буст ×{multiplier_text} активирован!"
             color = 0x00FF9D
      
+        # ЭФФЕКТ (lucky_day)
         elif shop_item.get("type") == "effect":
             now_ts = datetime.now(timezone.utc).timestamp()
             duration_sec = shop_item.get("duration_hours", 24) * 3600
@@ -2532,6 +2534,7 @@ class ShopConfirmModal(Modal, title="Подтверждение покупки")
             msg_title = f"🍀 {shop_item['name']} активирован!"
             color = 0x2ECC71
      
+        # ПРЕДМЕТЫ ИНВЕНТАРЯ
         elif shop_item.get("type") == "inventory_item":
             item_id = shop_item.get("item_id", self.item_key)
             inv = economy_data[user_id].setdefault("inventory", {})
@@ -2544,6 +2547,7 @@ class ShopConfirmModal(Modal, title="Подтверждение покупки")
             msg_title = f"{emoji} {shop_item['name']} получен!"
             color = 0x3498DB
      
+        # ЛУТБОКСЫ
         elif shop_item.get("type") == "lootbox":
             pool = shop_item.get("pool", [])
             roll = random.random()
@@ -2575,6 +2579,7 @@ class ShopConfirmModal(Modal, title="Подтверждение покупки")
             msg = f"{item_emoji} **{item_name}**\n{rarity_text}"
             msg_title = f"🎰 Ящик открыт!"
      
+        # СКИДОЧНАЯ КАРТА
         elif shop_item.get("type") == "discount":
             now_ts = datetime.now(timezone.utc).timestamp()
             duration_sec = shop_item.get("duration_days", 7) * 86400
@@ -2593,6 +2598,7 @@ class ShopConfirmModal(Modal, title="Подтверждение покупки")
             msg_title = f"💳 Скидочная карта активирована!"
             color = 0x9B59B6
      
+        # ПАКЕТЫ (BUNDLE)
         elif shop_item.get("type") == "bundle":
             inv = economy_data[user_id].setdefault("inventory", {})
             items_added = []
@@ -2610,6 +2616,7 @@ class ShopConfirmModal(Modal, title="Подтверждение покупки")
             msg_title = f"📦 {shop_item['name']}!"
             color = 0x2ECC71
      
+        # КОСМЕТИКА (ТИТУЛ, КОРОНА)
         elif shop_item.get("type") == "cosmetic":
             now_ts = datetime.now(timezone.utc).timestamp()
             duration_sec = shop_item.get("duration_days", 30) * 86400
