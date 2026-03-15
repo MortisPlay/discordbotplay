@@ -1,14 +1,22 @@
 {
   "server_vault": 76630,
   "765476979792150549": {
-    "balance": 27550,
+    "balance": 26270,
     "last_daily": 1773538411.36948,
-    "last_message": 1773408981.972768,
+    "last_message": 1773541750.339324,
     "multiplier_end": 1774143194.314539,
     "inventory": {},
     "active_effects": [],
     "investments": [],
-    "last_tax_time": 1773538411.369507
+    "last_tax_time": 1773538411.369507,
+    "active_discounts": [
+      {
+        "type": "discount_card",
+        "discount_percent": 15,
+        "start_time": 1773540715.49249,
+        "end_time": 1774145515.49249
+      }
+    ]
   },
   "1034765820464746576": {
     "balance": 200,
@@ -20,13 +28,13 @@
     "investments": []
   },
   "1191348523900350566": {
-    "balance": 7278,
+    "balance": 7390,
     "last_daily": 0,
     "last_message": 1773366587.125157,
     "investments": []
   },
   "696486192778182716": {
-    "balance": 7212,
+    "balance": 7276,
     "last_message": 1773374252.226203
   },
   "1401355255912071238": {
