@@ -2416,6 +2416,34 @@ async def create_inventory_embed(member: discord.Member, inventory: dict, econom
     return embed
 
 # ───────────────────────────────────────────────
+# ФУНКЦИЯ ПОЛУЧЕНИЯ СКИДКИ
+# ───────────────────────────────────────────────
+def get_user_discount(user_id: str) -> int:
+    """Возвращает процент скидки пользователя на основе активных скидочных карт"""
+    if user_id not in economy_data:
+        return 0
+    
+    now_ts = datetime.now(timezone.utc).timestamp()
+    active_discounts = economy_data[user_id].get("active_discounts", [])
+    
+    # Фильтруем активные скидки
+    valid_discounts = [
+        d for d in active_discounts 
+        if d.get("end_time", 0) > now_ts
+    ]
+    
+    # Обновляем список, убирая просроченные
+    if len(valid_discounts) != len(active_discounts):
+        economy_data[user_id]["active_discounts"] = valid_discounts
+        save_economy()
+    
+    # Берем максимальную скидку (если несколько карт)
+    if valid_discounts:
+        return max(d.get("discount_percent", 0) for d in valid_discounts)
+    
+    return 0
+
+# ───────────────────────────────────────────────
 # КЛАССЫ ДЛЯ МАГАЗИНА
 # ───────────────────────────────────────────────
 class ShopConfirmModal(Modal, title="Подтверждение покупки"):
@@ -2497,7 +2525,7 @@ class ShopConfirmModal(Modal, title="Подтверждение покупки")
                 color = 0xe74c3c
                 msg_title = "❌ Ошибка"
      
-                # БУСТЫ (multiplier_1x5, multiplier_2x, multiplier_3x) - только если есть duration_days И type не указан
+        # БУСТЫ (multiplier_1x5, multiplier_2x, multiplier_3x) - только если есть duration_days И type не указан
         elif shop_item.get("duration_days") and not shop_item.get("type"):
             if "multiplier_end" not in economy_data[user_id]:
                 economy_data[user_id]["multiplier_end"] = 0
@@ -2669,7 +2697,7 @@ class GiftConfirmModal(Modal, title="Подарить предмет"):
         super().__init__()
         self.item_key = item_key
         self.item_name = item_name
-        self.price = price
+        self.price = price  # Это уже цена со скидкой
         self.author_id = author_id
         
         self.add_item(TextInput(
@@ -2755,7 +2783,7 @@ class GiftConfirmModal(Modal, title="Подарить предмет"):
         
         await send_mod_log(
             title="🎁 Подарок",
-            description=f"**От:** {interaction.user.mention}\n**Кому:** {target.mention}\n**Предмет:** {self.item_name}\n**Цена:** {format_number(self.price)} 🪙",
+            description=f"**От:** {interaction.user.mention}\n**Кому:** {target.mention}\n**Предмет:** {self.item_name}\n**Цена со скидкой:** {format_number(self.price)} 🪙",
             color=0xFF69B4
         )
 
@@ -2801,10 +2829,12 @@ class ShopCategorySelect(Select):
             save_economy()
      
         balance = economy_data[user_id].get("balance", 0)
+        discount_percent = get_user_discount(user_id)
      
         embed = discord.Embed(
             title=f"{SHOP_CATEGORIES[category]['emoji']} {SHOP_CATEGORIES[category]['name']}",
-            description=f"**Ваш баланс:** {format_number(balance)} {ECONOMY_EMOJIS['coin']}\n\n",
+            description=f"**Ваш баланс:** {format_number(balance)} {ECONOMY_EMOJIS['coin']}\n"
+                       f"{f'💳 Ваша скидка: **-{discount_percent}%**' if discount_percent > 0 else ''}\n\n",
             color=COLORS["economy"]
         )
      
@@ -2823,8 +2853,14 @@ class ShopCategorySelect(Select):
                     owned = any(d.get("type") == key for d in discounts)
                 owned_text = " ✅" if owned else ""
          
-            final_price = item["price"]
-            price_text = f"**{format_number(final_price)}** {ECONOMY_EMOJIS['coin']}"
+            base_price = item["price"]
+            if discount_percent > 0 and not owned:
+                final_price = int(base_price * (100 - discount_percent) / 100)
+                price_text = f"**{format_number(final_price)}** ~~{format_number(base_price)}~~ (-{discount_percent}%) {ECONOMY_EMOJIS['coin']}"
+            else:
+                final_price = base_price
+                price_text = f"**{format_number(final_price)}** {ECONOMY_EMOJIS['coin']}"
+            
             status = "✅ Уже куплено" if owned else f"Цена: {price_text}"
          
             limited_text = ""
@@ -2912,8 +2948,17 @@ class ShopItemsView(View):
                 ephemeral=True
             )
         
-        final_price = item["price"]
-        price_display = f"**{format_number(final_price)}** {ECONOMY_EMOJIS['coin']}"
+        # Получаем скидку пользователя
+        discount_percent = get_user_discount(user_id)
+        base_price = item["price"]
+        
+        # Применяем скидку
+        if discount_percent > 0:
+            final_price = int(base_price * (100 - discount_percent) / 100)
+            price_display = f"**{format_number(final_price)}** ~~{format_number(base_price)}~~ (-{discount_percent}%) {ECONOMY_EMOJIS['coin']}"
+        else:
+            final_price = base_price
+            price_display = f"**{format_number(final_price)}** {ECONOMY_EMOJIS['coin']}"
         
         if balance < final_price:
             return await interaction.response.send_message(
@@ -2931,7 +2976,7 @@ class ShopItemsView(View):
             modal = ShopConfirmModal(
                 item_key=item_key,
                 item_name=item["name"],
-                price=final_price,
+                price=base_price,
                 final_price=final_price
             )
             await interaction.response.send_modal(modal)
@@ -2951,9 +2996,12 @@ class ShopItemsView(View):
         view.add_item(buy_button)
         view.add_item(gift_button)
         
+        # Показываем информацию о скидке
+        discount_text = f"\n💳 Ваша скидка: **-{discount_percent}%**" if discount_percent > 0 else ""
+        
         embed = discord.Embed(
             title=f"🎁 {item['name']}",
-            description=f"Цена: {price_display}\n\nВыберите действие:",
+            description=f"Цена: {price_display}{discount_text}\n\nВыберите действие:",
             color=COLORS["economy"]
         )
         
@@ -3903,6 +3951,7 @@ async def userinfo(ctx: commands.Context, member: discord.Member = None):
         balance = economy_data.get(user_id, {}).get("balance", 0) if has_full_access(ctx.guild.id) else 0
         inventory_count = len(economy_data.get(user_id, {}).get("inventory", {})) if has_full_access(ctx.guild.id) else 0
         investments = len(economy_data.get(user_id, {}).get("investments", [])) if has_full_access(ctx.guild.id) else 0
+        discount_percent = get_user_discount(user_id) if has_full_access(ctx.guild.id) else 0
         
         embed = discord.Embed(
             title=f"👤 {fresh_member.display_name}",
@@ -3928,6 +3977,9 @@ async def userinfo(ctx: commands.Context, member: discord.Member = None):
         if has_full_access(ctx.guild.id):
             eco_text = (
                 f"💰 Баланс: **{format_number(balance)}** 🪙\n"
+                f"📦 Предметов: **{inventory_count}**\n"
+                f"📈 Инвестиций: **{investments}**\n"
+                f"💳 Скидка: **{discount_percent}%**" if discount_percent > 0 else f"💰 Баланс: **{format_number(balance)}** 🪙\n"
                 f"📦 Предметов: **{inventory_count}**\n"
                 f"📈 Инвестиций: **{investments}**"
             )
@@ -4951,9 +5003,13 @@ async def vault(ctx: commands.Context):
         total = sum(v.get("balance", 0) for k, v in economy_data.items() if k != "server_vault")
         avg = total // max(users, 1) if users > 0 else 0
         
+        # Статистика активных скидок
+        active_discounts = sum(1 for k, v in economy_data.items() if k != "server_vault" and v.get("active_discounts"))
+        
         shop_stats = {
             "vip": sum(1 for k, v in economy_data.items() if k != "server_vault" and v.get("vip_permanent", False)),
-            "бустеры": sum(1 for k, v in economy_data.items() if k != "server_vault" and v.get("multiplier_end", 0) > datetime.now(timezone.utc).timestamp())
+            "бустеры": sum(1 for k, v in economy_data.items() if k != "server_vault" and v.get("multiplier_end", 0) > datetime.now(timezone.utc).timestamp()),
+            "скидки": active_discounts
         }
         
         embed = discord.Embed(
@@ -4984,6 +5040,7 @@ async def vault(ctx: commands.Context):
             value=(
                 f"👑 **VIP:** {shop_stats['vip']} шт.\n"
                 f"🚀 **Активных бустеров:** {shop_stats['бустеры']}\n"
+                f"💳 **Активных скидок:** {shop_stats['скидки']}\n"
                 f"📦 **Всего покупок:** {sum(len(v.get('inventory', {})) for k, v in economy_data.items() if k != 'server_vault')}"
             ),
             inline=True
@@ -5004,7 +5061,7 @@ async def vault(ctx: commands.Context):
             
             embed.add_field(name="🏆 Топ богачей", value=donors_text, inline=False)
         
-        embed.set_footer(text="Экономика v1.2.0 • Следующее пополнение через 24ч")
+        embed.set_footer(text="Экономика v1.3.0 • Скидочные карты активны")
         await ctx.send(embed=embed, ephemeral=True)
         
     except Exception as e:
@@ -5039,6 +5096,8 @@ async def balance(ctx: commands.Context, member: discord.Member = None):
         now = datetime.now(timezone.utc).timestamp()
         last_daily = economy_data[user_id].get("last_daily", 0)
         remaining = DAILY_COOLDOWN - (now - last_daily)
+        discount_percent = get_user_discount(user_id)
+        
         if remaining <= 0:
             daily_status = f"{ECONOMY_EMOJIS['gift']} **Daily доступен!**"
         else:
@@ -5047,6 +5106,7 @@ async def balance(ctx: commands.Context, member: discord.Member = None):
             progress = (now - last_daily) / DAILY_COOLDOWN
             bar = create_progress_bar(int(progress * 100), 100)
             daily_status = f"⏳ До daily: **{hours}ч {minutes}мин**\n`{bar}` **{int(progress * 100)}%**"
+        
         embed = discord.Embed(
             title=f"{get_rank_emoji(bal)} Баланс {member.display_name}",
             color=COLORS["economy"],
@@ -5073,6 +5133,12 @@ async def balance(ctx: commands.Context, member: discord.Member = None):
             value=f"`{format_number(vault)}` {ECONOMY_EMOJIS['coin']}",
             inline=True
         )
+        if discount_percent > 0:
+            embed.add_field(
+                name="💳 Ваша скидка",
+                value=f"**{discount_percent}%** на всё в магазине",
+                inline=True
+            )
         if tax > 0:
             embed.add_field(
                 name=f"{ECONOMY_EMOJIS['tax']} Налог на богатство",
