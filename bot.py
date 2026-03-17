@@ -4281,7 +4281,7 @@ async def botinfo(ctx: commands.Context):
         inline=False
     )
     
-    # Добавляем ссылки и полезную информацию
+    # Добавляем ссылки и полезную информацию (БЕЗ КНОПКИ ПРИГЛАШЕНИЯ)
     embed.add_field(
         name="🔗 **Полезные ссылки**",
         value=(
@@ -4293,30 +4293,23 @@ async def botinfo(ctx: commands.Context):
         inline=False
     )
     
-    # Добавляем футер с прогресс-баром аптайма
-    # Простой прогресс-бар для визуализации аптайма (24ч = 100%)
+    # Создаём прогресс-бар для визуализации аптайма (24ч = 100%)
     uptime_percent = min(100, int((datetime.now(timezone.utc) - bot.launch_time).total_seconds() / 86400 * 100))
     bar_length = 15
     filled = int(uptime_percent * bar_length / 100)
     progress_bar = "█" * filled + "░" * (bar_length - filled)
     
     embed.set_footer(
-        text=f"MortisPlay • uptime: {uptime_percent}% | {ctx.author.display_name}",
+        text=f"MortisPlay • uptime: {uptime_percent}% [{progress_bar}] | {ctx.author.display_name}",
         icon_url=ctx.author.display_avatar.url
     )
     
     # Создаём интерактивные кнопки
     view = View(timeout=60)
     
-    # Кнопка для приглашения бота
-    invite_button = Button(
-        label="Пригласить бота",
-        style=discord.ButtonStyle.link,
-        url="https://discord.com/api/oauth2/authorize?client_id={}&permissions=8&scope=bot".format(bot.user.id),
-        emoji="📨"
-    )
+    # КНОПКА "ПРИГЛАСИТЬ БОТА" ПОЛНОСТЬЮ УДАЛЕНА
     
-    # Кнопка для перезагрузки статистики (только для админов)
+    # Кнопка для перезагрузки статистики (только для модераторов)
     if is_moderator(ctx.author):
         refresh_button = Button(
             label="Обновить статистику",
@@ -4431,14 +4424,6 @@ async def botinfo(ctx: commands.Context):
         
         refresh_button.callback = refresh_callback
         view.add_item(refresh_button)
-    
-    view.add_item(invite_button)
-    
-    # Добавляем прогресс-бар в футер
-    embed.set_footer(
-        text=f"MortisPlay • uptime: {uptime_percent}% [{progress_bar}] | {ctx.author.display_name}",
-        icon_url=ctx.author.display_avatar.url
-    )
     
     await ctx.send(embed=embed, view=view, ephemeral=True)
 
