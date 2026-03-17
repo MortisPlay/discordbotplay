@@ -1214,7 +1214,7 @@ class ClearModal(Modal, title="Очистить сообщения"):
             await interaction.response.send_message("❌ Введите число!", ephemeral=True)
 
 # ───────────────────────────────────────────────
-# КЛАССЫ ДЛЯ УЛУЧШЕННОЙ СИСТЕМЫ ТИКЕТОВ (С ОБЫЧНЫМ ТЕКСТОМ)
+# КЛАССЫ ДЛЯ УЛУЧШЕННОЙ СИСТЕМЫ ТИКЕТОВ (С ОБЫЧНЫМ ТЕКСТОМ, БЕЗ ШАБЛОНОВ)
 # ───────────────────────────────────────────────
 
 class TicketFormModal(Modal, title="Создание тикета"):
@@ -1325,11 +1325,10 @@ class TicketFormModal(Modal, title="Создание тикета"):
         welcome_message += f"\n{self.category['auto_response']}\n\n"
         welcome_message += "**Доступные действия:**\n"
         welcome_message += "🔒 **Закрыть** — закрыть тикет\n"
-        welcome_message += "📝 **Шаблон** — использовать готовый ответ\n"
         welcome_message += "👥 **Добавить** — пригласить пользователя\n"
         welcome_message += "⏰ **Продлить** — продлить время тикета"
         
-        # Создаём улучшенное управление тикетом
+        # Создаём улучшенное управление тикетом (БЕЗ КНОПКИ ШАБЛОНА)
         view = ImprovedTicketControls(ticket_channel.id, interaction.user.id)
         
         # Отправляем сообщение
@@ -1399,36 +1398,6 @@ class ImprovedTicketPanelView(View):
         view.add_item(ImprovedTicketCategorySelect())
         
         await interaction.response.send_message(message, view=view, ephemeral=True)
-
-class TemplateSelect(Select):
-    def __init__(self):
-        options = []
-        for key, template in ticket_templates.items():
-            options.append(discord.SelectOption(
-                label=template['name'][:100],
-                value=key,
-                description=template['content'][:100],
-                emoji="📝"
-            ))
-        super().__init__(
-            placeholder="Выберите шаблон ответа...",
-            options=options[:25],
-            min_values=1,
-            max_values=1
-        )
-    
-    async def callback(self, interaction: discord.Interaction):
-        template_key = self.values[0]
-        template = ticket_templates.get(template_key)
-        
-        if not template:
-            return await interaction.response.send_message("❌ Шаблон не найден!", ephemeral=True)
-        
-        # Отправляем обычное текстовое сообщение вместо Embed
-        message = f"**{template['name']}**\n\n{template['content']}"
-        
-        await interaction.response.send_message(message)
-        await interaction.followup.send("✅ Шаблон отправлен!", ephemeral=True)
 
 class ImprovedTicketControls(View):
     def __init__(self, channel_id: int, author_id: int):
@@ -1507,19 +1476,6 @@ class ImprovedTicketControls(View):
         
         await asyncio.sleep(5)
         await interaction.channel.delete()
-    
-    @discord.ui.button(label="📝 Шаблон", style=discord.ButtonStyle.secondary, emoji="📋", custom_id="ticket_template")
-    async def use_template(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if not interaction.user.guild_permissions.manage_channels:
-            return await interaction.response.send_message("❌ Только модераторы могут использовать шаблоны.", ephemeral=True)
-        
-        if not ticket_templates:
-            return await interaction.response.send_message("❌ Нет доступных шаблонов.", ephemeral=True)
-        
-        view = View(timeout=60)
-        view.add_item(TemplateSelect())
-        
-        await interaction.response.send_message("📋 Выберите шаблон ответа:", view=view, ephemeral=True)
     
     @discord.ui.button(label="👥 Добавить", style=discord.ButtonStyle.blurple, emoji="➕", custom_id="ticket_add")
     async def add_user(self, interaction: discord.Interaction, button: discord.ui.Button):
