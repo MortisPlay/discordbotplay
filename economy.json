@@ -1,14 +1,14 @@
 {
-  "server_vault": 76630,
+  "server_vault": 76888,
   "765476979792150549": {
-    "balance": 26270,
-    "last_daily": 1773538411.36948,
-    "last_message": 1773541750.339324,
+    "balance": 26138,
+    "last_daily": 1773737297.546546,
+    "last_message": 1773643032.147303,
     "multiplier_end": 1774143194.314539,
     "inventory": {},
     "active_effects": [],
     "investments": [],
-    "last_tax_time": 1773538411.369507,
+    "last_tax_time": 1773737297.546596,
     "active_discounts": [
       {
         "type": "discount_card",
