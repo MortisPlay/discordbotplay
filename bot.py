@@ -1214,7 +1214,7 @@ class ClearModal(Modal, title="Очистить сообщения"):
             await interaction.response.send_message("❌ Введите число!", ephemeral=True)
 
 # ───────────────────────────────────────────────
-# КЛАССЫ ДЛЯ УЛУЧШЕННОЙ СИСТЕМЫ ТИКЕТОВ
+# КЛАССЫ ДЛЯ УЛУЧШЕННОЙ СИСТЕМЫ ТИКЕТОВ (С ОБЫЧНЫМ ТЕКСТОМ)
 # ───────────────────────────────────────────────
 
 class TicketFormModal(Modal, title="Создание тикета"):
@@ -1261,7 +1261,7 @@ class TicketFormModal(Modal, title="Создание тикета"):
         
         # Проверяем, нет ли уже открытых тикетов у пользователя
         for channel in category.text_channels:
-            if str(interaction.user.id) in channel.topic if channel.topic else False:
+            if channel.topic and str(interaction.user.id) in channel.topic:
                 return await interaction.followup.send(
                     "❌ У вас уже есть открытый тикет! Закройте старый, чтобы создать новый.",
                     ephemeral=True
@@ -1314,27 +1314,20 @@ class TicketFormModal(Modal, title="Создание тикета"):
             "claimed_by": None
         }
         
-        # Создаём embed с информацией
-        embed = discord.Embed(
-            title=f"{self.category['emoji']} {self.category['name']}",
-            description=self.category['auto_response'],
-            color=self.category['color'],
-            timestamp=datetime.now(timezone.utc)
-        )
+        # Формируем приветственное сообщение (простой текст, без Embed)
+        welcome_message = f"**{interaction.user.mention}**, спасибо за обращение!\n"
+        welcome_message += f"**Категория:** {self.category['name']}\n\n"
+        welcome_message += f"**Информация из формы:**\n"
         
-        # Добавляем ответы пользователя
         for question, answer in answers.items():
-            embed.add_field(
-                name=f"📝 {question}", 
-                value=answer[:1024] + ("..." if len(answer) > 1024 else ""), 
-                inline=False
-            )
+            welcome_message += f"**{question}:** {answer}\n"
         
-        embed.set_author(
-            name=interaction.user.display_name, 
-            icon_url=interaction.user.display_avatar.url
-        )
-        embed.set_footer(text=f"ID: {interaction.user.id} • Категория: {self.category_key}")
+        welcome_message += f"\n{self.category['auto_response']}\n\n"
+        welcome_message += "**Доступные действия:**\n"
+        welcome_message += "🔒 **Закрыть** — закрыть тикет\n"
+        welcome_message += "📝 **Шаблон** — использовать готовый ответ\n"
+        welcome_message += "👥 **Добавить** — пригласить пользователя\n"
+        welcome_message += "⏰ **Продлить** — продлить время тикета"
         
         # Создаём улучшенное управление тикетом
         view = ImprovedTicketControls(ticket_channel.id, interaction.user.id)
@@ -1343,8 +1336,9 @@ class TicketFormModal(Modal, title="Создание тикета"):
         content = f"{interaction.user.mention}"
         if self.category["ping_role"]:
             content += f" {support_role.mention}"
+        content += f"\n\n{welcome_message}"
         
-        await ticket_channel.send(content=content, embed=embed, view=view)
+        await ticket_channel.send(content=content, view=view)
         
         # Уведомление пользователю
         await interaction.followup.send(f"✅ Тикет создан: {ticket_channel.mention}", ephemeral=True)
@@ -1394,25 +1388,17 @@ class ImprovedTicketPanelView(View):
                 ephemeral=True
             )
         
-        # Показываем выбор категории
-        embed = discord.Embed(
-            title="🎫 Выбор категории тикета",
-            description="Пожалуйста, выберите категорию вашего обращения:",
-            color=COLORS["ticket"]
-        )
+        # Показываем выбор категории (простой текст вместо Embed)
+        message = "**🎫 Выбор категории тикета**\n\n"
+        message += "Пожалуйста, выберите категорию вашего обращения:\n\n"
         
-        # Добавляем описание категорий
         for key, cat in TICKET_CATEGORIES.items():
-            embed.add_field(
-                name=f"{cat['emoji']} {cat['name']}",
-                value=cat['description'],
-                inline=False
-            )
+            message += f"{cat['emoji']} **{cat['name']}** — {cat['description']}\n"
         
         view = View(timeout=60)
         view.add_item(ImprovedTicketCategorySelect())
         
-        await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+        await interaction.response.send_message(message, view=view, ephemeral=True)
 
 class TemplateSelect(Select):
     def __init__(self):
@@ -1438,14 +1424,10 @@ class TemplateSelect(Select):
         if not template:
             return await interaction.response.send_message("❌ Шаблон не найден!", ephemeral=True)
         
-        embed = discord.Embed(
-            title=f"📝 {template['name']}",
-            description=template['content'],
-            color=0x3498db
-        )
-        embed.set_footer(text=f"Категория: {template.get('category', 'общее')}")
+        # Отправляем обычное текстовое сообщение вместо Embed
+        message = f"**{template['name']}**\n\n{template['content']}"
         
-        await interaction.response.send_message(embed=embed)
+        await interaction.response.send_message(message)
         await interaction.followup.send("✅ Шаблон отправлен!", ephemeral=True)
 
 class ImprovedTicketControls(View):
@@ -1496,9 +1478,6 @@ class ImprovedTicketControls(View):
             if msg.attachments:
                 content += f"\n📎 Вложения: {', '.join([a.url for a in msg.attachments])}"
             
-            if msg.embeds:
-                content += f"\n📊 Embed: {len(msg.embeds)} вложений"
-            
             transcript_lines.append(f"[{timestamp}] {author}: {content}")
         
         transcript_text = "\n".join(transcript_lines) or "[В тикете не было сообщений]"
@@ -1507,16 +1486,15 @@ class ImprovedTicketControls(View):
         filename = f"transcript_{interaction.channel.name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
         file = discord.File(io.StringIO(transcript_text), filename=filename)
         
-        # Отправляем в архив
+        # Отправляем в архив (простой текст вместо Embed)
         archive_ch = bot.get_channel(TICKET_ARCHIVE_CHANNEL_ID)
         if archive_ch:
-            embed = discord.Embed(
-                title="📜 Тикет закрыт",
-                description=f"**Канал:** {interaction.channel.name}\n**Закрыл:** {interaction.user.mention}\n**Сообщений:** {len(transcript_lines)}",
-                color=COLORS["ticket"],
-                timestamp=datetime.now(timezone.utc)
-            )
-            await archive_ch.send(embed=embed, file=file)
+            archive_message = f"**📜 Тикет закрыт**\n"
+            archive_message += f"**Канал:** {interaction.channel.name}\n"
+            archive_message += f"**Закрыл:** {interaction.user.mention}\n"
+            archive_message += f"**Сообщений:** {len(transcript_lines)}"
+            
+            await archive_ch.send(content=archive_message, file=file)
         
         await interaction.followup.send("✅ Тикет будет закрыт через 5 секунд...", ephemeral=True)
         
@@ -1560,12 +1538,8 @@ class ImprovedTicketControls(View):
         if interaction.channel.id in active_tickets:
             active_tickets[interaction.channel.id]["last_activity"] = datetime.now(timezone.utc).timestamp()
         
-        embed = discord.Embed(
-            title="⏰ Тикет продлён",
-            description=f"{interaction.user.mention} продлил время тикета на 24 часа.",
-            color=0x2ecc71
-        )
-        await interaction.response.send_message(embed=embed)
+        # Простое текстовое сообщение вместо Embed
+        await interaction.response.send_message(f"⏰ {interaction.user.mention} продлил время тикета на 24 часа.")
 
 class TicketAddUserModal(Modal, title="Добавить пользователя"):
     def __init__(self, channel_id: int):
@@ -1589,12 +1563,8 @@ class TicketAddUserModal(Modal, title="Добавить пользователя
             channel = interaction.guild.get_channel(self.channel_id)
             await channel.set_permissions(user, view_channel=True, send_messages=True, read_messages=True)
             
-            embed = discord.Embed(
-                title="👥 Пользователь добавлен",
-                description=f"{user.mention} добавлен в тикет.",
-                color=0x2ecc71
-            )
-            await interaction.response.send_message(embed=embed)
+            # Простое текстовое сообщение вместо Embed
+            await interaction.response.send_message(f"👥 {user.mention} добавлен в тикет.")
             
             # Уведомление пользователю
             try:
@@ -1625,9 +1595,6 @@ class TicketAutoCloser:
                     if channel.name.startswith("🔒-"):
                         continue
                     
-                    # Получаем информацию о тикете
-                    ticket_info = active_tickets.get(channel.id)
-                    
                     # Проверяем последнее сообщение
                     async for msg in channel.history(limit=1):
                         last_msg = msg.created_at
@@ -1642,27 +1609,23 @@ class TicketAutoCloser:
                         break
     
     async def _send_warning(self, channel):
-        """Отправляет предупреждение о неактивности"""
-        embed = discord.Embed(
-            title="⚠️ Тикет скоро закроется",
-            description="Этот тикет будет автоматически закрыт через **12 часов**, если в нём не будет активности.",
-            color=0xf1c40f,
-            timestamp=datetime.now(timezone.utc)
+        """Отправляет предупреждение о неактивности (простой текст)"""
+        warning_message = (
+            "**⚠️ Тикет скоро закроется**\n\n"
+            "Этот тикет будет автоматически закрыт через **12 часов**, если в нём не будет активности.\n\n"
+            "Напишите что-нибудь, чтобы продлить время"
         )
-        embed.set_footer(text="Напишите что-нибудь, чтобы продлить время")
-        
-        await channel.send(embed=embed)
+        await channel.send(warning_message)
     
     async def _auto_close_ticket(self, channel, reason):
         """Автоматически закрывает тикет"""
-        # Отправляем финальное предупреждение
-        embed = discord.Embed(
-            title="🔒 Тикет закрывается",
-            description=f"Тикет будет закрыт через **1 час** из-за: {reason}\nЕсли хотите сохранить тикет, напишите что-нибудь.",
-            color=0xe74c3c,
-            timestamp=datetime.now(timezone.utc)
+        # Отправляем финальное предупреждение (простой текст)
+        warning_message = (
+            f"**🔒 Тикет закрывается**\n\n"
+            f"Тикет будет закрыт через **1 час** из-за: {reason}\n"
+            f"Если хотите сохранить тикет, напишите что-нибудь."
         )
-        await channel.send(embed=embed)
+        await channel.send(warning_message)
         
         await asyncio.sleep(3600)  # Ждём 1 час
         
@@ -1679,15 +1642,13 @@ class TicketAutoCloser:
         transcript = "\n".join(transcript_lines)
         file = discord.File(io.StringIO(transcript), filename=f"auto_close_{channel.name}.txt")
         
-        # Отправляем в архив
+        # Отправляем в архив (простой текст)
         archive_ch = bot.get_channel(TICKET_ARCHIVE_CHANNEL_ID)
         if archive_ch:
-            embed = discord.Embed(
-                title="📜 Тикет закрыт автоматически",
-                description=f"**Канал:** {channel.name}\n**Причина:** {reason}",
-                color=COLORS["ticket"]
-            )
-            await archive_ch.send(embed=embed, file=file)
+            archive_message = f"**📜 Тикет закрыт автоматически**\n"
+            archive_message += f"**Канал:** {channel.name}\n"
+            archive_message += f"**Причина:** {reason}"
+            await archive_ch.send(content=archive_message, file=file)
         
         # Закрываем
         if channel.id in active_tickets:
