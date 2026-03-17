@@ -427,6 +427,212 @@ COLORS = {
 }
 
 # ───────────────────────────────────────────────
+# РАСШИРЕННАЯ СИСТЕМА ТИКЕТОВ
+# ───────────────────────────────────────────────
+
+# Файл для хранения шаблонов ответов
+TICKET_TEMPLATES_FILE = "ticket_templates.json"
+
+# Расширенные категории тикетов с формами
+TICKET_CATEGORIES = {
+    "tech": {
+        "name": "🔧 Техническая проблема",
+        "description": "Проблемы с ботом, баги, ошибки",
+        "emoji": "🔧",
+        "color": 0x3498db,
+        "form_fields": [
+            {"label": "Опишите проблему", "style": "long", "required": True, 
+             "placeholder": "Что именно не работает? Когда началось?"},
+            {"label": "Скриншот/Логи", "style": "long", "required": False,
+             "placeholder": "Прикрепите ссылку на скриншот или опишите ошибку"},
+            {"label": "Команда/действие", "style": "short", "required": True,
+             "placeholder": "Какую команду вы использовали?"}
+        ],
+        "support_role": SUPPORT_ROLE_ID,
+        "auto_response": "Спасибо за обращение! Техническая поддержка скоро свяжется с вами.",
+        "ping_role": True
+    },
+    "complaint": {
+        "name": "⚠️ Жалоба на игрока",
+        "description": "Пожаловаться на нарушителя",
+        "emoji": "⚠️",
+        "color": 0xe74c3c,
+        "form_fields": [
+            {"label": "На кого жалуетесь?", "style": "short", "required": True,
+             "placeholder": "Укажите никнейм нарушителя"},
+            {"label": "Причина жалобы", "style": "long", "required": True,
+             "placeholder": "Что именно нарушил? Есть ли доказательства?"},
+            {"label": "Доказательства", "style": "long", "required": False,
+             "placeholder": "Ссылки на скриншоты, видео, ID сообщений"}
+        ],
+        "support_role": SUPPORT_ROLE_ID,
+        "auto_response": "Ваша жалоба принята. Модераторы рассмотрят её в ближайшее время.",
+        "ping_role": True
+    },
+    "question": {
+        "name": "❓ Вопрос по серверу",
+        "description": "Общие вопросы о сервере",
+        "emoji": "❓",
+        "color": 0x2ecc71,
+        "form_fields": [
+            {"label": "Ваш вопрос", "style": "long", "required": True,
+             "placeholder": "Задайте ваш вопрос максимально подробно"}
+        ],
+        "support_role": SUPPORT_ROLE_ID,
+        "auto_response": "Спасибо за вопрос! Мы ответим как можно скорее.",
+        "ping_role": True
+    },
+    "appeal": {
+        "name": "⚖️ Апелляция",
+        "description": "Обжалование наказания",
+        "emoji": "⚖️",
+        "color": 0xf1c40f,
+        "form_fields": [
+            {"label": "Кто вас наказал?", "style": "short", "required": True,
+             "placeholder": "Укажите никнейм модератора"},
+            {"label": "Тип наказания", "style": "short", "required": True,
+             "placeholder": "Мут/бан/варн"},
+            {"label": "Почему считаете наказание несправедливым?", "style": "long", "required": True,
+             "placeholder": "Подробно опишите ситуацию"}
+        ],
+        "support_role": SUPPORT_ROLE_ID,
+        "auto_response": "Ваша апелляция принята к рассмотрению. Администрация свяжется с вами.",
+        "ping_role": True
+    },
+    "partner": {
+        "name": "🤝 Сотрудничество",
+        "description": "Предложения о сотрудничестве",
+        "emoji": "🤝",
+        "color": 0x9b59b6,
+        "form_fields": [
+            {"label": "Ваше предложение", "style": "long", "required": True,
+             "placeholder": "Опишите ваше предложение подробно"},
+            {"label": "Контакты", "style": "short", "required": True,
+             "placeholder": "Discord, Telegram, email для связи"}
+        ],
+        "support_role": SUPPORT_ROLE_ID,
+        "auto_response": "Спасибо за предложение! Мы свяжемся с вами в ближайшее время.",
+        "ping_role": False
+    },
+    "whitelist": {
+        "name": "✅ Заявка на вайтлист",
+        "description": "Подать заявку на доступ",
+        "emoji": "✅",
+        "color": 0x00ff9d,
+        "form_fields": [
+            {"label": "Ваш возраст", "style": "short", "required": True,
+             "placeholder": "Сколько вам лет?"},
+            {"label": "Опыт игры", "style": "long", "required": True,
+             "placeholder": "Расскажите о вашем опыте"},
+            {"label": "Почему хотите попасть?", "style": "long", "required": True,
+             "placeholder": "Напишите мотивацию"}
+        ],
+        "support_role": SUPPORT_ROLE_ID,
+        "auto_response": "Ваша заявка отправлена на рассмотрение! Ожидайте ответа.",
+        "ping_role": True
+    },
+    "purchase": {
+        "name": "💳 Покупка/Донат",
+        "description": "Вопросы о покупках",
+        "emoji": "💳",
+        "color": 0xffd700,
+        "form_fields": [
+            {"label": "Что хотите приобрести?", "style": "short", "required": True,
+             "placeholder": "Название товара/услуги"},
+            {"label": "Вопрос/Проблема", "style": "long", "required": True,
+             "placeholder": "Опишите вашу ситуацию"}
+        ],
+        "support_role": SUPPORT_ROLE_ID,
+        "auto_response": "Спасибо за обращение! Мы поможем с покупкой.",
+        "ping_role": True
+    }
+}
+
+# База готовых ответов (шаблоны)
+TEMPLATES_FILE = "ticket_templates.json"
+
+# Глобальная переменная для хранения шаблонов
+ticket_templates = {}
+
+def load_ticket_templates():
+    """Загружает шаблоны ответов из файла"""
+    global ticket_templates
+    if os.path.exists(TEMPLATES_FILE):
+        try:
+            with open(TEMPLATES_FILE, "r", encoding="utf-8") as f:
+                ticket_templates = json.load(f)
+                print(f"✅ Загружено {len(ticket_templates)} шаблонов ответов")
+        except Exception as e:
+            print(f"❌ Ошибка загрузки шаблонов: {e}")
+            ticket_templates = {}
+    else:
+        # Создаём базовые шаблоны
+        ticket_templates = {
+            "приветствие": {
+                "name": "👋 Приветствие",
+                "content": "Здравствуйте! Чем я могу вам помочь?",
+                "category": "общее",
+                "created_by": "system"
+            },
+            "спам": {
+                "name": "🚫 Анти-спам",
+                "content": "Пожалуйста, не спамьте в тикете. Ожидайте ответа модератора.",
+                "category": "предупреждения",
+                "created_by": "system"
+            },
+            "решение_проблемы": {
+                "name": "✅ Решение проблемы",
+                "content": "Проблема решена. Тикет будет закрыт через 24 часа, если у вас не будет дополнительных вопросов.",
+                "category": "закрытие",
+                "created_by": "system"
+            },
+            "ожидание": {
+                "name": "⏳ Ожидание",
+                "content": "Ваш запрос передан специалисту. Пожалуйста, ожидайте ответа.",
+                "category": "общее",
+                "created_by": "system"
+            },
+            "недостаточно_инфо": {
+                "name": "❓ Недостаточно информации",
+                "content": "Пожалуйста, предоставьте больше информации о вашей проблеме, чтобы мы могли вам помочь.",
+                "category": "запрос",
+                "created_by": "system"
+            },
+            "благодарность": {
+                "name": "🙏 Благодарность",
+                "content": "Спасибо за обращение! Хорошего дня!",
+                "category": "закрытие",
+                "created_by": "system"
+            },
+            "техподдержка": {
+                "name": "🔧 Техподдержка",
+                "content": "Техническая поддержка уже работает над вашей проблемой. Ожидайте обновлений.",
+                "category": "технические",
+                "created_by": "system"
+            },
+            "жалоба_рассмотрена": {
+                "name": "⚖️ Жалоба рассмотрена",
+                "content": "Ваша жалоба рассмотрена. Модерация приняла соответствующие меры. Спасибо за бдительность!",
+                "category": "модерация",
+                "created_by": "system"
+            }
+        }
+        save_ticket_templates()
+
+def save_ticket_templates():
+    """Сохраняет шаблоны ответов в файл"""
+    try:
+        with open(TEMPLATES_FILE, "w", encoding="utf-8") as f:
+            json.dump(ticket_templates, f, ensure_ascii=False, indent=2)
+        return True
+    except Exception as e:
+        print(f"❌ Ошибка сохранения шаблонов: {e}")
+        return False
+
+# Загружаем шаблоны при старте
+load_ticket_templates()
+
+# ───────────────────────────────────────────────
 # ГЛОБАЛЬНЫЕ ДАННЫЕ
 # ───────────────────────────────────────────────
 economy_data = {}
@@ -439,6 +645,7 @@ unauthorized_attempts = defaultdict(list)
 faq_data = {}
 voice_start_time = {}
 daily_voice_earned = {}
+active_tickets = {}  # Для отслеживания активности тикетов
 
 # ───────────────────────────────────────────────
 # ЗАГРУЗКА / СОХРАНЕНИЕ В JSON
@@ -1006,172 +1213,490 @@ class ClearModal(Modal, title="Очистить сообщения"):
         except ValueError:
             await interaction.response.send_message("❌ Введите число!", ephemeral=True)
 
-class TicketCategorySelect(Select):
-    def __init__(self):
-        options = [
-            discord.SelectOption(label="Техническая проблема", value="tech", emoji="🔧", description="Проблемы с ботом или сервером"),
-            discord.SelectOption(label="Жалоба на игрока", value="complaint", emoji="⚠️", description="Пожаловаться на нарушителя"),
-            discord.SelectOption(label="Вопрос по серверу", value="question", emoji="❓", description="Общие вопросы о сервере"),
-            discord.SelectOption(label="Сотрудничество", value="partner", emoji="🤝", description="Предложения о сотрудничестве"),
-            discord.SelectOption(label="Другое", value="other", emoji="📌", description="Другие вопросы")
-        ]
-        super().__init__(placeholder="Выберите категорию тикета...", options=options, min_values=1, max_values=1)
+# ───────────────────────────────────────────────
+# КЛАССЫ ДЛЯ УЛУЧШЕННОЙ СИСТЕМЫ ТИКЕТОВ
+# ───────────────────────────────────────────────
 
-    async def callback(self, interaction: discord.Interaction):
+class TicketFormModal(Modal, title="Создание тикета"):
+    def __init__(self, category_key: str):
+        super().__init__(timeout=300)
+        self.category_key = category_key
+        self.category = TICKET_CATEGORIES[category_key]
+        
+        # Добавляем поля из конфигурации
+        for field in self.category["form_fields"]:
+            style = discord.TextStyle.long if field["style"] == "long" else discord.TextStyle.short
+            self.add_item(TextInput(
+                label=field["label"],
+                style=style,
+                required=field["required"],
+                placeholder=field.get("placeholder", f"Введите {field['label'].lower()}..."),
+                max_length=1000 if field["style"] == "long" else 200
+            ))
+    
+    async def on_submit(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True)
+        
+        # Собираем ответы
+        answers = {}
+        for i, field in enumerate(self.category["form_fields"]):
+            answers[field["label"]] = self.children[i].value
+        
+        # Создаём канал тикета
         guild = interaction.guild
         category = guild.get_channel(TICKET_CATEGORY_ID)
-        if not category or not isinstance(category, discord.CategoryChannel):
-            return await interaction.followup.send("❌ Категория тикетов не настроена!", ephemeral=True)
-        support_role = guild.get_role(SUPPORT_ROLE_ID)
+        
+        if not category:
+            return await interaction.followup.send(
+                "❌ Категория тикетов не настроена! Обратитесь к администрации.",
+                ephemeral=True
+            )
+        
+        support_role = guild.get_role(self.category["support_role"])
         if not support_role:
-            return await interaction.followup.send("❌ Роль поддержки не настроена!", ephemeral=True)
+            return await interaction.followup.send(
+                "❌ Роль поддержки не настроена! Обратитесь к администрации.",
+                ephemeral=True
+            )
+        
+        # Проверяем, нет ли уже открытых тикетов у пользователя
+        for channel in category.text_channels:
+            if str(interaction.user.id) in channel.topic if channel.topic else False:
+                return await interaction.followup.send(
+                    "❌ У вас уже есть открытый тикет! Закройте старый, чтобы создать новый.",
+                    ephemeral=True
+                )
+        
+        # Права доступа
         overwrites = {
             guild.default_role: discord.PermissionOverwrite(view_channel=False),
-            interaction.user: discord.PermissionOverwrite(view_channel=True, send_messages=True, read_messages=True, attach_files=True),
-            support_role: discord.PermissionOverwrite(view_channel=True, send_messages=True, read_messages=True, attach_files=True),
-            guild.me: discord.PermissionOverwrite(view_channel=True, send_messages=True, read_messages=True, attach_files=True, manage_messages=True)
+            interaction.user: discord.PermissionOverwrite(
+                view_channel=True, 
+                send_messages=True, 
+                read_messages=True,
+                attach_files=True,
+                embed_links=True
+            ),
+            support_role: discord.PermissionOverwrite(
+                view_channel=True, 
+                send_messages=True, 
+                read_messages=True,
+                attach_files=True,
+                embed_links=True,
+                manage_messages=True
+            ),
+            guild.me: discord.PermissionOverwrite(
+                view_channel=True, 
+                send_messages=True, 
+                read_messages=True,
+                attach_files=True,
+                embed_links=True,
+                manage_messages=True,
+                manage_channels=True
+            )
         }
-        category_emojis = {
-            "tech": "🔧",
-            "complaint": "⚠️",
-            "question": "❓",
-            "partner": "🤝",
-            "other": "📌"
+        
+        # Создаём канал
+        import random
+        channel_name = f"{self.category['emoji']}-{interaction.user.name.lower()}-{random.randint(100,999)}"
+        ticket_channel = await category.create_text_channel(
+            name=channel_name,
+            overwrites=overwrites,
+            topic=f"Тикет от {interaction.user.id} | Категория: {self.category['name']}"
+        )
+        
+        # Сохраняем информацию о тикете для отслеживания активности
+        active_tickets[ticket_channel.id] = {
+            "author_id": interaction.user.id,
+            "category": self.category_key,
+            "created_at": datetime.now(timezone.utc).timestamp(),
+            "last_activity": datetime.now(timezone.utc).timestamp(),
+            "claimed_by": None
         }
-        emoji = category_emojis.get(self.values[0], "🎫")
-        channel_name = f"{emoji}-{self.values[0]}-{interaction.user.name.lower()}"
-        ticket_channel = await category.create_text_channel(channel_name, overwrites=overwrites)
-        category_descriptions = {
-            "tech": "Техническая проблема",
-            "complaint": "Жалоба на игрока",
-            "question": "Вопрос по серверу",
-            "partner": "Сотрудничество",
-            "other": "Другое"
-        }
+        
+        # Создаём embed с информацией
         embed = discord.Embed(
-            title=f"🎟️ Тикет: {category_descriptions.get(self.values[0], 'Обращение')}",
-            description=f"**{interaction.user.mention}**, спасибо за обращение!\n"
-                       f"Модератор свяжется с вами в ближайшее время.\n\n"
-                       f"**Категория:** {self.values[0]}\n\n"
-                       f"🔒 **Закрыть тикет** — нажмите красную кнопку ниже\n"
-                       f"⚠️ Тикет будет автоматически закрыт через {INACTIVE_TICKET_HOURS} часов неактивности.",
-            color=COLORS["ticket"],
+            title=f"{self.category['emoji']} {self.category['name']}",
+            description=self.category['auto_response'],
+            color=self.category['color'],
             timestamp=datetime.now(timezone.utc)
         )
-        embed.set_footer(text=f"ID: {interaction.user.id}")
-        view = TicketControls()
-        await ticket_channel.send(content=f"{interaction.user.mention} {support_role.mention}", embed=embed, view=view)
+        
+        # Добавляем ответы пользователя
+        for question, answer in answers.items():
+            embed.add_field(
+                name=f"📝 {question}", 
+                value=answer[:1024] + ("..." if len(answer) > 1024 else ""), 
+                inline=False
+            )
+        
+        embed.set_author(
+            name=interaction.user.display_name, 
+            icon_url=interaction.user.display_avatar.url
+        )
+        embed.set_footer(text=f"ID: {interaction.user.id} • Категория: {self.category_key}")
+        
+        # Создаём улучшенное управление тикетом
+        view = ImprovedTicketControls(ticket_channel.id, interaction.user.id)
+        
+        # Отправляем сообщение
+        content = f"{interaction.user.mention}"
+        if self.category["ping_role"]:
+            content += f" {support_role.mention}"
+        
+        await ticket_channel.send(content=content, embed=embed, view=view)
+        
+        # Уведомление пользователю
         await interaction.followup.send(f"✅ Тикет создан: {ticket_channel.mention}", ephemeral=True)
+        
+        # Лог в модерацию
         await send_mod_log(
             title="📩 Новый тикет",
-            description=f"**Канал:** {ticket_channel.mention}\n**Автор:** {interaction.user}\n**Категория:** {self.values[0]}",
-            color=COLORS["ticket"]
+            description=f"**Канал:** {ticket_channel.mention}\n**Автор:** {interaction.user}\n**Категория:** {self.category['name']}",
+            color=self.category['color']
         )
 
-class TicketInactivityCheck:
+class ImprovedTicketCategorySelect(Select):
     def __init__(self):
-        self.ticket_channels = {}
+        options = []
+        for key, cat in TICKET_CATEGORIES.items():
+            options.append(discord.SelectOption(
+                label=cat['name'],
+                value=key,
+                emoji=cat['emoji'],
+                description=cat['description'][:100]
+            ))
+        super().__init__(
+            placeholder="📋 Выберите категорию обращения...",
+            options=options,
+            min_values=1,
+            max_values=1
+        )
+    
+    async def callback(self, interaction: discord.Interaction):
+        category_key = self.values[0]
+        
+        # Показываем форму
+        modal = TicketFormModal(category_key)
+        await interaction.response.send_modal(modal)
 
-    async def check_inactive_tickets(self):
-        for guild in bot.guilds:
-            category = guild.get_channel(TICKET_CATEGORY_ID)
-            if not category or not isinstance(category, discord.CategoryChannel):
-                continue
-            for channel in category.text_channels:
-                if not channel.name.startswith(("🔧-", "⚠️-", "❓-", "🤝-", "📌-")):
-                    continue
-                async for msg in channel.history(limit=1):
-                    last_msg_time = msg.created_at
-                    now = datetime.now(timezone.utc)
-                    if (now - last_msg_time).total_seconds() > INACTIVE_TICKET_HOURS * 3600:
-                        warning_embed = discord.Embed(
-                            title="⚠️ Тикет неактивен",
-                            description=f"Этот тикет будет автоматически закрыт через 12 часов из-за неактивности.",
-                            color=0xFAA61A
-                        )
-                        await channel.send(embed=warning_embed)
-                        await asyncio.sleep(43200)
-                        async for new_msg in channel.history(limit=1):
-                            if new_msg.id == msg.id:
-                                transcript = await self.create_transcript(channel)
-                                await channel.delete()
-                                await send_mod_log(
-                                    title="📜 Тикет закрыт автоматически",
-                                    description=f"**Канал:** {channel.name}\n**Причина:** Неактивность",
-                                    color=0x7289DA,
-                                    fields=[("Транскрипт", transcript[:1000] + "...", False)]
-                                )
-                            break
-                    break
-
-    async def create_transcript(self, channel) -> str:
-        transcript_lines = []
-        async for msg in channel.history(limit=100, oldest_first=True):
-            timestamp = msg.created_at.strftime("%Y-%m-%d %H:%M:%S")
-            author = f"{msg.author} ({msg.author.id})"
-            content = msg.content or "[пусто]"
-            transcript_lines.append(f"[{timestamp}] {author}: {content}")
-        return "\n".join(transcript_lines)
-
-class TicketPanelView(View):
+class ImprovedTicketPanelView(View):
     def __init__(self):
         super().__init__(timeout=None)
-
-    @discord.ui.button(label="Создать тикет", style=discord.ButtonStyle.green, emoji="🎟️", custom_id="create_ticket")
+    
+    @discord.ui.button(label="🎫 Создать тикет", style=discord.ButtonStyle.green, emoji="📩", custom_id="improved_ticket")
     async def create_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
+        # Проверяем, есть ли уже категория
+        category = interaction.guild.get_channel(TICKET_CATEGORY_ID)
+        if not category:
+            return await interaction.response.send_message(
+                "❌ Категория тикетов не настроена! Обратитесь к администрации.",
+                ephemeral=True
+            )
+        
+        # Показываем выбор категории
         embed = discord.Embed(
-            title="🎫 Выбор категории",
+            title="🎫 Выбор категории тикета",
             description="Пожалуйста, выберите категорию вашего обращения:",
             color=COLORS["ticket"]
         )
+        
+        # Добавляем описание категорий
+        for key, cat in TICKET_CATEGORIES.items():
+            embed.add_field(
+                name=f"{cat['emoji']} {cat['name']}",
+                value=cat['description'],
+                inline=False
+            )
+        
         view = View(timeout=60)
-        view.add_item(TicketCategorySelect())
+        view.add_item(ImprovedTicketCategorySelect())
+        
         await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
 
-class TicketControls(View):
+class TemplateSelect(Select):
     def __init__(self):
-        super().__init__(timeout=None)
-        self.last_activity = datetime.now(timezone.utc)
+        options = []
+        for key, template in ticket_templates.items():
+            options.append(discord.SelectOption(
+                label=template['name'][:100],
+                value=key,
+                description=template['content'][:100],
+                emoji="📝"
+            ))
+        super().__init__(
+            placeholder="Выберите шаблон ответа...",
+            options=options[:25],
+            min_values=1,
+            max_values=1
+        )
+    
+    async def callback(self, interaction: discord.Interaction):
+        template_key = self.values[0]
+        template = ticket_templates.get(template_key)
+        
+        if not template:
+            return await interaction.response.send_message("❌ Шаблон не найден!", ephemeral=True)
+        
+        embed = discord.Embed(
+            title=f"📝 {template['name']}",
+            description=template['content'],
+            color=0x3498db
+        )
+        embed.set_footer(text=f"Категория: {template.get('category', 'общее')}")
+        
+        await interaction.response.send_message(embed=embed)
+        await interaction.followup.send("✅ Шаблон отправлен!", ephemeral=True)
 
-    @discord.ui.button(label="Закрыть тикет", style=discord.ButtonStyle.red, emoji="🔒", custom_id="close_ticket")
+class ImprovedTicketControls(View):
+    def __init__(self, channel_id: int, author_id: int):
+        super().__init__(timeout=None)
+        self.channel_id = channel_id
+        self.author_id = author_id
+    
+    @discord.ui.button(label="🔒 Закрыть", style=discord.ButtonStyle.red, emoji="🔒", custom_id="close_ticket_v2")
     async def close_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if not interaction.user.guild_permissions.manage_channels:
-            await check_unauthorized_commands(interaction.user)
-            return await interaction.response.send_message("❌ Только модераторы могут закрыть тикет.", ephemeral=True)
-        await interaction.response.send_message("🔒 Тикет закрывается через 5 секунд...", ephemeral=False)
+        # Проверяем права
+        if not interaction.user.guild_permissions.manage_channels and interaction.user.id != self.author_id:
+            return await interaction.response.send_message("❌ Только автор тикета или модераторы могут закрыть тикет.", ephemeral=True)
+        
+        # Создаём подтверждение
+        confirm_view = View(timeout=30)
+        
+        async def confirm_callback(interaction: discord.Interaction):
+            await self._archive_and_close(interaction)
+        
+        async def cancel_callback(interaction: discord.Interaction):
+            await interaction.response.edit_message(content="❌ Закрытие отменено.", view=None)
+        
+        confirm_button = Button(label="✅ Да, закрыть", style=discord.ButtonStyle.green)
+        confirm_button.callback = confirm_callback
+        cancel_button = Button(label="❌ Нет, отмена", style=discord.ButtonStyle.red)
+        cancel_button.callback = cancel_callback
+        
+        confirm_view.add_item(confirm_button)
+        confirm_view.add_item(cancel_button)
+        
+        await interaction.response.send_message(
+            "⚠️ Вы уверены, что хотите закрыть тикет? Это действие нельзя отменить.",
+            view=confirm_view,
+            ephemeral=True
+        )
+    
+    async def _archive_and_close(self, interaction: discord.Interaction):
+        await interaction.response.defer(ephemeral=True)
+        
+        # Создаём транскрипт
         transcript_lines = []
         async for msg in interaction.channel.history(limit=1000, oldest_first=True):
             timestamp = msg.created_at.strftime("%Y-%m-%d %H:%M:%S")
             author = f"{msg.author} ({msg.author.id})"
             content = msg.content or "[пусто]"
+            
             if msg.attachments:
                 content += f"\n📎 Вложения: {', '.join([a.url for a in msg.attachments])}"
+            
+            if msg.embeds:
+                content += f"\n📊 Embed: {len(msg.embeds)} вложений"
+            
             transcript_lines.append(f"[{timestamp}] {author}: {content}")
+        
         transcript_text = "\n".join(transcript_lines) or "[В тикете не было сообщений]"
-        filename = f"transcript_{interaction.channel.name}_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}.txt"
+        
+        # Сохраняем транскрипт
+        filename = f"transcript_{interaction.channel.name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
         file = discord.File(io.StringIO(transcript_text), filename=filename)
-        archive_channel_id = TICKET_ARCHIVE_CHANNEL_ID or MOD_LOG_CHANNEL_ID
-        archive_ch = bot.get_channel(archive_channel_id)
+        
+        # Отправляем в архив
+        archive_ch = bot.get_channel(TICKET_ARCHIVE_CHANNEL_ID)
         if archive_ch:
-            short_embed = discord.Embed(
+            embed = discord.Embed(
                 title="📜 Тикет закрыт",
                 description=f"**Канал:** {interaction.channel.name}\n**Закрыл:** {interaction.user.mention}\n**Сообщений:** {len(transcript_lines)}",
                 color=COLORS["ticket"],
                 timestamp=datetime.now(timezone.utc)
             )
-            await archive_ch.send(embed=short_embed, file=file)
+            await archive_ch.send(embed=embed, file=file)
+        
+        await interaction.followup.send("✅ Тикет будет закрыт через 5 секунд...", ephemeral=True)
+        
+        # Меняем название канала
+        await interaction.channel.edit(name=f"🔒-{interaction.channel.name}")
+        
+        # Удаляем из активных тикетов
+        if interaction.channel.id in active_tickets:
+            del active_tickets[interaction.channel.id]
+        
         await asyncio.sleep(5)
         await interaction.channel.delete()
-
-    @discord.ui.button(label="Взять тикет", style=discord.ButtonStyle.blurple, emoji="🖐️", custom_id="claim_ticket")
-    async def claim_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
+    
+    @discord.ui.button(label="📝 Шаблон", style=discord.ButtonStyle.secondary, emoji="📋", custom_id="ticket_template")
+    async def use_template(self, interaction: discord.Interaction, button: discord.ui.Button):
         if not interaction.user.guild_permissions.manage_channels:
-            await check_unauthorized_commands(interaction.user)
-            return await interaction.response.send_message("❌ Только модераторы могут взять тикет.", ephemeral=True)
-        await interaction.response.send_message(f"✅ {interaction.user.mention} взял тикет в работу!", ephemeral=False)
-        self.claim_ticket.disabled = True
-        await interaction.message.edit(view=self)
+            return await interaction.response.send_message("❌ Только модераторы могут использовать шаблоны.", ephemeral=True)
+        
+        if not ticket_templates:
+            return await interaction.response.send_message("❌ Нет доступных шаблонов.", ephemeral=True)
+        
+        view = View(timeout=60)
+        view.add_item(TemplateSelect())
+        
+        await interaction.response.send_message("📋 Выберите шаблон ответа:", view=view, ephemeral=True)
+    
+    @discord.ui.button(label="👥 Добавить", style=discord.ButtonStyle.blurple, emoji="➕", custom_id="ticket_add")
+    async def add_user(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if not interaction.user.guild_permissions.manage_channels:
+            return await interaction.response.send_message("❌ Только модераторы могут добавлять пользователей.", ephemeral=True)
+        
+        modal = TicketAddUserModal(self.channel_id)
+        await interaction.response.send_modal(modal)
+    
+    @discord.ui.button(label="⏰ Продлить", style=discord.ButtonStyle.success, emoji="⏰", custom_id="ticket_extend")
+    async def extend_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if not interaction.user.guild_permissions.manage_channels:
+            return await interaction.response.send_message("❌ Только модераторы могут продлить тикет.", ephemeral=True)
+        
+        # Продлеваем время неактивности
+        if interaction.channel.id in active_tickets:
+            active_tickets[interaction.channel.id]["last_activity"] = datetime.now(timezone.utc).timestamp()
+        
+        embed = discord.Embed(
+            title="⏰ Тикет продлён",
+            description=f"{interaction.user.mention} продлил время тикета на 24 часа.",
+            color=0x2ecc71
+        )
+        await interaction.response.send_message(embed=embed)
+
+class TicketAddUserModal(Modal, title="Добавить пользователя"):
+    def __init__(self, channel_id: int):
+        super().__init__()
+        self.channel_id = channel_id
+    
+    user_id = TextInput(
+        label="ID пользователя",
+        placeholder="Введите ID пользователя...",
+        required=True
+    )
+    
+    async def on_submit(self, interaction: discord.Interaction):
+        try:
+            user_id = int(self.user_id.value)
+            user = await interaction.guild.fetch_member(user_id)
+            
+            if not user:
+                return await interaction.response.send_message("❌ Пользователь не найден!", ephemeral=True)
+            
+            channel = interaction.guild.get_channel(self.channel_id)
+            await channel.set_permissions(user, view_channel=True, send_messages=True, read_messages=True)
+            
+            embed = discord.Embed(
+                title="👥 Пользователь добавлен",
+                description=f"{user.mention} добавлен в тикет.",
+                color=0x2ecc71
+            )
+            await interaction.response.send_message(embed=embed)
+            
+            # Уведомление пользователю
+            try:
+                await user.send(f"Вас пригласили в тикет {channel.mention} на сервере **{interaction.guild.name}**")
+            except:
+                pass
+                
+        except ValueError:
+            await interaction.response.send_message("❌ Неверный ID пользователя!", ephemeral=True)
+        except Exception as e:
+            await interaction.response.send_message(f"❌ Ошибка: {str(e)}", ephemeral=True)
+
+class TicketAutoCloser:
+    """Автоматическое закрытие неактивных тикетов"""
+    
+    async def check_inactive_tickets(self):
+        """Проверка неактивных тикетов"""
+        while True:
+            await asyncio.sleep(1800)  # 30 минут
+            
+            for guild in bot.guilds:
+                category = guild.get_channel(TICKET_CATEGORY_ID)
+                if not category:
+                    continue
+                
+                for channel in category.text_channels:
+                    # Пропускаем закрытые каналы
+                    if channel.name.startswith("🔒-"):
+                        continue
+                    
+                    # Получаем информацию о тикете
+                    ticket_info = active_tickets.get(channel.id)
+                    
+                    # Проверяем последнее сообщение
+                    async for msg in channel.history(limit=1):
+                        last_msg = msg.created_at
+                        now = datetime.now(timezone.utc)
+                        
+                        # Если неактивен 24 часа
+                        if (now - last_msg).total_seconds() > 24 * 3600:
+                            await self._auto_close_ticket(channel, "24 часа неактивности")
+                        # Если неактивен 12 часов - предупреждение
+                        elif (now - last_msg).total_seconds() > 12 * 3600:
+                            await self._send_warning(channel)
+                        break
+    
+    async def _send_warning(self, channel):
+        """Отправляет предупреждение о неактивности"""
+        embed = discord.Embed(
+            title="⚠️ Тикет скоро закроется",
+            description="Этот тикет будет автоматически закрыт через **12 часов**, если в нём не будет активности.",
+            color=0xf1c40f,
+            timestamp=datetime.now(timezone.utc)
+        )
+        embed.set_footer(text="Напишите что-нибудь, чтобы продлить время")
+        
+        await channel.send(embed=embed)
+    
+    async def _auto_close_ticket(self, channel, reason):
+        """Автоматически закрывает тикет"""
+        # Отправляем финальное предупреждение
+        embed = discord.Embed(
+            title="🔒 Тикет закрывается",
+            description=f"Тикет будет закрыт через **1 час** из-за: {reason}\nЕсли хотите сохранить тикет, напишите что-нибудь.",
+            color=0xe74c3c,
+            timestamp=datetime.now(timezone.utc)
+        )
+        await channel.send(embed=embed)
+        
+        await asyncio.sleep(3600)  # Ждём 1 час
+        
+        # Проверяем, была ли активность
+        async for msg in channel.history(limit=1):
+            if (datetime.now(timezone.utc) - msg.created_at).total_seconds() < 3600:
+                return  # Была активность, не закрываем
+        
+        # Создаём транскрипт
+        transcript_lines = []
+        async for msg in channel.history(limit=1000, oldest_first=True):
+            transcript_lines.append(f"[{msg.created_at}] {msg.author}: {msg.content}")
+        
+        transcript = "\n".join(transcript_lines)
+        file = discord.File(io.StringIO(transcript), filename=f"auto_close_{channel.name}.txt")
+        
+        # Отправляем в архив
+        archive_ch = bot.get_channel(TICKET_ARCHIVE_CHANNEL_ID)
+        if archive_ch:
+            embed = discord.Embed(
+                title="📜 Тикет закрыт автоматически",
+                description=f"**Канал:** {channel.name}\n**Причина:** {reason}",
+                color=COLORS["ticket"]
+            )
+            await archive_ch.send(embed=embed, file=file)
+        
+        # Закрываем
+        if channel.id in active_tickets:
+            del active_tickets[channel.id]
+        
+        await channel.delete()
+
+# Инициализируем авто-закрытие
+ticket_auto_closer = TicketAutoCloser()
 
 class HelpView(View):
     def __init__(self, author: discord.User, is_mod: bool):
@@ -1248,10 +1773,11 @@ class HelpView(View):
                     "name": "🎫 Тикеты",
                     "emoji": "🎫",
                     "commands": [
-                        ("/ticket setup", "Создать панель тикетов"),
-                        ("/ticket close", "Закрыть текущий тикет"),
-                        ("/ticket add", "Добавить пользователя в тикет"),
-                        ("/ticket remove", "Удалить пользователя из тикета")
+                        ("/ticket panel", "Создать панель тикетов"),
+                        ("/ticket stats", "Статистика тикетов"),
+                        ("/ticket search", "Найти тикеты пользователя"),
+                        ("/ticket transcript", "Сохранить транскрипт"),
+                        ("/ticket template", "Управление шаблонами")
                     ]
                 },
                 {
@@ -3077,8 +3603,7 @@ async def check_investments_task():
 
 @tasks.loop(hours=1)
 async def check_inactive_tickets_task():
-    checker = TicketInactivityCheck()
-    await checker.check_inactive_tickets()
+    await ticket_auto_closer.check_inactive_tickets()
 
 @tasks.loop(minutes=30)
 async def voice_income_task():
@@ -3177,9 +3702,9 @@ async def on_ready():
                 else:
                     print(f"✅ Право VIEW_AUDIT_LOG есть на сервере {guild.name}")
  
-    bot.add_view(TicketPanelView())
-    bot.add_view(TicketControls())
-
+    # Добавляем постоянные view
+    bot.add_view(ImprovedTicketPanelView())
+    
     async def reset_voice_earned():
         while True:
             now = datetime.now(timezone.utc)
@@ -4307,8 +4832,6 @@ async def botinfo(ctx: commands.Context):
     # Создаём интерактивные кнопки
     view = View(timeout=60)
     
-    # КНОПКА "ПРИГЛАСИТЬ БОТА" ПОЛНОСТЬЮ УДАЛЕНА
-    
     # Кнопка для перезагрузки статистики (только для модераторов)
     if is_moderator(ctx.author):
         refresh_button = Button(
@@ -5210,55 +5733,180 @@ async def temprole(ctx: commands.Context, member: discord.Member, role: discord.
     except Exception as e:
         await send_error_embed(ctx, str(e))
 
-@bot.hybrid_command(name="ticket", description="Управление тикетами")
-@app_commands.describe(action="setup / close / add / remove")
+# ───────────────────────────────────────────────
+# УЛУЧШЕННЫЕ КОМАНДЫ ДЛЯ ТИКЕТОВ
+# ───────────────────────────────────────────────
+@bot.hybrid_group(name="ticket", description="🎫 Управление тикетами")
+async def ticket_group(ctx: commands.Context):
+    if ctx.invoked_subcommand is None:
+        embed = discord.Embed(
+            title="🎫 Управление тикетами",
+            description="Доступные команды:",
+            color=COLORS["ticket"]
+        )
+        embed.add_field(name="📋 Панель", value="`/ticket panel` - создать панель тикетов", inline=False)
+        embed.add_field(name="📊 Статистика", value="`/ticket stats` - статистика тикетов", inline=False)
+        embed.add_field(name="🔍 Поиск", value="`/ticket search @user` - найти тикеты пользователя", inline=False)
+        embed.add_field(name="📜 Транскрипт", value="`/ticket transcript` - сохранить транскрипт", inline=False)
+        embed.add_field(name="📝 Шаблоны", value="`/ticket templates` - управление шаблонами", inline=False)
+        await ctx.send(embed=embed, ephemeral=True)
+
+@ticket_group.command(name="panel", description="📋 Создать панель тикетов")
+@commands.has_permissions(administrator=True)
+async def ticket_panel(ctx: commands.Context):
+    """Создаёт красивую панель для создания тикетов"""
+    embed = discord.Embed(
+        title="🎫 Система поддержки",
+        description=(
+            "Нажмите кнопку ниже, чтобы создать тикет.\n\n"
+            "**Категории:**\n"
+            "🔧 **Техническая проблема** — проблемы с ботом/сервером\n"
+            "⚠️ **Жалоба на игрока** — сообщить о нарушителе\n"
+            "❓ **Вопрос по серверу** — общие вопросы\n"
+            "⚖️ **Апелляция** — обжалование наказания\n"
+            "🤝 **Сотрудничество** — предложения\n"
+            "✅ **Вайтлист** — подать заявку\n"
+            "💳 **Покупка/Донат** — вопросы о покупках"
+        ),
+        color=COLORS["ticket"]
+    )
+    embed.set_footer(text="Выберите категорию в следующем окне")
+    
+    view = ImprovedTicketPanelView()
+    await ctx.send(embed=embed, view=view)
+    await ctx.send("✅ Панель создана!", ephemeral=True)
+
+@ticket_group.command(name="stats", description="📊 Статистика тикетов")
 @commands.has_permissions(manage_channels=True)
-async def ticket(ctx: commands.Context, action: str = "setup", user: discord.Member = None):
-    try:
-        if not ctx.author.guild_permissions.manage_channels:
-            await check_unauthorized_commands(ctx.author)
-            return await ctx.send("❌ Нет прав!", ephemeral=True)
-        if not has_full_access(ctx.guild.id):
-            return await ctx.send("❌ Команда только на сервере разработчика.", ephemeral=True)
-        action = action.lower()
+async def ticket_stats(ctx: commands.Context):
+    """Показывает статистику по тикетам"""
+    category = ctx.guild.get_channel(TICKET_CATEGORY_ID)
+    if not category:
+        return await ctx.send("❌ Категория тикетов не найдена!", ephemeral=True)
+    
+    total = len(category.text_channels)
+    open_tickets = [c for c in category.text_channels if not c.name.startswith("🔒-")]
+    closed_tickets = total - len(open_tickets)
+    
+    # Считаем по категориям
+    categories_count = {}
+    for channel in category.text_channels:
+        for key, cat in TICKET_CATEGORIES.items():
+            if channel.name.startswith(cat['emoji']):
+                categories_count[cat['name']] = categories_count.get(cat['name'], 0) + 1
+                break
+    
+    embed = discord.Embed(
+        title="📊 Статистика тикетов",
+        color=COLORS["ticket"],
+        timestamp=datetime.now(timezone.utc)
+    )
+    
+    embed.add_field(name="📊 Всего тикетов", value=str(total), inline=True)
+    embed.add_field(name="🟢 Открыто", value=str(len(open_tickets)), inline=True)
+    embed.add_field(name="🔒 Закрыто", value=str(closed_tickets), inline=True)
+    
+    # Статистика по категориям
+    if categories_count:
+        stats = "\n".join([f"{name}: {count}" for name, count in categories_count.items()])
+        embed.add_field(name="📋 По категориям", value=stats, inline=False)
+    
+    await ctx.send(embed=embed, ephemeral=True)
+
+@ticket_group.command(name="search", description="🔍 Найти тикеты пользователя")
+@app_commands.describe(user="Пользователь")
+@commands.has_permissions(manage_channels=True)
+async def ticket_search(ctx: commands.Context, user: discord.User):
+    """Ищет все тикеты пользователя"""
+    category = ctx.guild.get_channel(TICKET_CATEGORY_ID)
+    if not category:
+        return await ctx.send("❌ Категория тикетов не найдена!", ephemeral=True)
+    
+    user_tickets = []
+    for channel in category.text_channels:
+        if channel.topic and str(user.id) in channel.topic:
+            status = "🟢" if not channel.name.startswith("🔒-") else "🔒"
+            user_tickets.append(f"{status} {channel.mention}")
+    
+    if not user_tickets:
+        return await ctx.send(f"❌ У {user.mention} нет тикетов.", ephemeral=True)
+    
+    embed = discord.Embed(
+        title=f"🔍 Тикеты {user.display_name}",
+        description="\n".join(user_tickets[:10]),
+        color=COLORS["ticket"]
+    )
+    
+    if len(user_tickets) > 10:
+        embed.set_footer(text=f"Показано 10 из {len(user_tickets)}")
+    
+    await ctx.send(embed=embed, ephemeral=True)
+
+@ticket_group.command(name="transcript", description="📜 Сохранить транскрипт текущего тикета")
+@commands.has_permissions(manage_channels=True)
+async def ticket_transcript(ctx: commands.Context):
+    """Сохраняет транскрипт текущего тикета"""
+    # Проверяем, что это канал тикета
+    is_ticket = False
+    for cat in TICKET_CATEGORIES.values():
+        if ctx.channel.name.startswith(cat['emoji']):
+            is_ticket = True
+            break
+    
+    if not is_ticket and not ctx.channel.name.startswith("🔒-"):
+        return await ctx.send("❌ Это не канал тикета!", ephemeral=True)
+    
+    await ctx.defer(ephemeral=True)
+    
+    transcript_lines = []
+    async for msg in ctx.channel.history(limit=1000, oldest_first=True):
+        timestamp = msg.created_at.strftime("%Y-%m-%d %H:%M:%S")
+        author = f"{msg.author} ({msg.author.id})"
+        content = msg.content or "[пусто]"
         
-        if action == "setup":
-            embed = discord.Embed(
-                title="🎫 Система тикетов",
-                description="Нажми кнопку, чтобы создать тикет",
-                color=COLORS["ticket"]
-            )
-            view = TicketPanelView()
-            await ctx.send(embed=embed, view=view)
-            await ctx.send("✅ Панель создана!", delete_after=10)
-            
-        elif action == "close":
-            if not any(ctx.channel.name.startswith(p) for p in ["🔧-", "⚠️-", "❓-", "🤝-", "📌-"]):
-                return await ctx.send("❌ Это не тикет!", ephemeral=True)
-            await ctx.send("🔒 Закрываю...")
-            await asyncio.sleep(5)
-            await ctx.channel.delete()
-            
-        elif action == "add":
-            if not any(ctx.channel.name.startswith(p) for p in ["🔧-", "⚠️-", "❓-", "🤝-", "📌-"]):
-                return await ctx.send("❌ Это не тикет!", ephemeral=True)
-            if not user:
-                return await ctx.send("❌ Укажите пользователя!", ephemeral=True)
-            await ctx.channel.set_permissions(user, view_channel=True, send_messages=True, read_messages=True)
-            await ctx.send(f"✅ {user.mention} добавлен в тикет!", ephemeral=True)
-            
-        elif action == "remove":
-            if not any(ctx.channel.name.startswith(p) for p in ["🔧-", "⚠️-", "❓-", "🤝-", "📌-"]):
-                return await ctx.send("❌ Это не тикет!", ephemeral=True)
-            if not user:
-                return await ctx.send("❌ Укажите пользователя!", ephemeral=True)
-            await ctx.channel.set_permissions(user, overwrite=None)
-            await ctx.send(f"✅ {user.mention} удален из тикета!", ephemeral=True)
-            
-        else:
-            await ctx.send("Использование: `/ticket setup` или `/ticket close` или `/ticket add @user` или `/ticket remove @user`")
-    except Exception as e:
-        await send_error_embed(ctx, str(e))
+        if msg.attachments:
+            content += f"\n📎 Вложения: {', '.join([a.url for a in msg.attachments])}"
+        
+        if msg.embeds:
+            content += f"\n📊 Embed: {len(msg.embeds)}"
+        
+        transcript_lines.append(f"[{timestamp}] {author}: {content}")
+    
+    transcript_text = "\n".join(transcript_lines)
+    filename = f"transcript_{ctx.channel.name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
+    file = discord.File(io.StringIO(transcript_text), filename=filename)
+    
+    await ctx.followup.send(file=file, ephemeral=True)
+
+@ticket_group.command(name="templates", description="📝 Управление шаблонами ответов")
+@commands.has_permissions(administrator=True)
+async def ticket_templates_cmd(ctx: commands.Context):
+    """Показывает список шаблонов ответов"""
+    if not ticket_templates:
+        return await ctx.send("❌ Нет доступных шаблонов.", ephemeral=True)
+    
+    embed = discord.Embed(
+        title="📝 Шаблоны ответов",
+        description="Доступные шаблоны для быстрых ответов:",
+        color=COLORS["ticket"]
+    )
+    
+    # Группируем по категориям
+    templates_by_category = {}
+    for key, template in ticket_templates.items():
+        cat = template.get("category", "общее")
+        if cat not in templates_by_category:
+            templates_by_category[cat] = []
+        templates_by_category[cat].append(f"`{key}` - {template['name']}")
+    
+    for category, templates in templates_by_category.items():
+        embed.add_field(
+            name=f"📁 {category.capitalize()}",
+            value="\n".join(templates[:5]),
+            inline=False
+        )
+    
+    await ctx.send(embed=embed, ephemeral=True)
 
 @bot.hybrid_command(name="ban", description="Забанить пользователя")
 @app_commands.describe(member="Пользователь", reason="Причина", delete_message_days="Удалить сообщения за N дней")
@@ -6465,6 +7113,7 @@ def graceful_shutdown():
     save_warnings()
     save_cases()
     save_faq()
+    save_ticket_templates()
     print("[SHUTDOWN] Данные сохранены. Выход.")
 
 atexit.register(graceful_shutdown)
