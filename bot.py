@@ -16,7 +16,6 @@ import traceback
 import sys
 import signal
 import atexit
-import pytz
 
 # ───────────────────────────────────────────────
 # НАСТРОЙКИ (БЕЗ ТОКЕНА!)
@@ -86,13 +85,6 @@ VOICE_DAILY_MAX = 300
 SUPER_DROP_CHANCE = 2
 SUPER_DROP_MIN = 50000
 SUPER_DROP_MAX = 150000
-
-# ───────────────────────────────────────────────
-# СКИДКА НА 9 МАЯ
-# ───────────────────────────────────────────────
-MAY_9_DISCOUNT_PERCENT = 50  # Процент скидки на День Победы
-MAY_9_DISCOUNT_ROLE_NAMES = ["Мужской"]  # Добавьте названия ролей для скидки (например: ["Мужчина", "Женщина"])
-MAY_9_DISCOUNT_TIMEZONE = "Europe/Moscow"  # Временная зона (МСК = UTC+3)
 
 # ───────────────────────────────────────────────
 # РАСШИРЕННЫЙ МАГАЗИН С КАТЕГОРИЯМИ
@@ -2811,29 +2803,6 @@ async def create_inventory_embed(member: discord.Member, inventory: dict, econom
     return embed
 
 # ───────────────────────────────────────────────
-# ФУНКЦИЯ ПОЛУЧЕНИЯ СКИДКИ НА 9 МАЯ
-# ───────────────────────────────────────────────
-def get_may_9_discount(user) -> int:
-    """
-    Возвращает скидку на 9 мая для пользователей с определённой ролью
-    Действует с 9 мая 00:00 МСК до 10 мая 00:00 МСК
-    """
-    try:
-        import pytz
-        msk = pytz.timezone(MAY_9_DISCOUNT_TIMEZONE)
-        now_msk = datetime.now(msk)
-        
-        if now_msk.month == 5 and now_msk.day == 9:
-            if user and hasattr(user, 'roles'):
-                user_role_names = [role.name for role in user.roles]
-                for discount_role in MAY_9_DISCOUNT_ROLE_NAMES:
-                    if discount_role in user_role_names:
-                        return MAY_9_DISCOUNT_PERCENT
-        return 0
-    except:
-        return 0
-
-# ───────────────────────────────────────────────
 # ФУНКЦИЯ ПОЛУЧЕНИЯ СКИДКИ
 # ───────────────────────────────────────────────
 def get_user_discount(user_id: str) -> int:
@@ -3248,13 +3217,11 @@ class ShopCategorySelect(Select):
      
         balance = economy_data[user_id].get("balance", 0)
         discount_percent = get_user_discount(user_id)
-        may_9_discount = get_may_9_discount(interaction.user)
      
         embed = discord.Embed(
             title=f"{SHOP_CATEGORIES[category]['emoji']} {SHOP_CATEGORIES[category]['name']}",
             description=f"**Ваш баланс:** {format_number(balance)} {ECONOMY_EMOJIS['coin']}\n"
-                       f"{f'💳 Ваша скидка: **-{discount_percent}%**' if discount_percent > 0 else ''}"
-                       f"{f' • 🎖️ Скидка на 9 мая: **-{may_9_discount}%**' if may_9_discount > 0 else ''}\n\n",
+                       f"{f'💳 Ваша скидка: **-{discount_percent}%**' if discount_percent > 0 else ''}\n\n",
             color=COLORS["economy"]
         )
      
@@ -3274,13 +3241,9 @@ class ShopCategorySelect(Select):
                 owned_text = " ✅" if owned else ""
          
             base_price = item["price"]
-            active_discount = discount_percent
-            if item.get("category") == "роли" and may_9_discount > 0:
-                active_discount = may_9_discount
-            
-            if active_discount > 0 and not owned:
-                final_price = int(base_price * (100 - active_discount) / 100)
-                price_text = f"**{format_number(final_price)}** ~~{format_number(base_price)}~~ (-{active_discount}%) {ECONOMY_EMOJIS['coin']}"
+            if discount_percent > 0 and not owned:
+                final_price = int(base_price * (100 - discount_percent) / 100)
+                price_text = f"**{format_number(final_price)}** ~~{format_number(base_price)}~~ (-{discount_percent}%) {ECONOMY_EMOJIS['coin']}"
             else:
                 final_price = base_price
                 price_text = f"**{format_number(final_price)}** {ECONOMY_EMOJIS['coin']}"
@@ -3374,17 +3337,12 @@ class ShopItemsView(View):
         
         # Получаем скидку пользователя
         discount_percent = get_user_discount(user_id)
-        may_9_discount = get_may_9_discount(interaction.user)
         base_price = item["price"]
         
-        # Применяем скидку - на 9 мая только для ролей
-        active_discount = discount_percent
-        if item.get("category") == "роли" and may_9_discount > 0:
-            active_discount = may_9_discount
-        
-        if active_discount > 0:
-            final_price = int(base_price * (100 - active_discount) / 100)
-            price_display = f"**{format_number(final_price)}** ~~{format_number(base_price)}~~ (-{active_discount}%) {ECONOMY_EMOJIS['coin']}"
+        # Применяем скидку
+        if discount_percent > 0:
+            final_price = int(base_price * (100 - discount_percent) / 100)
+            price_display = f"**{format_number(final_price)}** ~~{format_number(base_price)}~~ (-{discount_percent}%) {ECONOMY_EMOJIS['coin']}"
         else:
             final_price = base_price
             price_display = f"**{format_number(final_price)}** {ECONOMY_EMOJIS['coin']}"
@@ -3426,11 +3384,7 @@ class ShopItemsView(View):
         view.add_item(gift_button)
         
         # Показываем информацию о скидке
-        discount_text = ""
-        if may_9_discount > 0 and item.get("category") == "роли":
-            discount_text = f"\n🎖️ **Скидка на 9 мая: -{may_9_discount}%** (действует 1 день)"
-        elif discount_percent > 0:
-            discount_text = f"\n💳 Ваша скидка: **-{discount_percent}%**"
+        discount_text = f"\n💳 Ваша скидка: **-{discount_percent}%**" if discount_percent > 0 else ""
         
         embed = discord.Embed(
             title=f"🎁 {item['name']}",
