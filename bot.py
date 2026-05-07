@@ -829,8 +829,10 @@ def save_faq():
     try:
         with open(FAQ_FILE, "w", encoding="utf-8") as f:
             json.dump(faq_data, f, ensure_ascii=False, indent=2)
+        return True
     except Exception as e:
         print(f"[SAVE FAQ] Ошибка: {e}")
+        return False
 
 def load_warnings():
     global warnings_data
@@ -846,8 +848,13 @@ def load_warnings():
         warnings_data = {}
 
 def save_warnings():
-    with open(WARNINGS_FILE, "w", encoding="utf-8") as f:
-        json.dump(warnings_data, f, ensure_ascii=False, indent=2)
+    try:
+        with open(WARNINGS_FILE, "w", encoding="utf-8") as f:
+            json.dump(warnings_data, f, ensure_ascii=False, indent=2)
+        return True
+    except Exception as e:
+        print(f"[SAVE WARNINGS] Ошибка: {e}")
+        return False
 
 def load_cases():
     global cases_data
@@ -862,8 +869,13 @@ def load_cases():
         cases_data = {}
 
 def save_cases():
-    with open(CASES_FILE, "w", encoding="utf-8") as f:
-        json.dump(cases_data, f, ensure_ascii=False, indent=2)
+    try:
+        with open(CASES_FILE, "w", encoding="utf-8") as f:
+            json.dump(cases_data, f, ensure_ascii=False, indent=2)
+        return True
+    except Exception as e:
+        print(f"[SAVE CASES] Ошибка: {e}")
+        return False
 
 # Загружаем все данные
 load_economy()
@@ -3505,30 +3517,33 @@ async def clean_old_warnings_task():
 
 @tasks.loop(minutes=1)
 async def check_temp_roles_task():
-    for guild in bot.guilds:
-        for member in guild.members:
-            user_id = str(member.id)
-            if user_id in temp_roles:
-                now = datetime.now(timezone.utc).timestamp()
-                to_remove = []
-                for role_id, expiry in temp_roles[user_id].items():
-                    if now >= expiry:
-                        role = guild.get_role(int(role_id))
-                        if role and role in member.roles:
-                            try:
-                                await member.remove_roles(role, reason="Временная роль истекла")
-                                await send_mod_log(
-                                    title="⏱️ Роль снята",
-                                    description=f"**Пользователь:** {member.mention}\n**Роль:** {role.mention}",
-                                    color=COLORS["audit"]
-                                )
-                            except:
-                                pass
-                        to_remove.append(role_id)
-                for role_id in to_remove:
-                    del temp_roles[user_id][role_id]
-                if not temp_roles[user_id]:
-                    del temp_roles[user_id]
+    if not temp_roles:
+        return
+    now = datetime.now(timezone.utc).timestamp()
+    for user_id, roles in list(temp_roles.items()):
+        to_remove = []
+        for role_id, expiry in list(roles.items()):
+            if now >= expiry:
+                for guild in bot.guilds:
+                    member = guild.get_member(int(user_id))
+                    if not member:
+                        continue
+                    role = guild.get_role(int(role_id))
+                    if role and role in member.roles:
+                        try:
+                            await member.remove_roles(role, reason="Временная роль истекла")
+                            await send_mod_log(
+                                title="⏱️ Роль снята",
+                                description=f"**Пользователь:** {member.mention}\n**Роль:** {role.mention}",
+                                color=COLORS["audit"]
+                            )
+                        except:
+                            pass
+                to_remove.append(role_id)
+        for role_id in to_remove:
+            del temp_roles[user_id][role_id]
+        if not temp_roles.get(user_id):
+            del temp_roles[user_id]
 
 @tasks.loop(hours=6)
 async def check_investments_task():
@@ -3566,6 +3581,7 @@ async def check_inactive_tickets_task():
 @tasks.loop(minutes=30)
 async def voice_income_task():
     now = datetime.now(timezone.utc).timestamp()
+    economy_changed = False
     for guild in bot.guilds:
         for vc in guild.voice_channels:
             if "afk" in vc.name.lower():
@@ -3616,7 +3632,9 @@ async def voice_income_task():
                         earn = remaining
                     economy_data[user_id]["balance"] += earn
                     daily_voice_earned[user_id] += earn
-                    save_economy()
+                    economy_changed = True
+    if economy_changed:
+        save_economy()
 
 # ───────────────────────────────────────────────
 # СОБЫТИЯ
@@ -3646,19 +3664,21 @@ async def on_ready():
     else:
         print(f"⚠️ [JSON CHECK] Файл economy.json не найден, будет создан при первом сохранении")
  
-    load_economy()
-    save_economy()
- 
-    for guild in bot.guilds:
-        await guild.chunk()
-        if guild.id == FULL_ACCESS_GUILD_ID:
-            bot_member = guild.get_member(bot.user.id)
-            if bot_member:
-                perms = bot_member.guild_permissions
-                if not perms.view_audit_log:
-                    print(f"⚠️ НЕТ ПРАВА VIEW_AUDIT_LOG на сервере {guild.name}!")
-                else:
-                    print(f"✅ Право VIEW_AUDIT_LOG есть на сервере {guild.name}")
+    full_access_guild = bot.get_guild(FULL_ACCESS_GUILD_ID)
+    if full_access_guild:
+        try:
+            await full_access_guild.chunk()
+        except Exception as e:
+            print(f"⚠️ [CHUNK] Не удалось chunk для сервера Full Access: {e}")
+        bot_member = full_access_guild.get_member(bot.user.id)
+        if bot_member:
+            perms = bot_member.guild_permissions
+            if not perms.view_audit_log:
+                print(f"⚠️ НЕТ ПРАВА VIEW_AUDIT_LOG на сервере {full_access_guild.name}!")
+            else:
+                print(f"✅ Право VIEW_AUDIT_LOG есть на сервере {full_access_guild.name}")
+    else:
+        print(f"⚠️ [CHUNK] Сервер FULL_ACCESS_GUILD_ID ({FULL_ACCESS_GUILD_ID}) не найден")
  
     # Добавляем постоянные view
     bot.add_view(ImprovedTicketPanelView())
@@ -3797,6 +3817,9 @@ trade_invitations = {}
 @bot.event
 async def on_message(message):
     if message.author.bot:
+        return
+    if message.guild is None:
+        await bot.process_commands(message)
         return
     user_id = str(message.author.id)
     now = datetime.now(timezone.utc).timestamp()
@@ -3980,7 +4003,6 @@ async def on_message(message):
             earn_coins = int(random.randint(1, 5) * MORTIS_COIN_RATE)
             economy_data[user_id]["balance"] += earn_coins
             economy_data[user_id]["last_message"] = now
-            save_economy()
 
     await bot.process_commands(message)
 
