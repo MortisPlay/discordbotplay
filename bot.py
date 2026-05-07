@@ -4665,60 +4665,68 @@ async def serverinfo(ctx: commands.Context):
     
     await ctx.send(embed=embed, ephemeral=True)
 
-@bot.hybrid_command(name="botinfo", description="🤖 Подробная информация о боте")
-async def botinfo(ctx: commands.Context):
-    """Показывает подробную информацию о боте в стильном оформлении"""
+def _format_uptime(seconds: int) -> str:
+    """Форматирует количество секунд в красивую строку"""
+    days = seconds // 86400
+    remaining = seconds % 86400
+    hours = remaining // 3600
+    minutes = (remaining % 3600) // 60
+    secs = remaining % 60
     
-    # Рассчитываем аптайм
-    uptime = datetime.now(timezone.utc) - bot.launch_time
-    days = uptime.days
-    hours, remainder = divmod(uptime.seconds, 3600)
-    minutes, seconds = divmod(remainder, 60)
-    
-    # Форматируем аптайм
     if days > 0:
-        uptime_str = f"**{days}**д **{hours}**ч **{minutes}**м"
+        return f"**{days}**д **{hours}**ч **{minutes}**м"
     elif hours > 0:
-        uptime_str = f"**{hours}**ч **{minutes}**м **{seconds}**с"
+        return f"**{hours}**ч **{minutes}**м **{secs}**с"
     elif minutes > 0:
-        uptime_str = f"**{minutes}**м **{seconds}**с"
-    else:
-        uptime_str = f"**{seconds}**с"
+        return f"**{minutes}**м **{secs}**с"
+    return f"**{secs}**с"
+
+def _create_botinfo_embed(bot_obj, owner_id: int) -> tuple[discord.Embed, dict]:
+    """
+    Создаёт embed с информацией о боте.
+    Возвращает (embed, stats_dict) для переиспользования при обновлении
+    """
+    now = datetime.now(timezone.utc)
+    uptime_sec = int((now - bot_obj.launch_time).total_seconds())
+    stats = {
+        'latency': round(bot_obj.latency * 1000),
+        'uptime_sec': uptime_sec,
+        'total_guilds': len(bot_obj.guilds),
+        'total_users': sum(g.member_count for g in bot_obj.guilds),
+        'total_channels': sum(len(g.channels) for g in bot_obj.guilds),
+        'total_commands': len(bot_obj.commands),
+        'launch_ts': int(bot_obj.launch_time.timestamp())
+    }
+    stats['uptime_str'] = _format_uptime(stats['uptime_sec'])
+    python_version = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+    discord_version = discord.__version__
+
+    ping_status = "🟢" if stats['latency'] < 100 else "🟡" if stats['latency'] < 200 else "🔴"
     
-    # Получаем статистику
-    total_users = sum(g.member_count for g in bot.guilds)
-    total_channels = sum(len(g.channels) for g in bot.guilds)
-    total_commands = len(bot.commands)
+    uptime_percent = min(100, int(uptime_sec / 86400 * 100))
+    bar_length = 15
+    filled = int(uptime_percent * bar_length / 100)
+    progress_bar = "█" * filled + "░" * (bar_length - filled)
     
-    # Считаем пинг
-    latency = round(bot.latency * 1000)
-    ping_status = "🟢" if latency < 100 else "🟡" if latency < 200 else "🔴"
-    
-    # Создаём основной embed
     embed = discord.Embed(
         title="🤖 **Информация о боте**",
-        description=(
-            "```ansi\n"
-            "[1;36m⚡ Многофункциональный бот для Discord[0m\n"
-            "```"
-        ),
-        color=0x5865F2,  # Discord Blurple
-        timestamp=datetime.now(timezone.utc)
+        description="```ansi\n[1;36m⚡ Многофункциональный бот для Discord[0m\n```",
+        color=0x5865F2,
+        timestamp=now
     )
     
-    # Устанавливаем красивый thumbnail
-    embed.set_thumbnail(url=bot.user.display_avatar.url)
+    embed.set_thumbnail(url=bot_obj.user.display_avatar.url)
     
-    # Добавляем поля с эмбедами в две колонки
     embed.add_field(
         name="📋 **Основная информация**",
         value=(
             f"```yml\n"
-            f"Имя: {bot.user.name}\n"
-            f"ID: {bot.user.id}\n"
-            f"Владелец: <@{OWNER_ID}>\n"
+            f"Имя: {bot_obj.user.name}\n"
+            f"ID: {bot_obj.user.id}\n"
+            f"Владелец: <@{owner_id}>\n"
             f"Версия: v1.3.0\n"
-            f"Библиотека: discord.py 2.3.2\n"
+            f"Python: {python_version}\n"
+            f"discord.py: {discord_version}\n"
             f"```"
         ),
         inline=True
@@ -4728,10 +4736,10 @@ async def botinfo(ctx: commands.Context):
         name="📊 **Статистика**",
         value=(
             f"```css\n"
-            f"[ Серверов: {len(bot.guilds)} ]\n"
-            f"[ Пользователей: {total_users:,} ]\n"
-            f"[ Каналов: {total_channels} ]\n"
-            f"[ Команд: {total_commands} ]\n"
+            f"[ Серверов: {len(bot_obj.guilds)} ]\n"
+            f"[ Пользователей: {stats['total_users']:,} ]\n"
+            f"[ Каналов: {stats['total_channels']} ]\n"
+            f"[ Команд: {stats['total_commands']} ]\n"
             f"```"
         ),
         inline=True
@@ -4741,16 +4749,14 @@ async def botinfo(ctx: commands.Context):
         name="⚡ **Производительность**",
         value=(
             f"```diff\n"
-            f"{'+' if latency < 100 else '-' if latency < 200 else '!'} Пинг: {latency}ms {ping_status}\n"
-            f"+ Аптайм: {uptime_str}\n"
-            f"+ Запуск: <t:{int(bot.launch_time.timestamp())}:R>\n"
-            f"+ Сборка: Python 3.11\n"
-            f"```"
+            f"{('+' if stats['latency'] < 100 else '-' if stats['latency'] < 200 else '!')} Пинг: {stats['latency']}ms {ping_status}\n"
+            f"+ Аптайм: {stats['uptime_str']}\n"
+            f"```\n"
+            f"Запуск: <t:{stats['launch_ts']}:R>"
         ),
         inline=False
     )
     
-    # Добавляем красивый разделитель
     embed.add_field(
         name="🔧 **Функционал**",
         value=(
@@ -4764,149 +4770,59 @@ async def botinfo(ctx: commands.Context):
         inline=False
     )
     
-    # Добавляем ссылки и полезную информацию (БЕЗ КНОПКИ ПРИГЛАШЕНИЯ)
     embed.add_field(
         name="🔗 **Полезные ссылки**",
         value=(
             "• 🌐 **Сайт:** [mortisplay.ru](https://mortisplay.ru)\n"
             "• 📚 **Помощь:** `/help`\n"
             "• 💬 **Поддержка:** Создайте тикет\n"
-            "• 📊 **Статус:** 🟢 Онлайн"
+            f"• 📊 **Статус:** {ping_status} Онлайн"
         ),
         inline=False
     )
     
-    # Создаём прогресс-бар для визуализации аптайма (24ч = 100%)
-    uptime_percent = min(100, int((datetime.now(timezone.utc) - bot.launch_time).total_seconds() / 86400 * 100))
-    bar_length = 15
-    filled = int(uptime_percent * bar_length / 100)
-    progress_bar = "█" * filled + "░" * (bar_length - filled)
-    
     embed.set_footer(
-        text=f"MortisPlay • uptime: {uptime_percent}% [{progress_bar}] | {ctx.author.display_name}",
-        icon_url=ctx.author.display_avatar.url
+        text=f"MortisPlay • uptime: {uptime_percent}% [{progress_bar}]"
     )
     
-    # Создаём интерактивные кнопки
-    view = View(timeout=60)
-    
-    # Кнопка для перезагрузки статистики (только для модераторов)
-    if is_moderator(ctx.author):
+    return embed, stats
+
+@bot.hybrid_command(name="botinfo", description="🤖 Подробная информация о боте")
+async def botinfo(ctx: commands.Context):
+    """Показывает подробную информацию о боте в стильном оформлении"""
+    try:
+        embed, stats = _create_botinfo_embed(bot, OWNER_ID)
+        embed.set_footer(
+            text=f"MortisPlay • uptime: {min(100, int(stats['uptime_sec'] / 86400 * 100))}% | {ctx.author.display_name}",
+            icon_url=ctx.author.display_avatar.url
+        )
+
+        view = View(timeout=60)
         refresh_button = Button(
             label="Обновить статистику",
             style=discord.ButtonStyle.secondary,
             emoji="🔄",
             custom_id="refresh_botinfo"
         )
-        
+
         async def refresh_callback(interaction: discord.Interaction):
             if interaction.user.id != ctx.author.id:
                 return await interaction.response.send_message("❌ Это не твоя команда!", ephemeral=True)
-            
-            # Пересчитываем всё заново
-            new_latency = round(bot.latency * 1000)
-            new_uptime = datetime.now(timezone.utc) - bot.launch_time
-            new_days = new_uptime.days
-            new_hours, new_remainder = divmod(new_uptime.seconds, 3600)
-            new_minutes, new_seconds = divmod(new_remainder, 60)
-            
-            if new_days > 0:
-                new_uptime_str = f"**{new_days}**д **{new_hours}**ч **{new_minutes}**м"
-            elif new_hours > 0:
-                new_uptime_str = f"**{new_hours}**ч **{new_minutes}**м **{new_seconds}**с"
-            elif new_minutes > 0:
-                new_uptime_str = f"**{new_minutes}**м **{new_seconds}**с"
-            else:
-                new_uptime_str = f"**{new_seconds}**с"
-            
-            new_ping_status = "🟢" if new_latency < 100 else "🟡" if new_latency < 200 else "🔴"
-            new_uptime_percent = min(100, int((datetime.now(timezone.utc) - bot.launch_time).total_seconds() / 86400 * 100))
-            new_filled = int(new_uptime_percent * bar_length / 100)
-            new_progress_bar = "█" * new_filled + "░" * (bar_length - new_filled)
-            
-            new_embed = discord.Embed(
-                title="🤖 **Информация о боте**",
-                description="```ansi\n[1;36m⚡ Многофункциональный бот для Discord[0m\n```",
-                color=0x5865F2,
-                timestamp=datetime.now(timezone.utc)
-            )
-            new_embed.set_thumbnail(url=bot.user.display_avatar.url)
-            
-            new_embed.add_field(
-                name="📋 **Основная информация**",
-                value=(
-                    f"```yml\n"
-                    f"Имя: {bot.user.name}\n"
-                    f"ID: {bot.user.id}\n"
-                    f"Владелец: <@{OWNER_ID}>\n"
-                    f"Версия: v1.3.0\n"
-                    f"Библиотека: discord.py 2.3.2\n"
-                    f"```"
-                ),
-                inline=True
-            )
-            
-            new_embed.add_field(
-                name="📊 **Статистика**",
-                value=(
-                    f"```css\n"
-                    f"[ Серверов: {len(bot.guilds)} ]\n"
-                    f"[ Пользователей: {total_users:,} ]\n"
-                    f"[ Каналов: {total_channels} ]\n"
-                    f"[ Команд: {total_commands} ]\n"
-                    f"```"
-                ),
-                inline=True
-            )
-            
-            new_embed.add_field(
-                name="⚡ **Производительность**",
-                value=(
-                    f"```diff\n"
-                    f"{'+' if new_latency < 100 else '-' if new_latency < 200 else '!'} Пинг: {new_latency}ms {new_ping_status}\n"
-                    f"+ Аптайм: {new_uptime_str}\n"
-                    f"+ Запуск: <t:{int(bot.launch_time.timestamp())}:R>\n"
-                    f"+ Сборка: Python 3.11\n"
-                    f"```"
-                ),
-                inline=False
-            )
-            
-            new_embed.add_field(
-                name="🔧 **Функционал**",
-                value=(
-                    "```prolog\n"
-                    "✅ Экономика      ✅ Модерация\n"
-                    "✅ Магазин        ✅ Тикеты\n"
-                    "✅ Инвентарь      ✅ Торговля\n"
-                    "✅ Развлечения    ✅ FAQ\n"
-                    "```"
-                ),
-                inline=False
-            )
-            
-            new_embed.add_field(
-                name="🔗 **Полезные ссылки**",
-                value=(
-                    "• 🌐 **Сайт:** [mortisplay.ru](https://mortisplay.ru)\n"
-                    "• 📚 **Помощь:** `/help`\n"
-                    "• 💬 **Поддержка:** Создайте тикет\n"
-                    "• 📊 **Статус:** 🟢 Онлайн"
-                ),
-                inline=False
-            )
-            
+
+            new_embed, new_stats = _create_botinfo_embed(bot, OWNER_ID)
             new_embed.set_footer(
-                text=f"MortisPlay • uptime: {new_uptime_percent}% [{new_progress_bar}] | {ctx.author.display_name}",
+                text=f"MortisPlay • uptime: {min(100, int(new_stats['uptime_sec'] / 86400 * 100))}% | {ctx.author.display_name}",
                 icon_url=ctx.author.display_avatar.url
             )
-            
             await interaction.response.edit_message(embed=new_embed, view=view)
-        
+
         refresh_button.callback = refresh_callback
         view.add_item(refresh_button)
-    
-    await ctx.send(embed=embed, view=view, ephemeral=True)
+        view.add_item(Button(style=discord.ButtonStyle.link, label="Сайт", url="https://mortisplay.ru"))
+
+        await ctx.send(embed=embed, view=view, ephemeral=True)
+    except Exception as e:
+        await send_error_embed(ctx, f"Ошибка при получении информации о боте: {str(e)}")
 
 @bot.hybrid_command(name="stats", description="Статистика сервера")
 async def stats(ctx: commands.Context):
