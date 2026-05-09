@@ -1,0 +1,156 @@
+{
+    "server_vault": 76888,
+    "765476979792150549": {
+        "balance": 164946,
+        "last_daily": "2026-05-09T11:26:25.207890",
+        "last_message": 1773643032.147303,
+        "multiplier": 1.0,
+        "multiplier_end": 1774143194.314539,
+        "last_tax_time": 1773737297.546596,
+        "inventory": {
+            "lucky_day": 1,
+            "gift_box": 0,
+            "chainsaw_case": 0,
+            "multiplier_1x5": 1,
+            "energy_drink": 1,
+            "medal": 1,
+            "standard_case": 0,
+            "mortis_relic": 0
+        },
+        "investments": [],
+        "active_effects": [],
+        "active_discounts": [
+            {
+                "type": "discount_card",
+                "discount_percent": 15,
+                "start_time": 1773540715.49249,
+                "end_time": 1774145515.49249
+            }
+        ],
+        "job": "менеджер",
+        "last_work": 1778287274.811765,
+        "status": "🎥 Ютубер",
+        "is_verified": true,
+        "mortis_coins": 1
+    },
+    "1034765820464746576": {
+        "balance": 200,
+        "last_daily": 0,
+        "last_message": 0,
+        "multiplier": 1.0,
+        "multiplier_end": 0,
+        "last_tax_time": 0,
+        "inventory": {},
+        "investments": [],
+        "active_effects": [],
+        "active_discounts": []
+    },
+    "1191348523900350566": {
+        "balance": 7390,
+        "last_daily": 0,
+        "last_message": 1773366587.125157,
+        "multiplier": 1.0,
+        "multiplier_end": 0,
+        "last_tax_time": 0,
+        "inventory": {},
+        "investments": [],
+        "active_effects": [],
+        "active_discounts": []
+    },
+    "696486192778182716": {
+        "balance": 7276,
+        "last_daily": 0,
+        "last_message": 1773374252.226203,
+        "multiplier": 1.0,
+        "multiplier_end": 0,
+        "last_tax_time": 0,
+        "inventory": {},
+        "investments": [],
+        "active_effects": [],
+        "active_discounts": []
+    },
+    "1401355255912071238": {
+        "balance": 0,
+        "last_daily": 0,
+        "last_message": 0,
+        "multiplier": 1.0,
+        "multiplier_end": 0,
+        "last_tax_time": 0,
+        "inventory": {},
+        "investments": [],
+        "active_effects": [],
+        "active_discounts": []
+    },
+    "1025368165259169832": {
+        "balance": 2,
+        "last_daily": 0,
+        "last_message": 1773366247.5123,
+        "multiplier": 1.0,
+        "multiplier_end": 0,
+        "last_tax_time": 0,
+        "inventory": {},
+        "investments": [],
+        "active_effects": [],
+        "active_discounts": []
+    },
+    "1346431119775502356": {
+        "balance": 1,
+        "last_daily": 0,
+        "last_message": 1773408924.550487,
+        "multiplier": 1.0,
+        "multiplier_end": 0,
+        "last_tax_time": 0,
+        "inventory": {},
+        "investments": [],
+        "active_effects": [],
+        "active_discounts": []
+    },
+    "1346446343345799198": {
+        "balance": 5,
+        "last_daily": 0,
+        "last_message": 1773408945.829741,
+        "multiplier": 1.0,
+        "multiplier_end": 0,
+        "last_tax_time": 0,
+        "inventory": {},
+        "investments": [],
+        "active_effects": [],
+        "active_discounts": []
+    },
+    "1340511301931110432": {
+        "balance": 2,
+        "last_daily": 0,
+        "last_message": 1773408946.128602,
+        "multiplier": 1.0,
+        "multiplier_end": 0,
+        "last_tax_time": 0,
+        "inventory": {},
+        "investments": [],
+        "active_effects": [],
+        "active_discounts": []
+    },
+    "1340512338687688714": {
+        "balance": 1,
+        "last_daily": 0,
+        "last_message": 1773408947.495913,
+        "multiplier": 1.0,
+        "multiplier_end": 0,
+        "last_tax_time": 0,
+        "inventory": {},
+        "investments": [],
+        "active_effects": [],
+        "active_discounts": []
+    },
+    "1340501178362105979": {
+        "balance": 3,
+        "last_daily": 0,
+        "last_message": 1773408952.917551,
+        "multiplier": 1.0,
+        "multiplier_end": 0,
+        "last_tax_time": 0,
+        "inventory": {},
+        "investments": [],
+        "active_effects": [],
+        "active_discounts": []
+    }
+}
