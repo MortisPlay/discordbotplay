@@ -445,12 +445,33 @@ class EconomyCog(commands.Cog):
         res_msg = " и ".join(msg_parts)
         await interaction.response.send_message(f"✅ {interaction.user.mention} передал {member.mention}: {res_msg}")    
 
-    @app_commands.command(name="inventory", description="🎒 Посмотреть свои вещи и использовать их")
+    @app_commands.command(name="inventory", description="🎒 Посмотреть свои вещи")
     async def inventory(self, interaction: discord.Interaction):
         user = economy_db.get_user(interaction.user.id)
-        view = InventoryView(interaction.user.id)
-        embed = view.create_embed(user, interaction.user)
-        await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+        inventory = user.get("inventory", {})
+
+        # ПРОВЕРКА: Если инвентарь вдруг оказался списком, превращаем его в пустой словарь
+        if isinstance(inventory, list):
+            inventory = {}
+            user["inventory"] = {}
+            economy_db.update_user(interaction.user.id, user)
+
+        if not inventory:
+            return await interaction.response.send_message("🎒 Ваш инвентарь пуст.", ephemeral=True)
+
+        emb = discord.Embed(title=f"Инвентарь {interaction.user.display_name}", color=0x3498db)
+        
+        inv_text = ""
+        for iid, amt in inventory.items(): # Теперь .items() не вызовет ошибку
+            if amt > 0:
+                item = SHOP_ITEMS.get(iid) or INVENTORY_ITEMS.get(iid)
+                if item:
+                    inv_text += f"{item['emoji']} **{item['name']}** — {amt} шт.\n"
+                else:
+                    inv_text += f"❓ **{iid}** — {amt} шт.\n"
+
+        emb.description = inv_text or "Тут пока ничего нет."
+        await interaction.response.send_message(embed=emb, ephemeral=True)
 
     @app_commands.command(name="balance", description="💰 Проверить состояние счета")
     async def balance(self, interaction: discord.Interaction, member: discord.Member = None):
