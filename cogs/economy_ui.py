@@ -1,4 +1,5 @@
 # economy_ui.py
+from __future__ import annotations
 import discord
 from discord.ui import View, Button, Select
 from datetime import datetime
@@ -13,7 +14,7 @@ from utils.db import economy_db
 
 # ====================== ПОДТВЕРЖДЕНИЕ ПОКУПКИ ======================
 class ConfirmPurchaseView(View):
-    def __init__(self, item_id: str, member: discord.Member, final_price: int, user_id: int):
+    def __init__(self, item_id: str, member: "discord.Member", final_price: int, user_id: int):
         super().__init__(timeout=60)
         self.item_id = item_id
         self.member = member
@@ -21,7 +22,7 @@ class ConfirmPurchaseView(View):
         self.user_id = user_id
 
     @discord.ui.button(label="✅ Подтвердить", style=discord.ButtonStyle.green)
-    async def confirm(self, interaction: discord.Interaction, button: Button):
+    async def confirm(self, interaction: "discord.Interaction", button: Button):
         if interaction.user.id != self.user_id:
             return await interaction.response.send_message("❌ Это не ваше меню!", ephemeral=True)
 
@@ -44,11 +45,10 @@ class ConfirmPurchaseView(View):
             success_msg = f"✅ Вы купили **{item['name']}** за **{format_number(self.final_price)}** {ECONOMY_EMOJIS['coin']}"
 
         economy_db.update_user(self.member.id, user)
-
         await interaction.response.edit_message(content=success_msg, embed=None, view=None)
 
     @discord.ui.button(label="❌ Отмена", style=discord.ButtonStyle.red)
-    async def cancel(self, interaction: discord.Interaction, button: Button):
+    async def cancel(self, interaction: "discord.Interaction", button: Button):
         if interaction.user.id != self.user_id:
             return await interaction.response.send_message("❌ Это не ваше меню!", ephemeral=True)
         await interaction.response.edit_message(content="🛒 Покупка отменена.", embed=None, view=None)
@@ -91,7 +91,7 @@ class InventoryView(View):
             select.callback = self.use_callback
             self.add_item(select)
 
-    async def use_callback(self, interaction: discord.Interaction):
+    async def use_callback(self, interaction: "discord.Interaction"):
         if interaction.user.id != self.user_id:
             return await interaction.response.send_message("❌ Это не ваш инвентарь!", ephemeral=True)
 
@@ -106,7 +106,6 @@ class InventoryView(View):
 
         msg = "Этот предмет нельзя использовать."
 
-        # Кейсы
         case_rewards = {
             "low_box": ([50, 150, 300], [60, 30, 10]),
             "standard_case": ([400, 700, 1200], [50, 35, 15]),
@@ -145,8 +144,11 @@ class InventoryView(View):
         await interaction.edit_original_response(content=f"✅ {msg}", embed=embed, view=self)
 
     @staticmethod
-    def create_embed(user_data: dict, member: discord.Member):
-        embed = discord.Embed(title=f"🎒 Инвентарь — {member.display_name}", color=0x3498db)
+    def create_embed(user_data: dict, member: "discord.Member"):
+        embed = discord.Embed(
+            title=f"🎒 Инвентарь — {member.display_name}",
+            color=0x1abc9c
+        )
         inv = user_data.get("inventory", {})
 
         lines = []
@@ -159,21 +161,31 @@ class InventoryView(View):
             else:
                 lines.append(f"❓ **{iid}** — `{count}` шт.")
 
-        embed.description = "\n".join(lines) if lines else "*Инвентарь пуст...*"
-        embed.set_footer(text=f"Баланс: {format_number(user_data.get('balance', 0))} {ECONOMY_EMOJIS['coin']}")
+        if lines:
+            embed.description = "\n".join(lines)
+        else:
+            embed.description = "*Инвентарь пуст...*\nПопробуйте `/shop`, `/work` или `/vault` для новых возможностей."
+
+        job_name = user_data.get("job", "Безработный")
+        boost_status = "Да" if user_data.get("work_boost") else "Нет"
+        embed.add_field(
+            name="⚙️ Статус",
+            value=f"Работа: `{job_name.capitalize()}`\nЭнергетик: `{boost_status}`",
+            inline=False
+        )
+        embed.set_footer(text=f"Баланс: {format_number(user_data.get('balance', 0))} {ECONOMY_EMOJIS['coin']} • /work /vault")
         embed.set_thumbnail(url=member.display_avatar.url)
         return embed
 
 
-# ====================== МАГАЗИН ======================
+# ====================== МАГАЗИН (ИСПРАВЛЕНО) ======================
 class ShopView(View):
-    def __init__(self, user_id: int, member: discord.Member):
+    def __init__(self, user_id: int, member: "discord.Member"):
         super().__init__(timeout=300)
         self.user_id = user_id
         self.member = member
         self.current_category = None
 
-        # Выбор категории
         options = [
             discord.SelectOption(
                 label=data["name"],
@@ -191,14 +203,14 @@ class ShopView(View):
         select_cat.callback = self.category_callback
         self.add_item(select_cat)
 
-    async def category_callback(self, interaction: discord.Interaction):
+    async def category_callback(self, interaction: "discord.Interaction"):
         if interaction.user.id != self.user_id:
             return await interaction.response.send_message("❌ Это не ваше меню!", ephemeral=True)
 
         self.current_category = interaction.data['values'][0]
         await self.update_shop_embed(interaction)
 
-    async def update_shop_embed(self, interaction: discord.Interaction):
+    async def update_shop_embed(self, interaction: "discord.Interaction"):
         cat_data = SHOP_CATEGORIES.get(self.current_category, {})
         
         event_text = ""
@@ -215,7 +227,7 @@ class ShopView(View):
 
         item_options = []
         for iid, info in items.items():
-            price = get_item_price(iid, self.member) if 'get_item_price' in globals() else info["price"]
+            price = get_item_price(iid, self.member)
             old_price = info["price"]
 
             price_text = f"**Цена:** {format_number(price)} {ECONOMY_EMOJIS['coin']}"
@@ -244,15 +256,26 @@ class ShopView(View):
             item_select.callback = self.initiate_purchase
             self.add_item(item_select)
 
-        await interaction.edit_original_response(embed=embed, view=self)
+        # === ИСПРАВЛЕНИЕ ОШИБКИ Unknown Webhook ===
+        try:
+            if interaction.response.is_done():
+                await interaction.edit_original_response(embed=embed, view=self)
+            else:
+                await interaction.response.edit_message(embed=embed, view=self)
+        except discord.errors.NotFound:
+            # Если сообщение уже удалено или недоступно
+            await interaction.followup.send("❌ Сессия магазина устарела. Используйте `/shop` заново.", ephemeral=True)
+        except Exception as e:
+            logger.error(f"Ошибка обновления магазина: {e}")
+            await interaction.followup.send("❌ Произошла ошибка при обновлении магазина.", ephemeral=True)
 
-    async def initiate_purchase(self, interaction: discord.Interaction):
+    async def initiate_purchase(self, interaction: "discord.Interaction"):
         if interaction.user.id != self.user_id:
             return await interaction.response.send_message("❌ Это не ваше меню!", ephemeral=True)
 
         item_id = interaction.data['values'][0]
         item = SHOP_ITEMS[item_id]
-        final_price = get_item_price(item_id, self.member) if 'get_item_price' in globals() else item["price"]
+        final_price = get_item_price(item_id, self.member)
 
         confirm_embed = discord.Embed(title="💳 Подтверждение покупки", color=0x2ecc71)
         confirm_embed.description = f"**{item.get('emoji', '')} {item['name']}**\nЦена: **{format_number(final_price)}** {ECONOMY_EMOJIS['coin']}"
@@ -267,31 +290,57 @@ class ShopView(View):
 # ====================== ПЕРЕКЛЮЧАТЕЛЬ ВАЛЮТ ======================
 class CurrencySwitchView(View):
     def __init__(self):
-        super().__init__(timeout=180)
+        super().__init__(timeout=240)
 
     @discord.ui.button(label="🪙 Серверная валюта", style=discord.ButtonStyle.blurple, emoji="🪙")
-    async def server_val(self, interaction: discord.Interaction, button: Button):
+    async def server_val(self, interaction: "discord.Interaction", button: Button):
         embed = discord.Embed(
             title="🪙 Монеты MortisPlay",
-            description="• Основная валюта сервера\n• Получается через работу, daily, кейсы\n• Есть комиссия при переводе (5%)",
-            color=0xf1c40f
+            description=(
+                "• Основная внутриигровая валюта\n"
+                "• Получается через работу, daily и кейсы\n"
+                "• Переводы: 5% комиссия\n"
+                "• Используйте в магазине и переводах"
+            ),
+            color=0x3498db
         )
-        embed.set_footer(text="Обычная внутриигровая валюта")
+        embed.add_field(name="Использование", value="`/work`, `/shop`, `/pay`, `/vault`", inline=False)
+        embed.set_footer(text="Внутренняя валюта сервера")
         await interaction.response.edit_message(embed=embed, view=self)
 
     @discord.ui.button(label="💎 MortisCoin", style=discord.ButtonStyle.green, emoji="💎")
-    async def real_val(self, interaction: discord.Interaction, button: Button):
+    async def real_val(self, interaction: "discord.Interaction", button: Button):
         embed = discord.Embed(
             title="💎 MortisCoin",
-            description="• Премиальная валюта\n• Без комиссии при переводах\n• Обмен: 500 🪙 = 1 💎\n• Требуется верификация (/verify)",
-            color=0x00ff88
+            description=(
+                "• Премиальная внутренняя валюта\n"
+                "• Без комиссии при переводах\n"
+                "• Получается через верификацию и обмен\n"
+                "• 500 🪙 = 1 💎"
+            ),
+            color=0x00c292
         )
-        embed.set_footer(text="Премиум валюта • Защищена от инфляции")
+        embed.add_field(name="Требования", value="Нужна верификация: `/verify`", inline=False)
+        embed.set_footer(text="Премиум валюта сервера")
+        await interaction.response.edit_message(embed=embed, view=self)
+
+    @discord.ui.button(label="🌍 Валюты", style=discord.ButtonStyle.gray, emoji="🌐")
+    async def fiat_val(self, interaction: "discord.Interaction", button: Button):
+        embed = discord.Embed(
+            title="🌍 Фиатные валюты",
+            description="Показатели настоящих валют, адаптированные для внутреннего баланса MortisPlay.",
+            color=0x9b59b6
+        )
+        embed.add_field(name="🇷🇺 Рубли", value="1 ₽ = 1.4 🪙\n100 ₽ = 140 🪙", inline=False)
+        embed.add_field(name="🇺🇸 Доллары", value="1 $ = 82 🪙\n5 $ = 410 🪙", inline=False)
+        embed.add_field(name="🇪🇺 Евро", value="1 € = 92 🪙\n5 € = 460 🪙", inline=False)
+        embed.add_field(name="💎 MortisCoin", value="1 💎 = 500 🪙\nПремиум валюта без комиссии", inline=False)
+        embed.set_footer(text="Курсы ориентировочные и используются только внутри бота.")
         await interaction.response.edit_message(embed=embed, view=self)
 
 
-# Вспомогательная функция
-def get_item_price(item_id: str, member: discord.Member) -> int:
+# ====================== ЦЕНООБРАЗОВАНИЕ ======================
+def get_item_price(item_id: str, member: "discord.Member") -> int:
     """Вычисляет цену с учетом событий"""
     from config.shop import CURRENT_EVENT, SHOP_ITEMS
     item = SHOP_ITEMS.get(item_id)

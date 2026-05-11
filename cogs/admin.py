@@ -1,3 +1,4 @@
+from __future__ import annotations
 import discord
 from discord import app_commands
 from discord.ext import commands
@@ -17,7 +18,7 @@ class AdminCog(commands.Cog):
 
     @app_commands.command(name="addcoins", description="💸 Добавить монеты пользователю (Админ)")
     @app_commands.checks.has_permissions(administrator=True)
-    async def addcoins(self, interaction: discord.Interaction, member: discord.Member, amount: int):
+    async def addcoins(self, interaction: "discord.Interaction", member: "discord.Member", amount: int):
         # 1. Получаем данные пользователя из БД
         user = economy_db.get_user(member.id)
         
@@ -34,8 +35,8 @@ class AdminCog(commands.Cog):
             ephemeral=True
         )
 
-    @app_commands.command(name="stats", description="📊 Статистика бота")
-    async def statistics(self, interaction: discord.Interaction):
+    @app_commands.command(name="stats", description="� Статистика бота")
+    async def statistics(self, interaction: "discord.Interaction"):
         if interaction.user.id != OWNER_ID:
             return await interaction.response.send_message("❌ Только владелец бота.", ephemeral=True)
 

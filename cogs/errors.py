@@ -1,3 +1,4 @@
+from __future__ import annotations
 import discord
 from discord import app_commands
 from discord.ext import commands
@@ -13,7 +14,7 @@ class ErrorHandler(commands.Cog):
 
     # ====================== ОБРАБОТКА СЛЭШ-КОМАНД (/) ======================
 
-    async def on_app_command_error(self, interaction: discord.Interaction, error: app_commands.AppCommandError):
+    async def on_app_command_error(self, interaction: "discord.Interaction", error: app_commands.AppCommandError):
         """Этот метод вызывается автоматически при ошибке в любой слэш-команде"""
         
         # Обработка Кулдауна (Ограничения по времени)

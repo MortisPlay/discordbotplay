@@ -1,3 +1,4 @@
+from __future__ import annotations
 import discord
 from discord import app_commands
 from discord.ext import commands
@@ -16,7 +17,7 @@ class FunCog(commands.Cog):
     # ====================== КОМАНДЫ ======================
 
     @app_commands.command(name="iq", description="🧠 Узнать свой IQ")
-    async def iq(self, interaction: discord.Interaction):
+    async def iq(self, interaction: "discord.Interaction"):
         """Ежедневный IQ с редкими высокими значениями"""
         seed = interaction.user.id + int(datetime.now(timezone.utc).timestamp() // 86400)
         random.seed(seed)
@@ -47,7 +48,7 @@ class FunCog(commands.Cog):
         await interaction.response.send_message(embed=embed)
 
     @app_commands.command(name="coinflip", description="🪙 Подбросить монетку")
-    async def coinflip(self, interaction: discord.Interaction):
+    async def coinflip(self, interaction: "discord.Interaction"):
         result = random.choice(["Орёл", "Решка"])
         embed = discord.Embed(
             title="🪙 Монетка подброшена",
@@ -58,7 +59,7 @@ class FunCog(commands.Cog):
 
     @app_commands.command(name="dice", description="🎲 Бросить кубик")
     @app_commands.describe(sides="Количество граней (от 2 до 100)")
-    async def dice(self, interaction: discord.Interaction, sides: int = 6):
+    async def dice(self, interaction: "discord.Interaction", sides: int = 6):
         if sides < 2 or sides > 100:
             return await interaction.response.send_message(
                 "❌ Количество граней должно быть от 2 до 100.",
@@ -75,7 +76,7 @@ class FunCog(commands.Cog):
 
     @app_commands.command(name="rps", description="✂️ Камень-ножницы-бумага")
     @app_commands.describe(choice="Ваш выбор")
-    async def rps(self, interaction: discord.Interaction, choice: str):
+    async def rps(self, interaction: "discord.Interaction", choice: str):
         choices = ["камень", "ножницы", "бумага"]
         choice = choice.lower()
 

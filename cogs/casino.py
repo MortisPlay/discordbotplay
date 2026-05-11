@@ -1,4 +1,5 @@
 # cogs/casino.py
+from __future__ import annotations
 import discord
 from discord import app_commands
 from discord.ext import commands
@@ -11,7 +12,7 @@ class CasinoCog(commands.Cog):
         self.bot = bot
 
     @app_commands.command(name="slots", description="🎰 Испытать удачу в слотах")
-    async def slots(self, interaction: discord.Interaction, bet: int):
+    async def slots(self, interaction: "discord.Interaction", bet: int):
         if bet < 10: return await interaction.response.send_message("❌ Мин. ставка: 10", ephemeral=True)
         
         user_data = economy_db.get_user(interaction.user.id)
