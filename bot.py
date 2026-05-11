@@ -9,16 +9,13 @@ from utils.db import init_databases
 # ====================== НАСТРОЙКИ ======================
 intents = discord.Intents(
     guilds=True,
-    members=True,          # Видеть участников
-    presences=True,        # Видеть СТАТУС (онлайн)
-    message_content=True,  # Читать сообщения
+    members=True,
+    presences=True,
+    message_content=True,
     voice_states=True,
     moderation=True,
     guild_messages=True
 )
-
-# УДАЛИ ЭТУ СТРОКУ: bot = commands.Bot(command_prefix="!", intents=intents)
-# Она лишняя, так как ниже ты создаешь MortisBot()
 
 class MortisBot(commands.Bot):
     def __init__(self):
@@ -34,17 +31,19 @@ class MortisBot(commands.Bot):
     async def setup_hook(self):
         """Выполняется перед запуском бота"""
         print(">>> [0/4] Загрузка cogs...")
+        
         COGS = [
             "cogs.fun",
             "cogs.moderation",
             "cogs.tickets",
-            "cogs.economy",
+            "cogs.economy",      # ← Главный экономический модуль
             "cogs.errors",
             "cogs.admin",
-            "cogs.utility",      
+            "cogs.utility",
             "cogs.voice_events",
-            "cogs.casino"  
+            "cogs.casino",
         ]
+        
         for cog in COGS:
             try:
                 await self.load_extension(cog)
@@ -52,11 +51,10 @@ class MortisBot(commands.Bot):
             except Exception as e:
                 print(f"    ❌ ОШИБКА загрузки {cog}:")
                 traceback.print_exc()
-        
-        if not keep_status.is_running():
-            keep_status.start()
 
-# ОСТАВЛЯЕМ ТОЛЬКО ЭТО:
+        print(">>> Все cog'и обработаны.")
+
+# ====================== БОТ ======================
 bot = MortisBot()
 
 # ====================== СТАТУС ======================
@@ -89,14 +87,13 @@ async def on_ready():
         print(f">>> [1/4] ОШИБКА БД: {e}")
 
     # 2. Синхронизация команд
-    # ТЕПЕРЬ МЫ ИСПОЛЬЗУЕМ copy_global_to ТОЛЬКО ЗДЕСЬ, ЧТОБЫ КОМАНДЫ ПОЯВИЛИСЬ
-    print(f">>> [2/4] Синхронизация на сервер {FULL_ACCESS_GUILD_ID}...")
-    await asyncio.sleep(5) # Даем боту 5 секунд "продышаться" перед синхронизацией
+    print(f">>> [2/4] Синхронизация команд на сервер {FULL_ACCESS_GUILD_ID}...")
+    await asyncio.sleep(5)
     try:
         guild = discord.Object(id=FULL_ACCESS_GUILD_ID)
         bot.tree.copy_global_to(guild=guild)
         synced = await bot.tree.sync(guild=guild)
-        print(f">>> [2/4] OK: {len(synced)} команд на сервере")
+        print(f">>> [2/4] OK: {len(synced)} команд синхронизировано")
     except Exception as e:
         print(f">>> [2/4] ОШИБКА синхронизации: {e}")
 
