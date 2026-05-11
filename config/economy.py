@@ -214,6 +214,62 @@ JOBS = {
             "requires_verified": True,
             "min_account_age_days": 7
         }
+    },
+    "security_guard": {
+        "name": "Охранник",
+        "min_salary": 150,
+        "max_salary": 250,
+        "description": "Охраняешь важные объекты.",
+        "emoji": "👮",
+        "requirements": {
+            "min_balance": 500,
+            "min_account_age_days": 2
+        }
+    },
+    "delivery_man": {
+        "name": "Курьер",
+        "min_salary": 100,
+        "max_salary": 180,
+        "description": "Доставляешь посылки по городу.",
+        "emoji": "📮",
+        "requirements": {
+            "min_account_age_days": 1
+        }
+    },
+    "chef": {
+        "name": "Шеф-повар",
+        "min_salary": 250,
+        "max_salary": 400,
+        "description": "Готовишь деликатесы в ресторане.",
+        "emoji": "👨‍🍳",
+        "requirements": {
+            "min_balance": 800,
+            "min_account_age_days": 4
+        }
+    },
+    "designer": {
+        "name": "Дизайнер",
+        "min_salary": 350,
+        "max_salary": 550,
+        "description": "Создаёшь красивый визуал.",
+        "emoji": "🎨",
+        "requirements": {
+            "min_balance": 1500,
+            "requires_verified": True,
+            "min_account_age_days": 6
+        }
+    },
+    "ceo": {
+        "name": "Генеральный директор",
+        "min_salary": 600,
+        "max_salary": 1000,
+        "description": "Руководишь всей компанией.",
+        "emoji": "🤵",
+        "requirements": {
+            "min_balance": 5000,
+            "requires_verified": True,
+            "min_account_age_days": 14
+        }
     }
 }
 

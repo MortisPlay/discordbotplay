@@ -4,12 +4,7 @@ from datetime import date
 # Указываем дату события
 EVENT_DATE = date(2026, 5, 9) 
 
-CURRENT_EVENT = {
-    "name": "Праздник Победы",
-    "reason": "В честь 9 мая на все товары действует праздничная скидка 15%!",
-    "multiplier": 0.85,
-    "date": date(2026, 5, 9) # Добавьте эту строку!
-}
+CURRENT_EVENT = None  # События сейчас нет
 
 SHOP_CATEGORIES = {
     "бусты": {"name": "💰 Бусты доходов", "emoji": "💰", "description": "Увеличьте свои доходы на работе"},
