@@ -60,20 +60,24 @@ class Database:
     def get_user(self, user_id: int | str) -> Dict[str, Any]:
         """Получает данные пользователя или создает новые с расширенными полями"""
         user_id = str(user_id)
-        if user_id not in self.data:
-            # ОБНОВЛЕННЫЙ ШАБЛОН:
-            self.data[user_id] = {
+        if not isinstance(self.data, dict):
+            self.data = self.default_data.copy()
+
+        user_data = self.data.get(user_id)
+        if not isinstance(user_data, dict):
+            user_data = {
                 "balance": 0,            # Обычные монеты (с налогами и комиссией)
                 "mortis_coins": 0,      # Элитная валюта (без комиссий)
                 "is_verified": False,    # Пройдена ли верификация (для MortisCoin)
                 "status": "Новичок 🍼",
-                "inventory": [],
+                "inventory": {},
                 "warnings": 0,           # Кол-во подозрений от античита
                 "last_work": None,
                 "last_daily": None,
                 "created_at": datetime.now().isoformat() # Дата регистрации в экономике
             }
-        return self.data[user_id]
+            self.data[user_id] = user_data
+        return user_data
 
     def update_user(self, user_id: int | str, data: Dict[str, Any] = None):
         """

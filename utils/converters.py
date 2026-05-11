@@ -85,4 +85,4 @@ class MemberOrIDConverter(commands.Converter):
 
 # Можно использовать в командах так:
 # @app_commands.describe(duration="Длительность (1h, 30m, 2d)")
-# async def mute(self, interaction: discord.Interaction, member: discord.Member, duration: DurationConverter):
+# async def mute(self, interaction: "discord.Interaction", member: "discord.Member", duration: DurationConverter):
