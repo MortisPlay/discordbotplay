@@ -21,15 +21,17 @@ class TicketsCog(commands.Cog):
     # ====================== ОСНОВНЫЕ КОМАНДЫ ======================
 
     @app_commands.command(name="panel", description="🎫 Создать панель тикетов")
-    @commands.has_permissions(administrator=True)
+    @app_commands.default_permissions(administrator=True)
     async def ticket_panel(self, interaction: discord.Interaction):
         embed = discord.Embed(
-            title="🎫 Система поддержки",
-            description="Нажмите кнопку ниже, чтобы создать тикет.",
+            title="🎫 Центр поддержки",
+            description="Нажмите кнопку ниже, чтобы создать обращение.",
             color=0x9B59B6
         )
-        view = ImprovedTicketPanelView(self.bot) # Передаем self.bot
-        await interaction.response.send_message(embed=embed, view=view)
+        
+        await interaction.response.send_message("✅ Панель создана!", ephemeral=True)
+        
+        await interaction.channel.send(embed=embed, view=ImprovedTicketPanelView(self.bot))
 
     # ====================== UI ======================
 

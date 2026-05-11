@@ -4,12 +4,10 @@ from discord.ext import commands
 import platform
 import psutil
 import time
-from datetime import datetime
-from typing import Optional
+from utils.db import economy_db
 
 from config.settings import logger, format_number
-from config.economy import ECONOMY_EMOJIS
-from utils.db import economy_db
+from config.economy import ECONOMY_EMOJIS, JOBS
 
 class UtilityCog(commands.Cog):
     def __init__(self, bot: commands.Bot):
@@ -17,131 +15,80 @@ class UtilityCog(commands.Cog):
         self.start_time = time.time()
 
     def get_progress_bar(self, percent):
-        """Создает текстовый визуальный индикатор нагрузки"""
         filled = int(percent / 10)
         bar = "▰" * filled + "▱" * (10 - filled)
         return bar
 
     @app_commands.command(name="user", description="👤 Подробная информация о пользователе")
     @app_commands.describe(member="Пользователь, чей профиль нужно посмотреть")
-    async def user_info(self, interaction: discord.Interaction, member: Optional[discord.Member] = None):
-        # 1. СРАЗУ отправляем сигнал ожидания (даем боту +15 минут на ответ)
-        # ephemeral=True, так как финальный ответ тоже будет скрытым
+    async def user_info(self, interaction: discord.Interaction, member: discord.Member = None):
         await interaction.response.defer(ephemeral=True)
-
         try:
-            # 2. Теперь спокойно выполняем все расчеты
             target = member or interaction.user
-            
-            if interaction.guild:
-                member = interaction.guild.get_member(target.id) or target
-            else:
-                member = target
+            guild_member = interaction.guild.get_member(target.id) if interaction.guild else target
 
-            user_data = economy_db.get_user(member.id)
-            
+            user_data = economy_db.get_user(target.id)
             balance = user_data.get("balance", 0)
             job = user_data.get("job", "Безработный").capitalize()
-            inventory = user_data.get("inventory", {})
-            total_items = sum(inventory.values()) if inventory else 0
-            
-            status_map = {
-                discord.Status.online: "🟢 В сети",
-                discord.Status.idle: "🌙 Не активен",
-                discord.Status.dnd: "🔴 Не беспокоить",
-                discord.Status.offline: "⚪ Не в сети",
-                discord.Status.invisible: "⚪ Не в сети"
-            }
-            
-            current_status = getattr(member, "status", discord.Status.offline)
-            status_text = status_map.get(current_status, "⚪ Вне зоны доступа")
 
-            embed = discord.Embed(title=f"👤 Досье: {member.display_name}", color=0x2b2d31)
-            embed.set_thumbnail(url=member.display_avatar.url)
-            
-            joined_at = f"<t:{int(member.joined_at.timestamp())}:R>" if hasattr(member, "joined_at") and member.joined_at else "Неизвестно"
-            top_role = member.top_role.mention if hasattr(member, "top_role") else "Нет ролей"
+            embed = discord.Embed(title=f"👤 Досье: {target.display_name}", color=0x2b2d31)
+            embed.set_thumbnail(url=target.display_avatar.url)
 
-            embed.add_field(
-                name="📝 Общие сведения",
-                value=(
-                    f"**Статус:** `{status_text}`\n"
-                    f"**Аккаунт создан:** <t:{int(member.created_at.timestamp())}:D>\n"
-                    f"**Зашел на сервер:** {joined_at}\n"
-                    f"**Топ роль:** {top_role}"
-                ),
-                inline=False
-            )
+            embed.add_field(name="📝 Общие сведения", value=(
+                f"**Аккаунт создан:** <t:{int(target.created_at.timestamp())}:D>\n"
+                f"**На сервере с:** <t:{int(guild_member.joined_at.timestamp())}:R>" if guild_member.joined_at else "Неизвестно"
+            ), inline=False)
 
-            embed.add_field(
-                name=f"{ECONOMY_EMOJIS['balance']} Экономика",
-                value=(
-                    f"**Баланс:** `{format_number(balance)}` {ECONOMY_EMOJIS['coin']}\n"
-                    f"**Место работы:** `{job}`\n"
-                    f"**Предметов:** `{total_items}` шт."
-                ),
-                inline=True
-            )
+            embed.add_field(name=f"{ECONOMY_EMOJIS['balance']} Экономика", 
+                           value=f"**Баланс:** `{format_number(balance)}` {ECONOMY_EMOJIS['coin']}\n**Работа:** `{job}`", 
+                           inline=True)
 
-            if hasattr(member, "roles"):
-                roles = [role.mention for role in reversed(member.roles[1:])]
-                roles_text = ", ".join(roles[:5]) + (f" и еще {len(roles)-5}" if len(roles) > 5 else "")
-            else:
-                roles_text = "Нет ролей"
-
-            embed.add_field(name="🎭 Роли", value=roles_text if roles_text else "Нет ролей", inline=True)
-            embed.set_footer(text=f"ID: {member.id} • Семья Бензопил")
-
-            # 3. ТАК КАК МЫ ИСПОЛЬЗОВАЛИ defer(), отвечаем через follow-up
+            embed.set_footer(text=f"ID: {target.id} • Семья Бензопил")
             await interaction.followup.send(embed=embed)
 
         except Exception as e:
-            logger.error(f"Ошибка в команде user: {e}")
-            # Если что-то пошло не так, сообщаем пользователю
-            await interaction.followup.send("❌ Произошла ошибка при получении данных.", ephemeral=True)
+            logger.error(f"Ошибка user: {e}")
+            await interaction.followup.send("❌ Ошибка при получении данных.", ephemeral=True)
 
-    @app_commands.command(name="botinfo", description="🛰️ Состояние систем и технические характеристики")
+    @app_commands.command(name="botinfo", description="🛰️ Состояние систем")
     async def botinfo(self, interaction: discord.Interaction):
-        uptime_seconds = int(time.time() - self.start_time)
-        days, rem = divmod(uptime_seconds, 86400)
-        hours, rem = divmod(rem, 3600)
-        minutes, seconds = divmod(rem, 60)
-        uptime_str = f"{days}д {hours}ч {minutes}м"
+        cpu = psutil.cpu_percent()
+        mem = psutil.virtual_memory().percent
+        uptime = int(time.time() - self.start_time)
 
-        cpu_pct = psutil.cpu_percent()
-        ram = psutil.virtual_memory()
-        ping = round(self.bot.latency * 1000)
+        embed = discord.Embed(title="🦾 System Status", color=0x2ECC71)
+        embed.add_field(name="CPU", value=f"[{self.get_progress_bar(cpu)}] `{cpu}%`", inline=False)
+        embed.add_field(name="RAM", value=f"[{self.get_progress_bar(mem)}] `{mem}%`", inline=False)
+        embed.add_field(name="Uptime", value=f"<t:{int(time.time() - uptime)}:R>", inline=False)
+        embed.set_footer(text=f"{platform.system()} • 2026")
         
-        embed = discord.Embed(
-            title="🦾 Mortis Bot Control Center",
-            description=f"**Состояние системы:** `СТАБИЛЬНО` ✅\n**Версия протокола:** `v2.4.0-build`",
-            color=0x2b2d31
-        )
-        
-        if self.bot.user.avatar:
-            embed.set_thumbnail(url=self.bot.user.avatar.url)
-
-        embed.add_field(
-            name="📊 Ресурсы хоста",
-            value=(
-                f"**CPU:** `{cpu_pct}%`\n`{self.get_progress_bar(cpu_pct)}`\n"
-                f"**RAM:** `{ram.percent}%`\n`{self.get_progress_bar(ram.percent)}`"
-            ),
-            inline=False
-        )
-
-        embed.add_field(
-            name="📡 Сеть и Статистика",
-            value=(
-                f"**Пинг:** `{ping}ms`\n"
-                f"**Серверы:** `{len(self.bot.guilds)}`\n"
-                f"**Аптайм:** `{uptime_str}`"
-            ),
-            inline=True
-        )
-
-        embed.set_footer(text=f"MortisPlay.ru • 2026")
         await interaction.response.send_message(embed=embed, ephemeral=True)
+
+    @app_commands.command(name="job", description="💼 Устроиться на работу")
+    @app_commands.describe(job_name="Название работы")
+    @app_commands.choices(job_name=[
+        app_commands.Choice(name=job["name"], value=job_id) 
+        for job_id, job in JOBS.items()
+    ])
+    async def job(self, interaction: discord.Interaction, job_name: str):
+        user = economy_db.get_user(interaction.user.id)
+        if user.get("job") == job_name:
+            return await interaction.response.send_message("✅ Вы уже работаете на этой должности!", ephemeral=True)
+
+        job_info = JOBS.get(job_name)
+        if not job_info:
+            return await interaction.response.send_message("❌ Такой работы не существует.", ephemeral=True)
+
+        user["job"] = job_name
+        economy_db.update_user(interaction.user.id, user)
+
+        await interaction.response.send_message(
+            f"✅ Вы устроились на работу **{job_info['name']}**!\n"
+            f"Зарплата: `{job_info['min_salary']}-{job_info['max_salary']}` {ECONOMY_EMOJIS['coin']}",
+            ephemeral=True
+        )
+
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(UtilityCog(bot))
+    logger.info("✅ UtilityCog загружен")
