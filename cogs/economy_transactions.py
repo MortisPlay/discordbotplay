@@ -125,6 +125,11 @@ class EconomyTransactions(commands.Cog):
 
         try:
             msg = await self.bot.wait_for("message", check=check, timeout=20)
+            try:
+                await msg.delete()
+            except:
+                pass
+            
             if int(msg.content.strip()) != result:
                 return await interaction.followup.send("❌ Неверный ответ!", ephemeral=True)
 
@@ -132,6 +137,11 @@ class EconomyTransactions(commands.Cog):
             await interaction.followup.send(f"✅ Верно!\n\nВведите капчу: **`{captcha}`**", ephemeral=True)
             
             msg2 = await self.bot.wait_for("message", check=check, timeout=20)
+            try:
+                await msg2.delete()
+            except:
+                pass
+            
             if msg2.content.strip() != captcha:
                 return await interaction.followup.send("❌ Неверная капча!", ephemeral=True)
 

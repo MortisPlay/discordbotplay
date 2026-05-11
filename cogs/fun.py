@@ -74,39 +74,6 @@ class FunCog(commands.Cog):
         )
         await interaction.response.send_message(embed=embed)
 
-    @app_commands.command(name="rps", description="✂️ Камень-ножницы-бумага")
-    @app_commands.describe(choice="Ваш выбор")
-    async def rps(self, interaction: "discord.Interaction", choice: str):
-        choices = ["камень", "ножницы", "бумага"]
-        choice = choice.lower()
-
-        if choice not in choices:
-            return await interaction.response.send_message(
-                f"❌ Выберите: `{', '.join(choices)}`",
-                ephemeral=True
-            )
-
-        bot_choice = random.choice(choices)
-
-        if choice == bot_choice:
-            result = "Ничья! 🤝"
-            color = 0x3498DB
-        elif (choice == "камень" and bot_choice == "ножницы") or \
-             (choice == "ножницы" and bot_choice == "бумага") or \
-             (choice == "бумага" and bot_choice == "камень"):
-            result = "Ты выиграл! 🎉"
-            color = 0x2ECC71
-        else:
-            result = "Я выиграл! 🤖"
-            color = 0xE74C3C
-
-        embed = discord.Embed(
-            title="✂️ Камень-ножницы-бумага",
-            description=f"**Ты:** {choice.capitalize()}\n**Я:** {bot_choice.capitalize()}\n\n**{result}**",
-            color=color
-        )
-        await interaction.response.send_message(embed=embed)
-
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(FunCog(bot))

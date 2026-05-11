@@ -196,12 +196,7 @@ class EconomyCore(commands.Cog):
             failures.append("верификация (/verify)")
 
         if requirements.get("min_account_age_days"):
-            created_at = user.get("created_at")
-            age_days = 0
-            try:
-                age_days = (datetime.now(timezone.utc) - datetime.fromisoformat(created_at)).days
-            except Exception:
-                age_days = 0
+            age_days = (datetime.now(timezone.utc) - interaction.user.created_at).days
             if age_days < requirements["min_account_age_days"]:
                 failures.append(f"возраст аккаунта не менее {requirements['min_account_age_days']} дней")
 
