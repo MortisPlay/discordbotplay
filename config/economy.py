@@ -185,21 +185,35 @@ JOBS = {
         "min_salary": 120,
         "max_salary": 180,
         "description": "Варишь кофе в центре.",
-        "emoji": "☕"
+        "emoji": "☕",
+        "requirements": {
+            "min_balance": 200,
+            "min_account_age_days": 3
+        }
     },
     "manager": {
         "name": "Менеджер",
         "min_salary": 200,
         "max_salary": 350,
         "description": "Руководишь проектами.",
-        "emoji": "💼"
+        "emoji": "💼",
+        "requirements": {
+            "min_balance": 1000,
+            "requires_verified": True,
+            "min_account_age_days": 5
+        }
     },
     "programmer": {
         "name": "Разработчик",
         "min_salary": 400,
         "max_salary": 600,
         "description": "Пишешь код для MortisPlay.",
-        "emoji": "💻"
+        "emoji": "💻",
+        "requirements": {
+            "min_balance": 2500,
+            "requires_verified": True,
+            "min_account_age_days": 7
+        }
     }
 }
 
