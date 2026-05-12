@@ -7,9 +7,10 @@ import asyncio
 import random
 
 from config.settings import logger, format_number
-from config.economy import ECONOMY_EMOJIS
+from config.economy import ECONOMY_EMOJIS, JOBS
 from config.shop import SHOP_ITEMS, SHOP_CATEGORIES, CURRENT_EVENT, INVENTORY_ITEMS
 from utils.db import economy_db
+from datetime import timezone
 
 
 # ====================== ПОДТВЕРЖДЕНИЕ ПОКУПКИ ======================
@@ -52,6 +53,109 @@ class ConfirmPurchaseView(View):
         if interaction.user.id != self.user_id:
             return await interaction.response.send_message("❌ Это не ваше меню!", ephemeral=True)
         await interaction.response.edit_message(content="🛒 Покупка отменена.", embed=None, view=None)
+
+
+# ====================== ВЫБОР РАБОТЫ ======================
+class JobSelectionView(View):
+    def __init__(self, user_id: int, user: dict, interaction_user: discord.User):
+        super().__init__(timeout=180)
+        self.user_id = user_id
+        self.user_data = user
+        self.interaction_user = interaction_user
+
+        options = []
+        for job_id, job_info in JOBS.items():
+            if job_id == "unemployed":
+                continue
+            options.append(discord.SelectOption(
+                label=f"{job_info.get('emoji', '')} {job_info['name']}",
+                value=job_id,
+                description=f"Зарплата: {job_info['min_salary']}-{job_info['max_salary']}",
+                emoji=job_info.get('emoji')
+            ))
+
+        if options:
+            job_select = Select(
+                placeholder="💼 Выберите профессию...",
+                options=options[:25],
+                min_values=1,
+                max_values=1
+            )
+            job_select.callback = self.job_callback
+            self.add_item(job_select)
+
+    async def job_callback(self, interaction: discord.Interaction):
+        if interaction.user.id != self.user_id:
+            return await interaction.response.send_message("❌ Это не ваше меню!", ephemeral=True)
+
+        job_id = interaction.data['values'][0]
+        job_info = JOBS.get(job_id)
+
+        if not job_info:
+            return await interaction.response.send_message("❌ Такой работы не существует.", ephemeral=True)
+
+        current_job = self.user_data.get("job", "unemployed")
+        if current_job == job_id:
+            return await interaction.response.send_message("✅ Вы уже работаете на этой должности!", ephemeral=True)
+
+        requirements = job_info.get("requirements", {})
+        failures = []
+
+        if requirements.get("min_balance") and self.user_data.get("balance", 0) < requirements["min_balance"]:
+            failures.append(f"💰 Баланс не ниже {format_number(requirements['min_balance'])} {ECONOMY_EMOJIS['coin']}")
+
+        if requirements.get("requires_verified") and not self.user_data.get("is_verified", False):
+            failures.append("🔐 Верификация (/verify)")
+
+        if requirements.get("min_account_age_days"):
+            age_days = (datetime.now(timezone.utc) - self.interaction_user.created_at).days
+            if age_days < requirements["min_account_age_days"]:
+                failures.append(f"📅 Возраст аккаунта ≥ {requirements['min_account_age_days']} дней")
+
+        if failures:
+            embed = discord.Embed(
+                title=f"❌ Не удалось устроиться на {job_info['name']}",
+                description="Не выполнены следующие требования:",
+                color=0xe74c3c
+            )
+            embed.add_field(name="Требования", value="\n".join(f"• {reason}" for reason in failures), inline=False)
+            embed.add_field(name="Описание", value=job_info.get("description", "Нет описания"), inline=False)
+            embed.add_field(name="Зарплата", value=f"{job_info['min_salary']}-{job_info['max_salary']} {ECONOMY_EMOJIS['coin']} за смену", inline=False)
+            return await interaction.response.send_message(embed=embed, ephemeral=True)
+
+        self.user_data["job"] = job_id
+        economy_db.update_user(self.user_id, self.user_data)
+
+        embed = discord.Embed(
+            title="✅ Добро пожаловать на новую работу!",
+            description=(
+                f"{job_info.get('emoji', '')} **{job_info['name']}**\n\n"
+                f"{job_info.get('description', 'Нет описания')}"
+            ),
+            color=0x2ecc71
+        )
+        embed.add_field(
+            name="💵 Зарплата за смену",
+            value=f"**{job_info['min_salary']}-{job_info['max_salary']}** {ECONOMY_EMOJIS['coin']}",
+            inline=False
+        )
+
+        if requirements:
+            req_list = []
+            if requirements.get("min_balance"):
+                req_list.append(f"💰 Баланс: {format_number(requirements['min_balance'])} {ECONOMY_EMOJIS['coin']}")
+            if requirements.get("requires_verified"):
+                req_list.append("🔐 Требуется верификация")
+            if requirements.get("min_account_age_days"):
+                req_list.append(f"📅 Возраст аккаунта: {requirements['min_account_age_days']} дней")
+
+            if req_list:
+                embed.add_field(name="✅ Требования выполнены", value="\n".join(req_list), inline=False)
+
+        embed.add_field(name="💡 Совет", value="Используйте `/work` для работы и получения зарплаты!", inline=False)
+        embed.set_footer(text="Начните работать: /work")
+
+        await interaction.response.send_message(embed=embed, ephemeral=True)
 
 
 # ====================== ИНВЕНТАРЬ ======================
@@ -349,8 +453,7 @@ def get_item_price(item_id: str, member: "discord.Member") -> int:
     
     base_price = item["price"]
     today = datetime.now().date()
-    event_date = CURRENT_EVENT.get("date")
     
-    if event_date and today == event_date:
+    if CURRENT_EVENT and CURRENT_EVENT.get("date") and today == CURRENT_EVENT.get("date"):
         return int(base_price * CURRENT_EVENT.get("multiplier", 1.0))
     return base_price

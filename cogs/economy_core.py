@@ -170,73 +170,20 @@ class EconomyCore(commands.Cog):
 
     # ====================== JOB ======================
     @app_commands.command(name="job", description="💼 Устроиться на работу")
-    @app_commands.describe(job_name="Выберите работу")
-    @app_commands.choices(job_name=[
-        app_commands.Choice(name=job["name"], value=job_id)
-        for job_id, job in JOBS.items() if job_id != "unemployed"
-    ])
-    async def job(self, interaction: discord.Interaction, job_name: str):
+    async def job(self, interaction: discord.Interaction):
         user = economy_db.get_user(interaction.user.id)
-        current_job = user.get("job", "unemployed")
-
-        if current_job == job_name:
-            return await interaction.response.send_message("✅ Вы уже работаете на этой должности!", ephemeral=True)
-
-        job_info = JOBS.get(job_name)
-        if not job_info:
-            return await interaction.response.send_message("❌ Такой работы не существует.", ephemeral=True)
-
-        requirements = job_info.get("requirements", {})
-        failures = []
-
-        if requirements.get("min_balance") and user.get("balance", 0) < requirements["min_balance"]:
-            failures.append(f"баланс не ниже {format_number(requirements['min_balance'])} {ECONOMY_EMOJIS['coin']}")
-
-        if requirements.get("requires_verified") and not user.get("is_verified", False):
-            failures.append("верификация (/verify)")
-
-        if requirements.get("min_account_age_days"):
-            age_days = (datetime.now(timezone.utc) - interaction.user.created_at).days
-            if age_days < requirements["min_account_age_days"]:
-                failures.append(f"возраст аккаунта не менее {requirements['min_account_age_days']} дней")
-
-        if failures:
-            embed = discord.Embed(
-                title=f"❌ Не удалось устроиться на {job_info['name']}",
-                description="Требования для должности:",
-                color=0xe74c3c
-            )
-            embed.add_field(name="Требования", value="\n".join(f"• {reason}" for reason in failures), inline=False)
-            embed.add_field(name="Описание", value=job_info.get("description", ""), inline=False)
-            return await interaction.response.send_message(embed=embed, ephemeral=True)
-
-        user["job"] = job_name
-        economy_db.update_user(interaction.user.id, user)
-
+        
+        from .economy_ui import JobSelectionView
+        view = JobSelectionView(interaction.user.id, user, interaction.user)
+        
         embed = discord.Embed(
-            title="✅ Работа найдена",
-            description=(
-                f"Вы устроились на должность **{job_info['name']}** {job_info.get('emoji', '')}\n"
-                f"{job_info.get('description', '')}"
-            ),
-            color=0x2ecc71
+            title="💼 Выбор профессии",
+            description="Выберите работу, которая вам нравится. Для каждой работы есть свои требования!",
+            color=0x3498db
         )
-        embed.add_field(name="Зарплата", value=f"`{job_info['min_salary']}-{job_info['max_salary']}` {ECONOMY_EMOJIS['coin']}", inline=False)
-        if requirements:
-            embed.add_field(
-                name="Требования",
-                value="\n".join(
-                    f"• {reason}"
-                    for reason in [
-                        f"баланс не ниже {format_number(requirements['min_balance'])} {ECONOMY_EMOJIS['coin']}" if requirements.get('min_balance') else None,
-                        "верификация (/verify)" if requirements.get('requires_verified') else None,
-                        f"возраст аккаунта ≥ {requirements['min_account_age_days']} дн." if requirements.get('min_account_age_days') else None
-                    ]
-                    if reason
-                ),
-                inline=False
-            )
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        embed.add_field(name="💡 Совет", value="Скоро вы сможете работать и зарабатывать! Используйте `/work` для получения зарплаты.", inline=False)
+        
+        await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
 
     # ====================== INVENTORY ======================
     @app_commands.command(name="inventory", description="🎒 Просмотр инвентаря")
