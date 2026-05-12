@@ -25,8 +25,8 @@ ECONOMY_EMOJIS = {
 MALE_ROLE_ID = 1477476332714856561 
 
 # ====================== НАСТРОЙКИ ГОЛОСОВОЙ АКТИВНОСТИ ======================
-VOICE_INCOME_PER_MINUTE = 5       
-VOICE_MIN_SESSION_MINUTES = 2    
+VOICE_INCOME_PER_HOUR = 20
+VOICE_MIN_SESSION_MINUTES = 60
 
 # ====================== МАГАЗИН И КАТЕГОРИИ ======================
 
