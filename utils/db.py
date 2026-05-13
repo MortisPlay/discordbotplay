@@ -74,9 +74,30 @@ class Database:
                 "warnings": 0,           # Кол-во подозрений от античита
                 "last_work": None,
                 "last_daily": None,
-                "created_at": datetime.now().isoformat() # Дата регистрации в экономике
+                "created_at": datetime.now().isoformat(), # Дата регистрации в экономике
+                "bp_xp": 0,
+                "bp_premium": False,
+                "bp_claimed": []
             }
             self.data[user_id] = user_data
+            asyncio.create_task(self.save())
+            return user_data
+
+        changed = False
+        if "bp_xp" not in user_data:
+            user_data["bp_xp"] = 0
+            changed = True
+        if "bp_premium" not in user_data:
+            user_data["bp_premium"] = False
+            changed = True
+        if "bp_claimed" not in user_data:
+            user_data["bp_claimed"] = []
+            changed = True
+
+        if changed:
+            self.data[user_id] = user_data
+            asyncio.create_task(self.save())
+
         return user_data
 
     def update_user(self, user_id: int | str, data: Dict[str, Any] = None):

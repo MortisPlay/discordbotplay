@@ -76,6 +76,9 @@ async def migrate_old_economy_to_new():
             new_user["investments"] = data.get("investments", []).copy()
             new_user["active_effects"] = data.get("active_effects", []).copy()
             new_user["active_discounts"] = data.get("active_discounts", []).copy()
+            new_user["bp_xp"] = data.get("bp_xp", 0)
+            new_user["bp_premium"] = data.get("bp_premium", False)
+            new_user["bp_claimed"] = data.get("bp_claimed", []).copy()
 
             migrated += 1
 

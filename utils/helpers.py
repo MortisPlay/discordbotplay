@@ -18,7 +18,25 @@ def format_duration(seconds: int) -> str:
         return f"{hours}h {minutes}m" if minutes else f"{hours}h"
     days = hours // 24
     hours = hours % 24
-    return f"{days}d {hours}h" if hours else f"{days}d"
+    if days < 30:
+        return f"{days}d {hours}h" if hours else f"{days}d"
+    months = days // 30
+    days = days % 30
+    if months < 12:
+        if days and hours:
+            return f"{months}mo {days}d {hours}h"
+        if days:
+            return f"{months}mo {days}d"
+        if hours:
+            return f"{months}mo {hours}h"
+        return f"{months}mo"
+    years = months // 12
+    months = months % 12
+    if months and days:
+        return f"{years}y {months}mo {days}d"
+    if months:
+        return f"{years}y {months}mo"
+    return f"{years}y"
 
 
 def parse_duration(duration_str: str) -> int | None:
