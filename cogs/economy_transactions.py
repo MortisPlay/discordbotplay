@@ -161,32 +161,141 @@ class EconomyTransactions(commands.Cog):
     # ====================== ВАЛЮТА ======================
     valute_group = app_commands.Group(name="valute", description="💱 Управление валютами")
 
-    @valute_group.command(name="exchange", description="💱 Обменять монеты на MortisCoin")
-    async def valute_exchange(self, interaction: "discord.Interaction", amount_coins: int):
-        if amount_coins < 500:
-            return await interaction.response.send_message("❌ Минимум 500 монет.", ephemeral=True)
-
+    @valute_group.command(name="exchange", description="💱 Двусторонний обмен валют")
+    async def valute_exchange(self, interaction: "discord.Interaction"):
         user = economy_db.get_user(interaction.user.id)
         if not user.get("is_verified"):
             return await interaction.response.send_message("❌ Нужна верификация (/verify)", ephemeral=True)
 
-        if user.get("balance", 0) < amount_coins:
-            return await interaction.response.send_message("❌ Недостаточно монет!", ephemeral=True)
+        balance = user.get("balance", 0)
+        mcoins = user.get("mortis_coins", 0)
 
-        rate = 500
-        m_coins = amount_coins // rate
-        spent = m_coins * rate
-
-        user["balance"] -= spent
-        user["mortis_coins"] = user.get("mortis_coins", 0) + m_coins
-        economy_db.update_user(interaction.user.id, user)
-
-        await interaction.response.send_message(
-            f"✅ Обмен выполнен!\n"
-            f"Отдано: **{format_number(spent)}** 🪙\n"
-            f"Получено: **{m_coins}** 💎",
-            ephemeral=True
+        embed = discord.Embed(
+            title="💱 Обмен валют",
+            description="Выберите направление обмена",
+            color=0x9b59b6
         )
+        embed.add_field(
+            name="🪙 Ваш баланс монет",
+            value=f"`{format_number(balance)}` 🪙",
+            inline=True
+        )
+        embed.add_field(
+            name="💎 Ваш баланс MortisCoin",
+            value=f"`{mcoins}` 💎",
+            inline=True
+        )
+        embed.add_field(
+            name="📊 Курс обмена",
+            value="500 🪙 = 1 💎\n1 💎 = 500 🪙",
+            inline=False
+        )
+
+        view = ExchangeDirectionView(interaction.user.id, user)
+        await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+
+
+# ====================== ВЫБОР НАПРАВЛЕНИЯ ОБМЕНА ======================
+class ExchangeDirectionView(discord.ui.View):
+    def __init__(self, user_id: int, user_data: dict):
+        super().__init__(timeout=120)
+        self.user_id = user_id
+        self.user_data = user_data
+
+    @discord.ui.button(label="🪙 → 💎 (Монеты → MortisCoin)", style=discord.ButtonStyle.green, emoji="🪙")
+    async def coins_to_mcoins(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user.id != self.user_id:
+            return await interaction.response.send_message("❌ Это не ваше меню!", ephemeral=True)
+
+        # Создаём модальное окно для ввода количества
+        modal = ExchangeModal(
+            title="🪙 → 💎 Монеты → MortisCoin",
+            exchange_type="coins_to_mcoins",
+            user_data=self.user_data
+        )
+        await interaction.response.send_modal(modal)
+
+    @discord.ui.button(label="💎 → 🪙 (MortisCoin → Монеты)", style=discord.ButtonStyle.blurple, emoji="💎")
+    async def mcoins_to_coins(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user.id != self.user_id:
+            return await interaction.response.send_message("❌ Это не ваше меню!", ephemeral=True)
+
+        # Создаём модальное окно для ввода количества
+        modal = ExchangeModal(
+            title="💎 → 🪙 MortisCoin → Монеты",
+            exchange_type="mcoins_to_coins",
+            user_data=self.user_data
+        )
+        await interaction.response.send_modal(modal)
+
+
+# ====================== МОДАЛЬНОЕ ОКНО ОБМЕНА ======================
+class ExchangeModal(discord.ui.Modal):
+    amount = discord.ui.TextInput(label="Количество", placeholder="Минимум: 1", required=True, min_length=1, max_length=10)
+
+    def __init__(self, title: str, exchange_type: str, user_data: dict):
+        super().__init__(title=title)
+        self.exchange_type = exchange_type
+        self.user_data = user_data
+
+    async def on_submit(self, interaction: discord.Interaction):
+        try:
+            amount = int(self.amount.value)
+        except ValueError:
+            return await interaction.response.send_message("❌ Введите число!", ephemeral=True)
+
+        user = economy_db.get_user(interaction.user.id)
+        rate = 500
+
+        if self.exchange_type == "coins_to_mcoins":
+            if amount < 500:
+                return await interaction.response.send_message("❌ Минимум 500 🪙!", ephemeral=True)
+            
+            if user.get("balance", 0) < amount:
+                return await interaction.response.send_message("❌ Недостаточно монет!", ephemeral=True)
+
+            mcoins_to_get = amount // rate
+            spent = mcoins_to_get * rate
+            remainder = amount % rate
+
+            user["balance"] -= spent
+            user["mortis_coins"] = user.get("mortis_coins", 0) + mcoins_to_get
+            economy_db.update_user(interaction.user.id, user)
+
+            embed = discord.Embed(
+                title="✅ Обмен завершён!",
+                description="🪙 → 💎",
+                color=0x2ecc71
+            )
+            embed.add_field(name="Отдано", value=f"`{format_number(spent)}` 🪙", inline=True)
+            embed.add_field(name="Получено", value=f"`{mcoins_to_get}` 💎", inline=True)
+            if remainder > 0:
+                embed.add_field(name="💡 Остаток", value=f"`{format_number(remainder)}` 🪙 (менее 500)", inline=False)
+            embed.set_footer(text="Спасибо за использование сервиса!")
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+
+        elif self.exchange_type == "mcoins_to_coins":
+            if amount < 1:
+                return await interaction.response.send_message("❌ Минимум 1 💎!", ephemeral=True)
+            
+            if user.get("mortis_coins", 0) < amount:
+                return await interaction.response.send_message("❌ Недостаточно MortisCoin!", ephemeral=True)
+
+            coins_to_get = amount * rate
+            
+            user["mortis_coins"] -= amount
+            user["balance"] = user.get("balance", 0) + coins_to_get
+            economy_db.update_user(interaction.user.id, user)
+
+            embed = discord.Embed(
+                title="✅ Обмен завершён!",
+                description="💎 → 🪙",
+                color=0x2ecc71
+            )
+            embed.add_field(name="Отдано", value=f"`{amount}` 💎", inline=True)
+            embed.add_field(name="Получено", value=f"`{format_number(coins_to_get)}` 🪙", inline=True)
+            embed.set_footer(text="Спасибо за использование сервиса!")
+            await interaction.response.send_message(embed=embed, ephemeral=True)
 
 
 async def setup(bot: commands.Bot):

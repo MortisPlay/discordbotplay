@@ -20,9 +20,12 @@ async def setup(bot: commands.Bot):
     from .economy_core import EconomyCore
     from .economy_shop import EconomyShop
     from .economy_transactions import EconomyTransactions
+    # Импортируем наш новый класс из папки economy_bp
+    from .economy_bp.bp_main import BattlePassCog 
 
+    await bot.add_cog(BattlePassCog(bot)) 
     await bot.add_cog(EconomyCore(bot))
     await bot.add_cog(EconomyShop(bot))
     await bot.add_cog(EconomyTransactions(bot))
 
-    logger.info("✅ Полный Economy модуль успешно загружен (Core + Shop + Transactions)")
+    logger.info("✅ Полный Economy модуль успешно загружен (Core + Shop + Transactions + BattlePass)")

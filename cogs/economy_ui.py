@@ -2,15 +2,61 @@
 from __future__ import annotations
 import discord
 from discord.ui import View, Button, Select
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 import asyncio
 import random
 
 from config.settings import logger, format_number
 from config.economy import ECONOMY_EMOJIS, JOBS
-from config.shop import SHOP_ITEMS, SHOP_CATEGORIES, CURRENT_EVENT, INVENTORY_ITEMS
+from config.shop import SHOP_ITEMS, SHOP_CATEGORIES, CURRENT_EVENT, INVENTORY_ITEMS, PROMO_ROTATION_START
+from .economy_bp.bp_core import BPCore
+from .economy_bp.bp_config import BP_SETTINGS
 from utils.db import economy_db
-from datetime import timezone
+from utils.helpers import format_duration
+
+
+def create_timer_display(remaining_seconds: int) -> str:
+    """Создаёт красивый дисплей обратного отсчёта"""
+    if remaining_seconds <= 0:
+        return "⏰ Действие завершено!"
+    
+    days = remaining_seconds // 86400
+    hours = (remaining_seconds % 86400) // 3600
+    minutes = (remaining_seconds % 3600) // 60
+    seconds = remaining_seconds % 60
+    
+    if days > 0:
+        return f"⏰ `{days}д {hours}ч {minutes}м`"
+    elif hours > 0:
+        return f"⏰ `{hours}ч {minutes}м {seconds}с`"
+    elif minutes > 0:
+        return f"⏰ `{minutes}м {seconds}с`"
+    else:
+        return f"⏰ `{seconds}с`"
+
+
+def create_progress_bar(remaining_seconds: int, total_seconds: int, length: int = 10) -> str:
+    """Создаёт красивый прогресс-бар для времени"""
+    if total_seconds <= 0:
+        return "[" + "░" * length + "] 0%"
+    progress = remaining_seconds / total_seconds
+    filled = int(progress * length)
+    bar = "█" * filled + "░" * (length - filled)
+    percentage = int(progress * 100)
+    return f"[{bar}] {percentage}%"
+
+
+def get_expiry_display(total_hours: int) -> str:
+    """Красивый формат для срока действия"""
+    if total_hours == 24:
+        return "⚡ **ТОЛЬКО 1 ДЕНЬ!**"
+    elif total_hours == 48:
+        return "🔥 **2 ДНЯ**"
+    elif total_hours == 72:
+        return "🌟 **3 ДНЯ**"
+    else:
+        days = total_hours // 24
+        return f"⏳ **{days} ДНЕЙ**"
 
 
 # ====================== ПОДТВЕРЖДЕНИЕ ПОКУПКИ ======================
@@ -28,22 +74,37 @@ class ConfirmPurchaseView(View):
             return await interaction.response.send_message("❌ Это не ваше меню!", ephemeral=True)
 
         user = economy_db.get_user(self.member.id)
-        if user.get("balance", 0) < self.final_price:
-            return await interaction.response.send_message("❌ Недостаточно средств!", ephemeral=True)
-
         item = SHOP_ITEMS.get(self.item_id)
         if not item:
             return await interaction.response.send_message("❌ Предмет не найден.", ephemeral=True)
 
-        user["balance"] -= self.final_price
+        currency_key = item.get("currency", "balance")
+        symbol = "💎" if currency_key == "mortis_coins" else ECONOMY_EMOJIS["coin"]
+        current_amount = user.get("mortis_coins", 0) if currency_key == "mortis_coins" else user.get("balance", 0)
 
-        if item.get("category") == "statuses":
+        if current_amount < self.final_price:
+            return await interaction.response.send_message(
+                f"❌ Недостаточно {symbol}!", ephemeral=True
+            )
+
+        if currency_key == "mortis_coins":
+            user["mortis_coins"] = current_amount - self.final_price
+        else:
+            user["balance"] = current_amount - self.final_price
+
+        if item.get("bp_premium") or self.item_id == BP_SETTINGS["PREMIUM_ITEM_ID"]:
+            user["bp_premium"] = True
+            success_msg = (
+                "✅ Премиум ветка Боевого Пропуска активирована! "
+                "Откройте `/pass`, чтобы посмотреть свои награды."
+            )
+        elif item.get("category") == "statuses":
             user["status"] = f"{item['emoji']} {item['name']}"
             success_msg = f"✅ Статус успешно установлен: **{user['status']}**"
         else:
             inventory = user.setdefault("inventory", {})
             inventory[self.item_id] = inventory.get(self.item_id, 0) + 1
-            success_msg = f"✅ Вы купили **{item['name']}** за **{format_number(self.final_price)}** {ECONOMY_EMOJIS['coin']}"
+            success_msg = f"✅ Вы купили **{item['name']}** за **{format_number(self.final_price)}** {symbol}"
 
         economy_db.update_user(self.member.id, user)
         await interaction.response.edit_message(content=success_msg, embed=None, view=None)
@@ -208,6 +269,7 @@ class InventoryView(View):
 
         await interaction.response.edit_message(content="🔄 **Используем предмет...**", embed=None, view=None)
 
+        now = datetime.now(timezone.utc)
         msg = "Этот предмет нельзя использовать."
 
         case_rewards = {
@@ -234,6 +296,71 @@ class InventoryView(View):
             inventory[item_id] -= 1
             user["work_boost"] = True
             msg = "🥤 Энергетик выпит! +50% к следующей работе."
+
+        elif item_id == "акция_vip_24h":
+            inventory[item_id] -= 1
+            user["vip_until"] = (now + timedelta(hours=24)).isoformat()
+            msg = "👑 VIP активирован на 24 часа!"
+
+        elif item_id == "акция_vip_week":
+            inventory[item_id] -= 1
+            user["vip_until"] = (now + timedelta(days=7)).isoformat()
+            msg = "👑 VIP активирован на 7 дней!"
+
+        elif item_id == "акция_premium_25off":
+            inventory[item_id] -= 1
+            user["bp_premium"] = True
+            msg = "🎟️ Скидка Premium Pass применена и премиум активирован!"
+
+        elif item_id == "акция_multiplier_x2":
+            inventory[item_id] -= 1
+            user["temp_multiplier"] = 2.0
+            user["multiplier_end"] = int((now + timedelta(hours=48)).timestamp())
+            msg = "💰 Удвоитель заработков активирован на 48 часов!"
+
+        elif item_id == "акция_x3_boost":
+            inventory[item_id] -= 1
+            user["x3_boost_count"] = user.get("x3_boost_count", 0) + 3
+            msg = "🚀 Тройной бонус активирован: следующие 3 работы +300%!"
+
+        elif item_id == "акция_instant_500k":
+            inventory[item_id] -= 1
+            user["balance"] = user.get("balance", 0) + 500_000
+            msg = "💸 Получено 500,000 монет сразу!"
+
+        elif item_id == "акция_golden_case":
+            inventory[item_id] -= 1
+            win = random.choice([5000, 8000, 12000, 20000])
+            user["balance"] = user.get("balance", 0) + win
+            msg = f"👑 Золотой кейс открыт! Вы получили **{format_number(win)}** {ECONOMY_EMOJIS['coin']}"
+
+        elif item_id == "акция_mysterybox":
+            inventory[item_id] -= 1
+            reward = random.choice([1000, 2500, 5000, 10000])
+            user["balance"] = user.get("balance", 0) + reward
+            msg = f"🎁 Мистическая коробка раскрыта! Вы получили **{format_number(reward)}** {ECONOMY_EMOJIS['coin']}"
+
+        elif item_id == "акция_super_combo":
+            inventory[item_id] -= 1
+            user["inventory"]["energy_drink"] = user["inventory"].get("energy_drink", 0) + 2
+            user["inventory"]["standard_case"] = user["inventory"].get("standard_case", 0) + 1
+            msg = "⚡ Суперкомбо активирован! Вы получили 2 энергетика и 1 обычный кейс."
+
+        elif item_id == "акция_pro_tools_50off":
+            inventory[item_id] -= 1
+            user["inventory"]["pro_tools"] = user["inventory"].get("pro_tools", 0) + 1
+            msg = "🛠️ Набор инструментов получен! Теперь вы получите постоянный бонус +20%."
+
+        elif item_id == "акция_elite_box":
+            inventory[item_id] -= 1
+            win = random.choice([3000, 6000, 10000])
+            user["balance"] = user.get("balance", 0) + win
+            msg = f"🎖️ Элитный ящик открыт! Вы получили **{format_number(win)}** {ECONOMY_EMOJIS['coin']}"
+
+        elif item_id == "акция_rolemaster":
+            inventory[item_id] -= 1
+            user["status"] = "🎭 Роль Мастер"
+            msg = "🎭 Роль Мастер активирована!"
 
         elif item_id == "gift_box":
             res = random.randint(500, 5000)
@@ -327,22 +454,70 @@ class ShopView(View):
             color=0x9B59B6
         )
 
+        # Фильтруем товары по категории
         items = {k: v for k, v in SHOP_ITEMS.items() if v.get('category') == self.current_category}
+        
+        # Специальная проверка для БП - скрываем если сезон не начался
+        now = datetime.now(timezone.utc)
+        if self.current_category == "battlepass" and now < BP_SETTINGS["SEASON_START"]:
+            time_until = int((BP_SETTINGS["SEASON_START"] - now).total_seconds())
+            embed.add_field(
+                name="⏳ БП скоро откроется!",
+                value=f"Сезон Бензопилы начнётся через:\n**{create_timer_display(time_until)}**",
+                inline=False
+            )
+            # Очищаем товары для БП до начала сезона
+            items = {}
+        elif self.current_category == "battlepass":
+            season_end = BP_SETTINGS["SEASON_START"] + timedelta(days=BP_SETTINGS["SEASON_DURATION_DAYS"])
+            remaining = int((season_end - now).total_seconds())
+            if remaining > 0:
+                embed.add_field(
+                    name="⏳ До конца сезона:",
+                    value=f"**{create_timer_display(remaining)}**",
+                    inline=False
+                )
 
         item_options = []
         for iid, info in items.items():
             price = get_item_price(iid, self.member)
             old_price = info["price"]
+            currency_key = info.get("currency", "balance")
+            symbol = "💎" if currency_key == "mortis_coins" else ECONOMY_EMOJIS['coin']
 
-            price_text = f"**Цена:** {format_number(price)} {ECONOMY_EMOJIS['coin']}"
-            if price < old_price:
+            price_text = f"**Цена:** {format_number(price)} {symbol}"
+            if price < old_price and currency_key == "balance":
                 price_text = f"**Цена:** ~~{format_number(old_price)}~~ → **{format_number(price)}** 🔥"
 
-            embed.add_field(
-                name=f"{info.get('emoji', '')} {info['name']}",
-                value=f"{price_text}\n{info.get('description', '')}",
-                inline=False
-            )
+            if currency_key == "mortis_coins":
+                price_text = f"**Цена:** {format_number(price)} {symbol}"
+
+            duration_hours = info.get('duration_hours')
+            desc = info.get('description', '')
+            if duration_hours:
+                expiry_text = get_expiry_display(duration_hours)
+                desc = f"{desc}\n{expiry_text}"
+
+            if self.current_category == "временные_акции" and duration_hours:
+                now = datetime.now(timezone.utc)
+                total_seconds = duration_hours * 3600
+                elapsed = int((now - PROMO_ROTATION_START).total_seconds())
+                remaining_seconds = max(0, total_seconds - elapsed)
+
+                if remaining_seconds <= 0:
+                    continue
+
+                embed.add_field(
+                    name=f"{info.get('emoji', '')} {info['name']}",
+                    value=f"{price_text}\n{desc}\n{create_timer_display(remaining_seconds)}\n{create_progress_bar(remaining_seconds, total_seconds)}",
+                    inline=False
+                )
+            else:
+                embed.add_field(
+                    name=f"{info.get('emoji', '')} {info['name']}",
+                    value=f"{price_text}\n{desc}",
+                    inline=False
+                )
 
             item_options.append(discord.SelectOption(
                 label=info['name'],
@@ -360,6 +535,19 @@ class ShopView(View):
             item_select.callback = self.initiate_purchase
             self.add_item(item_select)
 
+        if self.current_category == "временные_акции" or self.current_category == "battlepass":
+            try:
+                self.refresh_button.disabled = False
+            except AttributeError:
+                pass
+
+        if self.current_category == "временные_акции" and not item_options:
+            embed.add_field(
+                name="🕒 Акции закончены",
+                value="Сейчас нет активных временных предложений. Вернитесь позже для новых акций.",
+                inline=False
+            )
+
         # === ИСПРАВЛЕНИЕ ОШИБКИ Unknown Webhook ===
         try:
             if interaction.response.is_done():
@@ -373,6 +561,12 @@ class ShopView(View):
             logger.error(f"Ошибка обновления магазина: {e}")
             await interaction.followup.send("❌ Произошла ошибка при обновлении магазина.", ephemeral=True)
 
+    @discord.ui.button(label="🔄 Обновить", style=discord.ButtonStyle.secondary, emoji="🔁")
+    async def refresh_button(self, interaction: "discord.Interaction", button: Button):
+        if interaction.user.id != self.user_id:
+            return await interaction.response.send_message("❌ Это не ваше меню!", ephemeral=True)
+        await self.update_shop_embed(interaction)
+
     async def initiate_purchase(self, interaction: "discord.Interaction"):
         if interaction.user.id != self.user_id:
             return await interaction.response.send_message("❌ Это не ваше меню!", ephemeral=True)
@@ -382,7 +576,9 @@ class ShopView(View):
         final_price = get_item_price(item_id, self.member)
 
         confirm_embed = discord.Embed(title="💳 Подтверждение покупки", color=0x2ecc71)
-        confirm_embed.description = f"**{item.get('emoji', '')} {item['name']}**\nЦена: **{format_number(final_price)}** {ECONOMY_EMOJIS['coin']}"
+        currency_key = item.get("currency", "balance")
+        symbol = "💎" if currency_key == "mortis_coins" else ECONOMY_EMOJIS['coin']
+        confirm_embed.description = f"**{item.get('emoji', '')} {item['name']}**\nЦена: **{format_number(final_price)}** {symbol}"
 
         await interaction.response.send_message(
             embed=confirm_embed,
@@ -401,45 +597,84 @@ class CurrencySwitchView(View):
         embed = discord.Embed(
             title="🪙 Монеты MortisPlay",
             description=(
-                "• Основная внутриигровая валюта\n"
-                "• Получается через работу, daily и кейсы\n"
-                "• Переводы: 5% комиссия\n"
-                "• Используйте в магазине и переводах"
+                "**Основная внутриигровая валюта**\n\n"
+                "📌 **Как получить:**\n"
+                "• Работа: `/work` (10-1000 🪙)\n"
+                "• Ежедневная награда: `/daily` (10-50 🪙)\n"
+                "• Голосовой чат: 20 🪙 за час\n"
+                "• Кейсы и ящики: 200-50,000 🪙\n\n"
+                "📌 **Использование:**\n"
+                "• Магазин: `/shop`\n"
+                "• Переводы: `/pay` (5% комиссия)\n"
+                "• Обмен: `/valute exchange`\n"
             ),
             color=0x3498db
         )
-        embed.add_field(name="Использование", value="`/work`, `/shop`, `/pay`, `/vault`", inline=False)
-        embed.set_footer(text="Внутренняя валюта сервера")
+        embed.add_field(
+            name="💡 Курс обмена",
+            value="500 🪙 = 1 💎 MortisCoin",
+            inline=False
+        )
+        embed.set_footer(text="Внутренняя валюта сервера • Семья Бензопил")
         await interaction.response.edit_message(embed=embed, view=self)
 
     @discord.ui.button(label="💎 MortisCoin", style=discord.ButtonStyle.green, emoji="💎")
-    async def real_val(self, interaction: "discord.Interaction", button: Button):
+    async def mortis_val(self, interaction: "discord.Interaction", button: Button):
         embed = discord.Embed(
-            title="💎 MortisCoin",
+            title="💎 MortisCoin — Премиум валюта",
             description=(
-                "• Премиальная внутренняя валюта\n"
-                "• Без комиссии при переводах\n"
-                "• Получается через верификацию и обмен\n"
-                "• 500 🪙 = 1 💎"
+                "**Премиальная внутренняя валюта**\n\n"
+                "📌 **Как получить:**\n"
+                "• Верификация: `/verify` (+1 💎)\n"
+                "• Обмен монет: `/valute exchange` (500 🪙 = 1 💎)\n"
+                "• Награды БП: Премиум уровни (+1-5 💎)\n"
+                "• Без комиссии при переводах!\n\n"
+                "📌 **Использование:**\n"
+                "• Premium Pass БП: 10 💎\n"
+                "• Переводы: `/pay` (без комиссии)\n"
+                "• Специальные предметы в магазине\n"
             ),
             color=0x00c292
         )
-        embed.add_field(name="Требования", value="Нужна верификация: `/verify`", inline=False)
-        embed.set_footer(text="Премиум валюта сервера")
+        embed.add_field(
+            name="🔐 Требование",
+            value="Нужна верификация: `/verify`",
+            inline=False
+        )
+        embed.set_footer(text="Премиум валюта сервера • Семья Бензопил")
         await interaction.response.edit_message(embed=embed, view=self)
 
-    @discord.ui.button(label="🌍 Валюты", style=discord.ButtonStyle.gray, emoji="🌐")
+    @discord.ui.button(label="🌍 Реальные валюты", style=discord.ButtonStyle.gray, emoji="🌐")
     async def fiat_val(self, interaction: "discord.Interaction", button: Button):
         embed = discord.Embed(
-            title="🌍 Фиатные валюты",
-            description="Показатели настоящих валют, адаптированные для внутреннего баланса MortisPlay.",
+            title="🌍 Реальные валюты на сервере",
+            description=(
+                "**Справочные курсы для примерной оценки стоимости**\n\n"
+                "❗ Курсы обновлены на 13.05.2026 (ориентировочно)"
+            ),
             color=0x9b59b6
         )
-        embed.add_field(name="🇷🇺 Рубли", value="1 ₽ = 1.4 🪙\n100 ₽ = 140 🪙", inline=False)
-        embed.add_field(name="🇺🇸 Доллары", value="1 $ = 82 🪙\n5 $ = 410 🪙", inline=False)
-        embed.add_field(name="🇪🇺 Евро", value="1 € = 92 🪙\n5 € = 460 🪙", inline=False)
-        embed.add_field(name="💎 MortisCoin", value="1 💎 = 500 🪙\nПремиум валюта без комиссии", inline=False)
-        embed.set_footer(text="Курсы ориентировочные и используются только внутри бота.")
+        embed.add_field(
+            name="🇷🇺 Российский рубль",
+            value="`1 ₽ ≈ 1.4 🪙`\n`100 ₽ ≈ 140 🪙`\n`1000 ₽ ≈ 1,400 🪙`",
+            inline=True
+        )
+        embed.add_field(
+            name="🇺🇸 Американский доллар",
+            value="`1 $ ≈ 82 🪙`\n`5 $ ≈ 410 🪙`\n`100 $ ≈ 8,200 🪙`",
+            inline=True
+        )
+        embed.add_field(
+            name="🇪🇺 Евро",
+            value="`1 € ≈ 92 🪙`\n`5 € ≈ 460 🪙`\n`100 € ≈ 9,200 🪙`",
+            inline=True
+        )
+        embed.add_field(
+            name="💎 MortisCoin",
+            value="`1 💎 = 500 🪙`\n`10 💎 = 5,000 🪙`\n`100 💎 = 50,000 🪙`",
+            inline=False
+        )
+        embed.set_footer(text="Справочные курсы • Используются только внутри бота")
         await interaction.response.edit_message(embed=embed, view=self)
 
 
@@ -454,6 +689,8 @@ def get_item_price(item_id: str, member: "discord.Member") -> int:
     base_price = item["price"]
     today = datetime.now().date()
     
+    if item.get("currency") == "mortis_coins":
+        return base_price
     if CURRENT_EVENT and CURRENT_EVENT.get("date") and today == CURRENT_EVENT.get("date"):
         return int(base_price * CURRENT_EVENT.get("multiplier", 1.0))
     return base_price

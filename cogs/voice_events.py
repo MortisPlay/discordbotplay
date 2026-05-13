@@ -35,8 +35,9 @@ class VoiceEvents(commands.Cog):
                         members_in_channel.append(member)
 
                     if len(members_in_channel) >= 2:
-                        reward_hours = duration_minutes // 60
-                        reward = reward_hours * VOICE_INCOME_PER_HOUR
+                        # Награда за каждые 30 минут в голосовом канале
+                        reward_blocks = duration_minutes // 30
+                        reward = reward_blocks * (VOICE_INCOME_PER_HOUR // 2)  # Половина часовой награды за 30 минут
 
                         if reward > 0:
                             # Начисляем монеты

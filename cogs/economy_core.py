@@ -12,6 +12,7 @@ from config.settings import logger, format_number
 from config.economy import ECONOMY_EMOJIS, JOBS, DAILY_COOLDOWN
 from config.shop import SHOP_ITEMS, INVENTORY_ITEMS
 from utils.db import economy_db
+from .economy_bp.bp_core import BPCore
 
 
 class EconomyCore(commands.Cog):
@@ -45,20 +46,35 @@ class EconomyCore(commands.Cog):
         target = member or interaction.user
         user_data = economy_db.get_user(target.id)
         balance = user_data.get("balance", 0)
+        mortis_coins = user_data.get("mortis_coins", 0)
 
         embed = discord.Embed(
             title=f"💰 Баланс — {target.display_name}",
-            color=0x2ecc71 if balance > 0 else 0xe74c3c,
+            color=0x2ecc71 if (balance > 0 or mortis_coins > 0) else 0xe74c3c,
             timestamp=datetime.now()
         )
         embed.set_thumbnail(url=target.display_avatar.url)
         embed.add_field(
-            name="Текущий счёт",
-            value=f"```fix\n{format_number(balance)} {ECONOMY_EMOJIS['coin']}```",
+            name="💵 Основная валюта",
+            value=f"```\n{format_number(balance)} 🪙\n```",
+            inline=True
+        )
+        embed.add_field(
+            name="💎 Премиум валюта",
+            value=f"```\n{format_number(mortis_coins)} 💎\n```",
+            inline=True
+        )
+        embed.add_field(
+            name="📊 Статус",
+            value=user_data.get("status", "Новичок 🍼"),
             inline=False
         )
-        embed.add_field(name="Статус", value=user_data.get("status", "Новичок 🍼"), inline=True)
-        embed.set_footer(text="Семья Бензопил")
+        embed.add_field(
+            name="💡 Полезные команды",
+            value="`/work` • `/shop` • `/pay` • `/valute exchange`",
+            inline=False
+        )
+        embed.set_footer(text="Семья Бензопил • MortisPlay")
 
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
@@ -76,10 +92,18 @@ class EconomyCore(commands.Cog):
                     delta = (last_dt + timedelta(seconds=DAILY_COOLDOWN)) - now
                     hours, remainder = divmod(int(delta.total_seconds()), 3600)
                     minutes, _ = divmod(remainder, 60)
-                    return await interaction.response.send_message(
-                        f"⏳ Вы уже получали награду.\nСледующая через **{hours}ч {minutes}м.**",
-                        ephemeral=True
+                    
+                    # Красивый эмбед при кулдауне
+                    embed = discord.Embed(
+                        title="⏳ Кулдаун /daily",
+                        description=(
+                            f"Вы уже получали награду сегодня!\n\n"
+                            f"🕐 Осталось: **{hours}ч {minutes}м**"
+                        ),
+                        color=0xe74c3c
                     )
+                    embed.set_footer(text="Приходите позже • Семья Бензопил")
+                    return await interaction.response.send_message(embed=embed, ephemeral=True)
             except ValueError:
                 pass
 
@@ -89,9 +113,19 @@ class EconomyCore(commands.Cog):
         economy_db.update_user(interaction.user.id, user)
 
         embed = discord.Embed(
-            title="🎁 Ежедневная награда",
-            description=f"**+{reward}** {ECONOMY_EMOJIS['coin']}",
+            title="🎁 Ежедневная награда получена!",
+            description=f"**+{reward}** 🪙",
             color=0xffd700
+        )
+        embed.add_field(
+            name="💰 Твой новый баланс",
+            value=f"```\n{format_number(user['balance'])} 🪙\n```",
+            inline=False
+        )
+        embed.add_field(
+            name="⏰ Следующая награда через",
+            value="**24 часа**",
+            inline=False
         )
         embed.set_footer(text="Приходите завтра снова! • Семья Бензопил")
         await interaction.response.send_message(embed=embed, ephemeral=True)
@@ -135,10 +169,33 @@ class EconomyCore(commands.Cog):
         multiplier = 1.0
         bonuses = []
 
+        # Применяем коэффициент профессии
+        job_coefficient = job_info.get("coefficient", 1.0)
+        reward = int(reward * job_coefficient)
+        if job_coefficient < 1.0:
+            bonuses.append(f"📉 Коэффициент профессии ×{job_coefficient}")
+        elif job_coefficient > 1.0:
+            bonuses.append(f"📈 Коэффициент профессии ×{job_coefficient}")
+
         if user.get("work_boost"):
             multiplier += 0.5
             user["work_boost"] = False
             bonuses.append("🥤 +50% к следующей работе")
+
+        if user.get("x3_boost_count", 0) > 0:
+            multiplier += 3.0
+            user["x3_boost_count"] -= 1
+            bonuses.append("🚀 +300% к следующей работе")
+
+        temp_multiplier = user.get("temp_multiplier", 1.0)
+        multiplier_end = user.get("multiplier_end")
+        if temp_multiplier and multiplier_end:
+            if now.timestamp() < multiplier_end:
+                multiplier *= temp_multiplier
+                bonuses.append(f"🔥 Временный множитель ×{int(temp_multiplier)}")
+            else:
+                user["temp_multiplier"] = 1.0
+                user["multiplier_end"] = 0
 
         if user.get("inventory", {}).get("pro_tools", 0) > 0:
             multiplier += 0.2
@@ -165,6 +222,10 @@ class EconomyCore(commands.Cog):
         if bonus_text:
             embed.add_field(name="Бонусы", value=bonus_text.strip(), inline=False)
         embed.set_footer(text="/job — смена работы, /vault — валюта")
+
+        # Внутри функции work, после начисления баланса:
+        xp_gain = random.randint(20, 45) # Случайное кол-во опыта
+        BPCore.add_xp(interaction.user.id, xp_gain)
 
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
