@@ -1,17 +1,20 @@
 # config/shop.py
-from datetime import date
+from datetime import date, datetime, timezone, timedelta
 
 # Указываем дату события
 EVENT_DATE = date(2026, 5, 9) 
 
 CURRENT_EVENT = None  # События сейчас нет
+PROMO_ROTATION_START = datetime.now(timezone.utc)
 
 SHOP_CATEGORIES = {
     "бусты": {"name": "💰 Бусты доходов", "emoji": "💰", "description": "Увеличьте свои доходы на работе"},
     "предметы": {"name": "🎁 Предметы", "emoji": "🎁", "description": "Разные полезные вещи"},
     "ящики": {"name": "🎰 Удачные ящики", "emoji": "🎰", "description": "Лутбоксы с монетами"},
     "statuses": {"name": "🏷️ Статусы", "emoji": "🏷️", "description": "Ваш титул в профиле"},
-    "luxury": {"name": "🏆 Роскошь", "emoji": "🏆", "description": "Очень дорогие коллекционные предметы"}
+    "battlepass": {"name": "🎫 Боевой пропуск", "emoji": "🎫", "description": "Активируйте премиум ветку Боевого Пропуска на сезон"},
+    "luxury": {"name": "🏆 Роскошь", "emoji": "🏆", "description": "Очень дорогие коллекционные предметы"},
+    "временные_акции": {"name": "⏰ ВРЕМЕННЫЕ АКЦИИ (БЕТА)", "emoji": "⏰", "description": "Эксклюзивные предметы с ограниченным сроком — 1-3 дня!"}
 }
 
 SHOP_ITEMS = {
@@ -39,12 +42,29 @@ SHOP_ITEMS = {
     "st_lethal": {"category": "statuses", "name": "Сотрудник Компании", "price": 200, "description": "Сбор лома — это жизнь.", "emoji": "🧤"},
     "st_rich": {"category": "statuses", "name": "Мажор", "price": 1000, "description": "Деньги есть.", "emoji": "💰"},
     "st_legend": {"category": "statuses", "name": "Легенда", "price": 5000, "description": "О вас слагают мифы.", "emoji": "👑"},
+    "premium_pass": {"category": "battlepass", "name": "Premium Pass", "price": 10, "currency": "mortis_coins", "description": "Активирует премиум ветку Боевого Пропуска за MortisCoin.", "emoji": "🎟️", "bp_premium": True},
 
     # --- LUXURY ---
     "golden_throne": {"category": "luxury", "name": "Золотой трон", "price": 100000, "description": "Символ безграничной власти.", "emoji": "💺"},
     "private_jet": {"category": "luxury", "name": "Личный самолет", "price": 500000, "description": "Для тех, кто ценит время.", "emoji": "🛩️"},
     "diamond_crown": {"category": "luxury", "name": "Алмазная корона", "price": 1000000, "description": "Самый дорогой предмет в мире.", "emoji": "💎"},
+    
+    # --- ВРЕМЕННЫЕ АКЦИИ (ротация) ---
+    # Эти предметы появляются на 1-3 дня и затем заменяются другими
+    "акция_vip_24h": {"category": "временные_акции", "name": "💎 VIP-статус (24 часа)", "price": 500, "description": "⏰ Эксклюзивное предложение! Действует только 1 день!", "emoji": "💎", "exclusive": True, "duration_hours": 24},
+    "акция_x3_boost": {"category": "временные_акции", "name": "🚀 Тройной бонус (3 смены)", "price": 750, "description": "⏰ Действует 2 дня! +300% к следующим 3 сменам.", "emoji": "🚀", "exclusive": False, "duration_hours": 48},
+    "акция_mysterybox": {"category": "временные_акции", "name": "🎁 Мистическая коробка", "price": 1500, "description": "⏰ Действует 3 дня! Случайный набор предметов.", "emoji": "🎁", "exclusive": False, "duration_hours": 72},
+    "акция_premium_25off": {"category": "временные_акции", "name": "🎟️ Premium Pass (-25% скидка)", "price": 7, "currency": "mortis_coins", "description": "⏰ Спешите! Скидка 25% только 1 день!", "emoji": "🎟️", "bp_premium": True, "exclusive": True, "duration_hours": 24},
+    "акция_multiplier_x2": {"category": "временные_акции", "name": "💰 Удвоитель заработков (48ч)", "price": 1200, "description": "⏰ Удвоит все заработки на 2 дня! Очень редкая акция!", "emoji": "💰", "exclusive": True, "duration_hours": 48},
+    "акция_golden_case": {"category": "временные_акции", "name": "👑 Золотой кейс (ЛЕГЕНДАРНЫЙ)", "price": 3000, "description": "⏰ Только 1 день! Гарантирован куш от 5000+ монет!", "emoji": "👑", "exclusive": True, "duration_hours": 24},
+    "акция_super_combo": {"category": "временные_акции", "name": "⚡ Суперкомбо-набор", "price": 2000, "description": "⏰ Действует 3 дня! Набор из 5 энергетиков + 2 ящика.", "emoji": "⚡", "exclusive": False, "duration_hours": 72},
+    "акция_instant_500k": {"category": "временные_акции", "name": "💸 Мгновенные 500k монет", "price": 4500, "description": "⏰ Спешите! Только 1 день! Получите 500,000 монет сразу!", "emoji": "💸", "exclusive": True, "duration_hours": 24},
+    "акция_pro_tools_50off": {"category": "временные_акции", "name": "🛠️ Инструменты (скидка -50%)", "price": 500, "description": "⏰ Действует 2 дня! Набор инструментов со скидкой 50%!", "emoji": "🛠️", "exclusive": False, "duration_hours": 48},
+    "акция_vip_week": {"category": "временные_акции", "name": "👑 VIP на неделю", "price": 1800, "description": "⏰ Только 2 дня! VIP-статус на 7 дней со скидкой!", "emoji": "👑", "exclusive": False, "duration_hours": 48},
+    "акция_elite_box": {"category": "временные_акции", "name": "🎖️ Элитный ящик (72ч)", "price": 2500, "description": "⏰ Действует 3 дня! Премиум кейс с лучшими награами!", "emoji": "🎖️", "exclusive": False, "duration_hours": 72},
+    "акция_rolemaster": {"category": "временные_акции", "name": "🎭 Роль Мастер (НОВАЯ)", "price": 800, "description": "⏰ Спешите! Только 1 день! Получите новую роль на сервере!", "emoji": "🎭", "exclusive": True, "duration_hours": 24},
 }
+
 
 # Предметы, которые могут лежать в инвентаре
 INVENTORY_ITEMS = {

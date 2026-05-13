@@ -171,14 +171,16 @@ JOBS = {
         "name": "Безработный",
         "min_salary": 0,
         "max_salary": 0,
-        "description": "У вас нет работы"
+        "description": "У вас нет работы",
+        "coefficient": 0.0
     },
     "cleaner": {
         "name": "Уборщик",
         "min_salary": 50,
         "max_salary": 100,
         "description": "Тяжелая работа на складе.",
-        "emoji": "📦"
+        "emoji": "📦",
+        "coefficient": 0.8  # Низкий коэффициент
     },
     "barista": {
         "name": "Бариста",
@@ -186,6 +188,7 @@ JOBS = {
         "max_salary": 180,
         "description": "Варишь кофе в центре.",
         "emoji": "☕",
+        "coefficient": 1.0,  # Стандартный
         "requirements": {
             "min_balance": 200,
             "min_account_age_days": 3
@@ -197,6 +200,7 @@ JOBS = {
         "max_salary": 350,
         "description": "Руководишь проектами.",
         "emoji": "💼",
+        "coefficient": 1.2,  # Высокий
         "requirements": {
             "min_balance": 1000,
             "requires_verified": True,
@@ -209,6 +213,7 @@ JOBS = {
         "max_salary": 600,
         "description": "Пишешь код для MortisPlay.",
         "emoji": "💻",
+        "coefficient": 1.5,  # Очень высокий
         "requirements": {
             "min_balance": 2500,
             "requires_verified": True,
@@ -221,6 +226,7 @@ JOBS = {
         "max_salary": 250,
         "description": "Охраняешь важные объекты.",
         "emoji": "👮",
+        "coefficient": 0.9,  # Чуть ниже стандарта
         "requirements": {
             "min_balance": 500,
             "min_account_age_days": 2
@@ -232,6 +238,7 @@ JOBS = {
         "max_salary": 180,
         "description": "Доставляешь посылки по городу.",
         "emoji": "📮",
+        "coefficient": 0.85,  # Низкий
         "requirements": {
             "min_account_age_days": 1
         }
@@ -242,6 +249,7 @@ JOBS = {
         "max_salary": 400,
         "description": "Готовишь деликатесы в ресторане.",
         "emoji": "👨‍🍳",
+        "coefficient": 1.3,  # Высокий
         "requirements": {
             "min_balance": 800,
             "min_account_age_days": 4
@@ -253,6 +261,7 @@ JOBS = {
         "max_salary": 550,
         "description": "Создаёшь красивый визуал.",
         "emoji": "🎨",
+        "coefficient": 1.25,  # Высокий
         "requirements": {
             "min_balance": 1500,
             "requires_verified": True,
@@ -265,6 +274,7 @@ JOBS = {
         "max_salary": 1000,
         "description": "Руководишь всей компанией.",
         "emoji": "🤵",
+        "coefficient": 1.8,  # Максимально высокий
         "requirements": {
             "min_balance": 5000,
             "requires_verified": True,
