@@ -70,7 +70,10 @@ class Database:
                 "mortis_coins": 0,      # Элитная валюта (без комиссий)
                 "is_verified": False,    # Пройдена ли верификация (для MortisCoin)
                 "status": "Новичок 🍼",
+                "statuses": [],
                 "inventory": {},
+                "inventory_visibility": "everyone",
+                "purchased_promos": [],
                 "warnings": 0,           # Кол-во подозрений от античита
                 "last_work": None,
                 "last_daily": None,
@@ -92,6 +95,15 @@ class Database:
             changed = True
         if "bp_claimed" not in user_data:
             user_data["bp_claimed"] = []
+            changed = True
+        if "statuses" not in user_data:
+            user_data["statuses"] = []
+            changed = True
+        if "inventory_visibility" not in user_data:
+            user_data["inventory_visibility"] = "everyone"
+            changed = True
+        if "purchased_promos" not in user_data:
+            user_data["purchased_promos"] = []
             changed = True
 
         if changed:
