@@ -1,7 +1,7 @@
 # economy_ui.py
 from __future__ import annotations
 import discord
-from discord.ui import View, Button, Select
+from discord.ui import View, Button, Select, UserSelect
 from datetime import datetime, timezone, timedelta
 import asyncio
 import random
@@ -87,6 +87,20 @@ class ConfirmPurchaseView(View):
                 f"❌ Недостаточно {symbol}!", ephemeral=True
             )
 
+        if item.get("category") == "временные_акции":
+            purchased_promos = user.setdefault("purchased_promos", [])
+            if self.item_id in purchased_promos:
+                return await interaction.response.send_message(
+                    "❌ Эту временную акцию вы уже покупали. Повторно её приобрести нельзя.", ephemeral=True
+                )
+
+        if item.get("category") == "statuses":
+            owned_statuses = user.setdefault("statuses", [])
+            if self.item_id in owned_statuses:
+                return await interaction.response.send_message(
+                    "❌ Вы уже купили этот статус.", ephemeral=True
+                )
+
         if currency_key == "mortis_coins":
             user["mortis_coins"] = current_amount - self.final_price
         else:
@@ -99,8 +113,15 @@ class ConfirmPurchaseView(View):
                 "Откройте `/pass`, чтобы посмотреть свои награды."
             )
         elif item.get("category") == "statuses":
+            owned_statuses = user.setdefault("statuses", [])
+            owned_statuses.append(self.item_id)
             user["status"] = f"{item['emoji']} {item['name']}"
-            success_msg = f"✅ Статус успешно установлен: **{user['status']}**"
+            success_msg = f"✅ Статус **{item['name']}** добавлен и установлен." 
+        elif item.get("category") == "временные_акции":
+            purchased_promos = user.setdefault("purchased_promos", [])
+            purchased_promos.append(self.item_id)
+            self.apply_temporary_promo(user, self.item_id)
+            success_msg = f"✅ Временная акция **{item['name']}** активирована!"
         else:
             inventory = user.setdefault("inventory", {})
             inventory[self.item_id] = inventory.get(self.item_id, 0) + 1
@@ -108,6 +129,43 @@ class ConfirmPurchaseView(View):
 
         economy_db.update_user(self.member.id, user)
         await interaction.response.edit_message(content=success_msg, embed=None, view=None)
+
+    def apply_temporary_promo(self, user: dict, item_id: str):
+        now = datetime.now(timezone.utc)
+        if item_id == "акция_vip_24h":
+            user["vip_until"] = (now + timedelta(hours=24)).isoformat()
+        elif item_id == "акция_vip_week":
+            user["vip_until"] = (now + timedelta(days=7)).isoformat()
+        elif item_id == "акция_premium_25off":
+            user["bp_premium"] = True
+        elif item_id == "акция_multiplier_x2":
+            user["temp_multiplier"] = 2.0
+            user["multiplier_end"] = int((now + timedelta(hours=48)).timestamp())
+        elif item_id == "акция_x3_boost":
+            user["x3_boost_count"] = user.get("x3_boost_count", 0) + 3
+        elif item_id == "акция_instant_500k":
+            package_coins = random.randint(15000, 25000)
+            user["balance"] = user.get("balance", 0) + package_coins
+            user["inventory"] = user.setdefault("inventory", {})
+            user["inventory"]["energy_drink"] = user["inventory"].get("energy_drink", 0) + 1
+        elif item_id == "акция_golden_case":
+            win = random.choice([5000, 8000, 12000, 20000])
+            user["balance"] = user.get("balance", 0) + win
+        elif item_id == "акция_mysterybox":
+            reward = random.choice([1000, 2500, 5000, 10000])
+            user["balance"] = user.get("balance", 0) + reward
+        elif item_id == "акция_super_combo":
+            user["inventory"] = user.setdefault("inventory", {})
+            user["inventory"]["energy_drink"] = user["inventory"].get("energy_drink", 0) + 2
+            user["inventory"]["standard_case"] = user["inventory"].get("standard_case", 0) + 1
+        elif item_id == "акция_pro_tools_50off":
+            user["inventory"] = user.setdefault("inventory", {})
+            user["inventory"]["pro_tools"] = user["inventory"].get("pro_tools", 0) + 1
+        elif item_id == "акция_elite_box":
+            win = random.choice([3000, 6000, 10000])
+            user["balance"] = user.get("balance", 0) + win
+        elif item_id == "акция_rolemaster":
+            user["status"] = "🎭 Роль Мастер"
 
     @discord.ui.button(label="❌ Отмена", style=discord.ButtonStyle.red)
     async def cancel(self, interaction: "discord.Interaction", button: Button):
@@ -227,11 +285,17 @@ class InventoryView(View):
         self.refresh_items()
 
     def refresh_items(self):
-        self.clear_items()
+        for child in self.children[:]:
+            if isinstance(child, Select):
+                self.remove_item(child)
+
         user = economy_db.get_user(self.user_id)
         inventory = user.get("inventory", {})
 
-        usable_items = {k: v for k, v in inventory.items() if v > 0}
+        usable_items = {
+            k: v for k, v in inventory.items()
+            if v > 0 and SHOP_ITEMS.get(k, {}).get("category") != "временные_акции"
+        }
 
         if not usable_items:
             return
@@ -325,8 +389,10 @@ class InventoryView(View):
 
         elif item_id == "акция_instant_500k":
             inventory[item_id] -= 1
-            user["balance"] = user.get("balance", 0) + 500_000
-            msg = "💸 Получено 500,000 монет сразу!"
+            package_coins = random.randint(15000, 25000)
+            user["balance"] = user.get("balance", 0) + package_coins
+            user["inventory"]["energy_drink"] = user["inventory"].get("energy_drink", 0) + 1
+            msg = f"📦 Премиум-пакет помощи открыт! Вы получили **{format_number(package_coins)}** {ECONOMY_EMOJIS['coin']} и 1 энергетик."
 
         elif item_id == "акция_golden_case":
             inventory[item_id] -= 1
@@ -387,6 +453,8 @@ class InventoryView(View):
             if count <= 0:
                 continue
             info = SHOP_ITEMS.get(iid) or INVENTORY_ITEMS.get(iid)
+            if info and info.get("category") == "временные_акции":
+                continue
             if info:
                 lines.append(f"{info.get('emoji', '📦')} **{info['name']}** — `{count}` шт.")
             else:
@@ -407,6 +475,255 @@ class InventoryView(View):
         embed.set_footer(text=f"Баланс: {format_number(user_data.get('balance', 0))} {ECONOMY_EMOJIS['coin']} • /work /vault")
         embed.set_thumbnail(url=member.display_avatar.url)
         return embed
+
+    @discord.ui.button(label="⚙️ Настройки", style=discord.ButtonStyle.gray, emoji="⚙️")
+    async def settings_button(self, interaction: discord.Interaction, button: Button):
+        if interaction.user.id != self.user_id:
+            return await interaction.response.send_message("❌ Это не ваш инвентарь!", ephemeral=True)
+        await interaction.response.send_message(
+            "Настройки инвентаря:",
+            view=InventorySettingsView(self.user_id),
+            ephemeral=True
+        )
+
+    @discord.ui.button(label="🔁 Трейд", style=discord.ButtonStyle.blurple, emoji="🔁")
+    async def trade_button(self, interaction: discord.Interaction, button: Button):
+        if interaction.user.id != self.user_id:
+            return await interaction.response.send_message("❌ Это не ваш инвентарь!", ephemeral=True)
+        await interaction.response.send_message(
+            "Выберите игрока и предмет для трейда:",
+            view=TradeInitView(self.user_id),
+            ephemeral=True
+        )
+
+
+class StatusSwitchView(View):
+    def __init__(self, target_id: int, requester_id: int):
+        super().__init__(timeout=180)
+        self.target_id = target_id
+        self.requester_id = requester_id
+
+        user = economy_db.get_user(target_id)
+        owned_statuses = user.get("statuses", [])
+        options = []
+        for status_id in owned_statuses:
+            item = SHOP_ITEMS.get(status_id)
+            if not item:
+                continue
+            options.append(discord.SelectOption(
+                label=item["name"],
+                value=status_id,
+                emoji=item.get("emoji")
+            ))
+
+        if options:
+            select = Select(
+                placeholder="Выберите статус для установки...",
+                options=options[:25]
+            )
+            select.callback = self.status_select
+            self.add_item(select)
+
+    async def status_select(self, interaction: discord.Interaction):
+        if interaction.user.id != self.requester_id:
+            return await interaction.response.send_message("❌ Это не ваш профиль!", ephemeral=True)
+
+        status_id = interaction.data["values"][0]
+        user = economy_db.get_user(self.target_id)
+        item = SHOP_ITEMS.get(status_id)
+        if not item:
+            return await interaction.response.send_message("❌ Статус не найден.", ephemeral=True)
+
+        user["status"] = f"{item['emoji']} {item['name']}"
+        economy_db.update_user(self.target_id, user)
+        await interaction.response.send_message(
+            f"✅ Статус изменён на **{item['name']}**.", ephemeral=True
+        )
+
+    @discord.ui.button(label="Сбросить статус", style=discord.ButtonStyle.red)
+    async def reset_status(self, interaction: discord.Interaction, button: Button):
+        if interaction.user.id != self.requester_id:
+            return await interaction.response.send_message("❌ Это не ваш профиль!", ephemeral=True)
+        user = economy_db.get_user(self.target_id)
+        user["status"] = "Новичок 🍼"
+        economy_db.update_user(self.target_id, user)
+        await interaction.response.send_message("✅ Статус сброшен на Новичок 🍼.", ephemeral=True)
+
+
+class InventorySettingsView(View):
+    def __init__(self, user_id: int):
+        super().__init__(timeout=180)
+        self.user_id = user_id
+
+    @discord.ui.button(label="👀 Видимость", style=discord.ButtonStyle.primary, emoji="👀")
+    async def visibility(self, interaction: discord.Interaction, button: Button):
+        if interaction.user.id != self.user_id:
+            return await interaction.response.send_message("❌ Это не ваш инвентарь!", ephemeral=True)
+
+        user = economy_db.get_user(self.user_id)
+        current = user.get("inventory_visibility", "everyone")
+        if current == "everyone":
+            user["inventory_visibility"] = "self"
+            label = "Только я"
+        else:
+            user["inventory_visibility"] = "everyone"
+            label = "Все"
+
+        economy_db.update_user(self.user_id, user)
+        await interaction.response.send_message(
+            f"✅ Настройка видимости обновлена: **{label}**.", ephemeral=True
+        )
+
+    @discord.ui.button(label="🎁 Коллекции", style=discord.ButtonStyle.secondary, emoji="🎁")
+    async def collections(self, interaction: discord.Interaction, button: Button):
+        if interaction.user.id != self.user_id:
+            return await interaction.response.send_message("❌ Это не ваш инвентарь!", ephemeral=True)
+
+        user = economy_db.get_user(self.user_id)
+        inventory = user.get("inventory", {})
+        lines = []
+        for iid, count in inventory.items():
+            if count <= 0:
+                continue
+            item = SHOP_ITEMS.get(iid)
+            if item and item.get("category") == "luxury":
+                lines.append(f"{item.get('emoji', '🎁')} **{item['name']}** — `{count}` шт.")
+
+        statuses = user.get("statuses", [])
+        if statuses:
+            lines.append("\n**Статусы в наличии:**")
+            for sid in statuses:
+                item = SHOP_ITEMS.get(sid)
+                if item:
+                    lines.append(f"{item.get('emoji', '')} {item['name']}")
+
+        if not lines:
+            lines = ["У вас нет коллекционных предметов или купленных статусов."]
+
+        embed = discord.Embed(
+            title="🎁 Коллекционные предметы и статусы",
+            description="\n".join(lines),
+            color=0x9b59b6
+        )
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+
+    @discord.ui.button(label="📌 Статус", style=discord.ButtonStyle.success, emoji="📌")
+    async def status(self, interaction: discord.Interaction, button: Button):
+        if interaction.user.id != self.user_id:
+            return await interaction.response.send_message("❌ Это не ваш инвентарь!", ephemeral=True)
+        await interaction.response.send_message(
+            "Выберите статус для профиля:",
+            view=StatusSwitchView(self.user_id, self.user_id),
+            ephemeral=True
+        )
+
+
+class TradeInitView(View):
+    def __init__(self, requester_id: int):
+        super().__init__(timeout=180)
+        self.requester_id = requester_id
+        self.target_id = None
+
+        user = economy_db.get_user(requester_id)
+        inventory = user.get("inventory", {})
+        options = []
+        for iid, count in inventory.items():
+            if count <= 0:
+                continue
+            info = SHOP_ITEMS.get(iid) or INVENTORY_ITEMS.get(iid)
+            if not info or info.get("category") == "временные_акции":
+                continue
+            options.append(discord.SelectOption(
+                label=f"{info.get('name')} ({count})",
+                value=iid,
+                emoji=info.get('emoji')
+            ))
+
+        user_select = UserSelect(placeholder="Выберите пользователя для трейда...", min_values=1, max_values=1)
+        user_select.callback = self.user_select_callback
+        self.add_item(user_select)
+
+        if options:
+            item_select = Select(placeholder="Выберите предмет для передачи...", options=options[:25])
+            item_select.callback = self.item_select_callback
+            self.add_item(item_select)
+
+    async def user_select_callback(self, interaction: discord.Interaction, select: UserSelect):
+        self.target_id = int(interaction.data["values"][0])
+        await interaction.response.edit_message(content="✅ Пользователь выбран. Теперь выберите предмет.", view=self)
+
+    async def item_select_callback(self, interaction: discord.Interaction, select: Select):
+        if self.target_id is None:
+            return await interaction.response.send_message(
+                "❌ Сначала выберите пользователя для трейда.", ephemeral=True
+            )
+        item_id = interaction.data["values"][0]
+        requester = economy_db.get_user(self.requester_id)
+        if requester.get("inventory", {}).get(item_id, 0) <= 0:
+            return await interaction.response.send_message(
+                "❌ У вас больше нет этого предмета.", ephemeral=True
+            )
+
+        item = SHOP_ITEMS.get(item_id) or INVENTORY_ITEMS.get(item_id)
+        if not item:
+            return await interaction.response.send_message("❌ Предмет не найден.", ephemeral=True)
+
+        target = interaction.guild.get_member(self.target_id) if interaction.guild else None
+        if not target:
+            return await interaction.response.send_message("❌ Пользователь не найден на сервере.", ephemeral=True)
+
+        trade_view = TradeProposalView(self.requester_id, self.target_id, item_id)
+        embed = discord.Embed(
+            title="📦 Предложение трейда",
+            description=(
+                f"**{interaction.user.display_name}** предлагает передать {item.get('emoji', '')} **{item['name']}**\n"
+                f"**{target.display_name}**, примете обмен?"
+            ),
+            color=0x00b894
+        )
+        await interaction.response.send_message(
+            embed=embed,
+            view=trade_view,
+            ephemeral=True
+        )
+
+
+class TradeProposalView(View):
+    def __init__(self, requester_id: int, target_id: int, item_id: str):
+        super().__init__(timeout=300)
+        self.requester_id = requester_id
+        self.target_id = target_id
+        self.item_id = item_id
+
+    @discord.ui.button(label="✅ Принять", style=discord.ButtonStyle.green)
+    async def accept(self, interaction: discord.Interaction, button: Button):
+        if interaction.user.id != self.target_id:
+            return await interaction.response.send_message("❌ Это не ваше предложение.", ephemeral=True)
+
+        requester = economy_db.get_user(self.requester_id)
+        if requester.get("inventory", {}).get(self.item_id, 0) <= 0:
+            return await interaction.response.send_message(
+                "❌ У инициатора больше нет этого предмета.", ephemeral=True
+            )
+
+        target = economy_db.get_user(self.target_id)
+        requester["inventory"][self.item_id] -= 1
+        target_inv = target.setdefault("inventory", {})
+        target_inv[self.item_id] = target_inv.get(self.item_id, 0) + 1
+        economy_db.update_user(self.requester_id, requester)
+        economy_db.update_user(self.target_id, target)
+
+        await interaction.response.edit_message(
+            content=f"✅ Трейд завершён: {interaction.user.mention} получил предмет.",
+            embed=None,
+            view=None
+        )
+
+    @discord.ui.button(label="❌ Отклонить", style=discord.ButtonStyle.red)
+    async def decline(self, interaction: discord.Interaction, button: Button):
+        if interaction.user.id != self.target_id:
+            return await interaction.response.send_message("❌ Это не ваше предложение.", ephemeral=True)
+        await interaction.response.edit_message(content="❌ Трейд отклонён.", embed=None, view=None)
 
 
 # ====================== МАГАЗИН (ИСПРАВЛЕНО) ======================
@@ -456,6 +773,8 @@ class ShopView(View):
 
         # Фильтруем товары по категории
         items = {k: v for k, v in SHOP_ITEMS.items() if v.get('category') == self.current_category}
+        user = economy_db.get_user(self.user_id)
+        purchased_promos = set(user.get("purchased_promos", []))
         
         # Специальная проверка для БП - скрываем если сезон не начался
         now = datetime.now(timezone.utc)
@@ -500,6 +819,10 @@ class ShopView(View):
 
             if self.current_category == "временные_акции" and duration_hours:
                 now = datetime.now(timezone.utc)
+                if info.get("bp_premium") and now < BP_SETTINGS["SEASON_START"]:
+                    continue
+                if iid in purchased_promos:
+                    continue
                 total_seconds = duration_hours * 3600
                 elapsed = int((now - PROMO_ROTATION_START).total_seconds())
                 remaining_seconds = max(0, total_seconds - elapsed)

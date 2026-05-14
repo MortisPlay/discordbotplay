@@ -64,11 +64,19 @@ class EconomyCore(commands.Cog):
             value=f"```\n{format_number(mortis_coins)} 💎\n```",
             inline=True
         )
+        statuses = user_data.get("statuses", [])
+        status_list = "Нет купленных статусов" if not statuses else "\n".join(
+            f"{SHOP_ITEMS.get(sid, {}).get('emoji', '')} {SHOP_ITEMS.get(sid, {}).get('name', sid)}"
+            for sid in statuses
+        )
+
         embed.add_field(
             name="📊 Статус",
             value=user_data.get("status", "Новичок 🍼"),
             inline=False
         )
+        if statuses:
+            embed.add_field(name="🧾 Купленные статусы", value=status_list, inline=False)
         embed.add_field(
             name="💡 Полезные команды",
             value="`/work` • `/shop` • `/pay` • `/valute exchange`",
@@ -76,7 +84,12 @@ class EconomyCore(commands.Cog):
         )
         embed.set_footer(text="Семья Бензопил • MortisPlay")
 
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        if target.id == interaction.user.id and statuses:
+            from .economy_ui import StatusSwitchView
+            view = StatusSwitchView(interaction.user.id, interaction.user.id)
+            await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+        else:
+            await interaction.response.send_message(embed=embed, ephemeral=True)
 
     # ====================== DAILY ======================
     @app_commands.command(name="daily", description="🎁 Ежедневная награда")
@@ -248,15 +261,24 @@ class EconomyCore(commands.Cog):
 
     # ====================== INVENTORY ======================
     @app_commands.command(name="inventory", description="🎒 Просмотр инвентаря")
-    async def inventory(self, interaction: discord.Interaction):
-        user = economy_db.get_user(interaction.user.id)
+    @app_commands.describe(member="Пользователь, чей инвентарь посмотреть")
+    async def inventory(self, interaction: discord.Interaction, member: discord.Member = None):
+        target = member or interaction.user
+        user = economy_db.get_user(target.id)
         if isinstance(user.get("inventory"), list):
             user["inventory"] = {}
-            economy_db.update_user(interaction.user.id, user)
-        
+            economy_db.update_user(target.id, user)
+
+        if target.id != interaction.user.id:
+            visibility = user.get("inventory_visibility", "everyone")
+            if visibility != "everyone":
+                return await interaction.response.send_message(
+                    "❌ Этот пользователь запретил просмотр своего инвентаря.", ephemeral=True
+                )
+
         from .economy_ui import InventoryView
-        view = InventoryView(interaction.user.id)
-        embed = view.create_embed(user, interaction.user)
+        view = InventoryView(target.id)
+        embed = view.create_embed(user, target)
         await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
 
 
