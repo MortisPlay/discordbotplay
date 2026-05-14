@@ -4,6 +4,7 @@ from discord import app_commands
 from discord.ext import commands
 from datetime import datetime, timezone
 from typing import Union
+import io
 
 from config.settings import logger, MOD_LOG_CHANNEL_ID
 
@@ -13,42 +14,93 @@ class ModerationCog(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    async def log_action(self, action_type: str, target: Union[discord.Member, discord.User], details: str, color: int, moderator: discord.Member = None):
+    async def log_action(
+        self,
+        action_type: str,
+        target: Union[discord.Member, discord.User, discord.Role, discord.abc.GuildChannel, discord.Guild, str],
+        details: str = None,
+        color: int = 0x5865F2,
+        moderator: discord.Member = None,
+        files: list[discord.File] = None,
+    ):
         """Расширенное логирование действий в админ-канал"""
         channel = self.bot.get_channel(MOD_LOG_CHANNEL_ID)
         if not channel:
             return
 
         embed = discord.Embed(title=f"📋 Лог: {action_type}", color=color, timestamp=datetime.now(timezone.utc))
-        embed.add_field(name="Цель", value=f"{target.mention} (`{target.id}`)", inline=True)
+        target_value = target.mention if hasattr(target, "mention") else str(target)
+        embed.add_field(name="Цель", value=target_value, inline=True)
+
         if moderator:
             embed.add_field(name="Модератор", value=f"{moderator.mention}", inline=True)
-        embed.add_field(name="Детали", value=details, inline=False)
-        
-        if hasattr(target, 'avatar') and target.avatar:
+
+        if details:
+            embed.add_field(name="Детали", value=details, inline=False)
+
+        if hasattr(target, "avatar") and target.avatar:
             embed.set_thumbnail(url=target.avatar.url)
-            
-        await channel.send(embed=embed)
+
+        await channel.send(embed=embed, files=files or [])
 
     # ====================== СОБЫТИЯ ЛОГИРОВАНИЯ ======================
     @commands.Cog.listener()
+    def _create_text_file(self, filename: str, content: str) -> discord.File:
+        return discord.File(io.BytesIO(content.encode('utf-8')), filename=filename)
+
     async def on_message_delete(self, message: discord.Message):
-        if message.author.bot or not message.guild: return
+        if message.author.bot or not message.guild:
+            return
+
+        details = f"Канал: {message.channel.mention}\n"
+        if message.content:
+            details += f"Контент: {message.content[:500]}"
+        else:
+            details += "Контент: *[Вложение или пусто]*"
+
+        files = None
+        if message.content and len(message.content) > 500:
+            details = f"Канал: {message.channel.mention}\nСообщение слишком длинное, подробности в файле."
+            text = f"Сообщение удалено от {message.author} ({message.author.id})\n\n{message.content}"
+            files = [self._create_text_file(f"deleted_message_{message.id}.txt", text)]
+
         await self.log_action(
             "Сообщение удалено",
             message.author,
-            f"Канал: {message.channel.mention}\nКонтент: {message.content[:500] if message.content else '*[Вложение или пусто]*'}",
-            0xE74C3C
+            details,
+            0xE74C3C,
+            files=files
         )
 
     @commands.Cog.listener()
     async def on_message_edit(self, before: discord.Message, after: discord.Message):
-        if before.author.bot or before.content == after.content or not before.guild: return
+        if before.author.bot or before.content == after.content or not before.guild:
+            return
+
+        before_text = before.content or "[Пусто]"
+        after_text = after.content or "[Пусто]"
+        long_before = len(before_text) > 300
+        long_after = len(after_text) > 300
+        file_content = None
+        files = None
+
+        if long_before or long_after or len(before_text) + len(after_text) > 900:
+            details = f"Канал: {before.channel.mention}\nСообщение слишком длинное, полная версия в файле."
+            file_content = f"До:\n{before_text}\n\nПосле:\n{after_text}"
+            files = [self._create_text_file(f"message_edit_{before.id}.txt", file_content)]
+        else:
+            details = (
+                f"Канал: {before.channel.mention}\n"
+                f"До: {before_text[:250]}\n"
+                f"После: {after_text[:250]}"
+            )
+
         await self.log_action(
             "Сообщение изменено",
             before.author,
-            f"Канал: {before.channel.mention}\nДо: {before.content[:250] or '[Пусто]'}\nПосле: {after.content[:250] or '[Пусто]'}",
-            0x3498DB
+            details,
+            0x3498DB,
+            files=files
         )
 
     @commands.Cog.listener()
@@ -91,10 +143,82 @@ class ModerationCog(commands.Cog):
             )
 
     @commands.Cog.listener()
+    async def on_member_ban(self, guild: discord.Guild, user: discord.User):
+        await self.log_action(
+            "Пользователь забанен",
+            user,
+            f"Сервер: {guild.name}",
+            0xE74C3C
+        )
+
+    @commands.Cog.listener()
+    async def on_member_unban(self, guild: discord.Guild, user: discord.User):
+        await self.log_action(
+            "Пользователь разбанен",
+            user,
+            f"Сервер: {guild.name}",
+            0x2ECC71
+        )
+
+    @commands.Cog.listener()
+    async def on_guild_channel_update(self, before: discord.abc.GuildChannel, after: discord.abc.GuildChannel):
+        changes = []
+        if before.name != after.name:
+            changes.append(f"Название: `{before.name}` → `{after.name}`")
+        if getattr(before, "topic", None) != getattr(after, "topic", None):
+            changes.append(f"Тема: `{getattr(before, 'topic', 'Нет') or 'Нет'}` → `{getattr(after, 'topic', 'Нет') or 'Нет'}`")
+        if getattr(before, "rate_limit_per_user", None) != getattr(after, "rate_limit_per_user", None):
+            changes.append(f"Slowmode: `{getattr(before, 'rate_limit_per_user', '0')}s` → `{getattr(after, 'rate_limit_per_user', '0')}s`")
+
+        if changes:
+            await self.log_action(
+                "Канал обновлен",
+                after,
+                "\n".join(changes),
+                0xF39C12
+            )
+
+    @commands.Cog.listener()
+    async def on_guild_role_create(self, role: discord.Role):
+        await self.log_action(
+            "Роль создана",
+            role,
+            f"Название: {role.name}\nЦвет: {role.color}",
+            0x2ECC71
+        )
+
+    @commands.Cog.listener()
+    async def on_guild_role_delete(self, role: discord.Role):
+        await self.log_action(
+            "Роль удалена",
+            role.name,
+            f"Название: {role.name}",
+            0xE74C3C
+        )
+
+    @commands.Cog.listener()
+    async def on_guild_role_update(self, before: discord.Role, after: discord.Role):
+        changes = []
+        if before.name != after.name:
+            changes.append(f"Название: `{before.name}` → `{after.name}`")
+        if before.color != after.color:
+            changes.append(f"Цвет: `{before.color}` → `{after.color}`")
+        if before.permissions != after.permissions:
+            changes.append("Права роли изменены")
+
+        if changes:
+            await self.log_action(
+                "Роль обновлена",
+                after,
+                "\n".join(changes),
+                0xF1C40F
+            )
+
+    @commands.Cog.listener()
     async def on_guild_channel_create(self, channel: discord.abc.GuildChannel):
         await self.log_action(
             "Канал создан",
-            channel.guild.owner,  # Или кто-то другой, но owner для примера
+            channel,
             f"Тип: {channel.type.name}\nНазвание: {channel.name}",
             0x2ECC71
         )
@@ -103,7 +227,7 @@ class ModerationCog(commands.Cog):
     async def on_guild_channel_delete(self, channel: discord.abc.GuildChannel):
         await self.log_action(
             "Канал удален",
-            channel.guild.owner,
+            channel,
             f"Тип: {channel.type.name}\nНазвание: {channel.name}",
             0xE74C3C
         )
