@@ -19,14 +19,16 @@ SHOP_CATEGORIES = {
 
 SHOP_ITEMS = {
     # --- БУСТЫ ---
-    "pro_tools": {"category": "бусты", "name": "Набор инструментов", "price": 1000, "description": "Постоянный бонус +20% к зарплате.", "emoji": "🛠️"},
+    "pro_tools": {"category": "бусты", "name": "Набор инструментов", "price": 1000, "description": "Постоянный бонус +20% к зарплате.", "emoji": "🛠️", "passive": True},
     "energy_drink": {"category": "бусты", "name": "Энергетик", "price": 250, "description": "Разовый буст +50% к следующей работе.", "emoji": "🥤"},
     "coffee_machine": {"category": "бусты", "name": "Кофемашина", "price": 5000, "description": "Увеличивает минимальную зарплату навсегда.", "emoji": "☕"},
+    "work_amplifier": {"category": "бусты", "name": "Аналитический усилитель", "price": 1800, "description": "Следующая работа принесёт +35% дохода.", "emoji": "🧠"},
 
     # --- ПРЕДМЕТЫ ---
     "gift_box": {"category": "предметы", "name": "Подарочная коробка", "price": 500, "description": "Можно передать другу или открыть самому.", "emoji": "🎁"},
     "lucky_coin": {"category": "предметы", "name": "Счастливая монета", "price": 1200, "description": "Немного удачи в профиль.", "emoji": "🪙"},
     "repair_kit": {"category": "предметы", "name": "Ремкомплект", "price": 300, "description": "Пригодится для будущих систем.", "emoji": "🔧"},
+    "fortune_cookie": {"category": "предметы", "name": "Печенье удачи", "price": 900, "description": "Повышает шанс получить редкий приз в следующем кейсе.", "emoji": "🍪"},
 
     # --- КЕЙСЫ ---
     "low_box": {"category": "ящики", "name": "Потертая коробка", "price": 150, "description": "Дешево и сердито.", "emoji": "📦"},
@@ -48,6 +50,7 @@ SHOP_ITEMS = {
     "golden_throne": {"category": "luxury", "name": "Золотой трон", "price": 100000, "description": "Символ безграничной власти.", "emoji": "💺"},
     "private_jet": {"category": "luxury", "name": "Личный самолет", "price": 500000, "description": "Для тех, кто ценит время.", "emoji": "🛩️"},
     "diamond_crown": {"category": "luxury", "name": "Алмазная корона", "price": 1000000, "description": "Самый дорогой предмет в мире.", "emoji": "💎"},
+    "royal_mansion": {"category": "luxury", "name": "Королевское поместье", "price": 300000, "description": "Роскошное владение для настоящих аристократов.", "emoji": "🏰"},
     
     # --- ВРЕМЕННЫЕ АКЦИИ (ротация) ---
     # Эти предметы появляются на 1-3 дня и затем заменяются другими
@@ -63,14 +66,20 @@ SHOP_ITEMS = {
     "акция_vip_week": {"category": "временные_акции", "name": "👑 VIP на неделю", "price": 1800, "description": "⏰ Только 2 дня! VIP-статус на 7 дней со скидкой!", "emoji": "👑", "exclusive": False, "duration_hours": 48},
     "акция_elite_box": {"category": "временные_акции", "name": "🎖️ Элитный ящик (72ч)", "price": 2500, "description": "⏰ Действует 3 дня! Премиум кейс с лучшими награами!", "emoji": "🎖️", "exclusive": False, "duration_hours": 72},
     "акция_rolemaster": {"category": "временные_акции", "name": "🎭 Роль Мастер (НОВАЯ)", "price": 800, "description": "⏰ Спешите! Только 1 день! Получите новую роль на сервере!", "emoji": "🎭", "exclusive": True, "duration_hours": 24},
+    "акция_double_earn": {"category": "временные_акции", "name": "⚡ Двойной заработок (48ч)", "price": 1200, "description": "⏰ Только 2 дня! Ваши следующие работы принесут +100% дохода.", "emoji": "⚡", "exclusive": True, "duration_hours": 48},
+    "акция_luxury_flash": {"category": "временные_акции", "name": "✨ Люксовый Flash-сейл", "price": 2200, "description": "⏰ Эксклюзивно 24 часа! Бонус на коллекцию роскоши.", "emoji": "✨", "exclusive": True, "duration_hours": 24},
+    "акция_seasonal_elite": {"category": "временные_акции", "name": "🌟 Сезонная элита", "price": 3500, "description": "⏰ Будет доступна после старта сезона. Эксклюзивное предложение!", "emoji": "🌟", "exclusive": True, "duration_hours": 72, "seasonal": True},
 }
+
 
 
 # Предметы, которые могут лежать в инвентаре
 INVENTORY_ITEMS = {
-    "pro_tools": {"name": "Набор инструментов", "emoji": "🛠️", "one_use": False},
+    "pro_tools": {"name": "Набор инструментов", "emoji": "🛠️", "one_use": False, "passive": True},
     "energy_drink": {"name": "Энергетик", "emoji": "🥤", "one_use": True},
     "gift_box": {"name": "Подарочная коробка", "emoji": "🎁", "one_use": True},
+    "fortune_cookie": {"name": "Печенье удачи", "emoji": "🍪", "one_use": True},
+    "work_amplifier": {"name": "Аналитический усилитель", "emoji": "🧠", "one_use": True},
     "low_box": {"name": "Потертая коробка", "emoji": "📦", "one_use": True},
     "standard_case": {"name": "Обычный кейс", "emoji": "💼", "one_use": True},
     "chainsaw_case": {"name": "Кейс «Семья Бензопил»", "emoji": "🎰", "one_use": True},
