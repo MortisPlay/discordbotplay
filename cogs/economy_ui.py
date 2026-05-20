@@ -5,6 +5,7 @@ from discord.ui import View, Button, Select, UserSelect
 from datetime import datetime, timezone, timedelta
 import asyncio
 import random
+import aiohttp
 
 from config.settings import logger, format_number
 from config.economy import ECONOMY_EMOJIS, JOBS
@@ -57,6 +58,48 @@ def get_expiry_display(total_hours: int) -> str:
     else:
         days = total_hours // 24
         return f"⏳ **{days} ДНЕЙ**"
+
+
+def get_inventory_use_reason(item_id: str, info: dict) -> tuple[bool, str]:
+    if not info:
+        return False, "Предмет не распознан."
+
+    inventory_info = INVENTORY_ITEMS.get(item_id)
+    if inventory_info is not None:
+        if inventory_info.get("one_use"):
+            return True, ""
+        if inventory_info.get("passive"):
+            return False, "Пассивный предмет — его эффект работает автоматически и не требует использования."
+        return False, "Этот предмет не используется вручную."
+
+    if info.get("category") == "временные_акции":
+        return False, "Эта акция активируется автоматически и не используется вручную."
+
+    if info.get("category") in {"luxury", "statuses", "battlepass"}:
+        return False, "Этот предмет не активируется через инвентарь."
+
+    return False, "Этот предмет нельзя использовать вручную."
+
+
+async def fetch_fiat_rates() -> dict:
+    url = "https://api.exchangerate.host/latest?base=USD&symbols=RUB,EUR"
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, timeout=10) as response:
+                data = await response.json()
+        rates = data.get("rates", {})
+        return {
+            "USD_RUB": float(rates.get("RUB", 82.0)),
+            "USD_EUR": float(rates.get("EUR", 0.93)),
+            "timestamp": int(data.get("timestamp", datetime.now(timezone.utc).timestamp()))
+        }
+    except Exception as e:
+        logger.warning(f"Не удалось получить курсы валют: {e}")
+        return {
+            "USD_RUB": 82.0,
+            "USD_EUR": 0.93,
+            "timestamp": int(datetime.now(timezone.utc).timestamp())
+        }
 
 
 # ====================== ПОДТВЕРЖДЕНИЕ ПОКУПКИ ======================
@@ -166,6 +209,28 @@ class ConfirmPurchaseView(View):
             user["balance"] = user.get("balance", 0) + win
         elif item_id == "акция_rolemaster":
             user["status"] = "🎭 Роль Мастер"
+        elif item_id == "акция_double_earn":
+            user["temp_multiplier"] = 2.0
+            user["multiplier_end"] = int((now + timedelta(hours=48)).timestamp())
+        elif item_id == "акция_luxury_flash":
+            user["balance"] = user.get("balance", 0) + 10000
+            user["inventory"] = user.setdefault("inventory", {})
+            user["inventory"]["gift_box"] = user["inventory"].get("gift_box", 0) + 1
+        elif item_id == "акция_seasonal_elite":
+            user["balance"] = user.get("balance", 0) + 15000
+            user["inventory"] = user.setdefault("inventory", {})
+            user["inventory"]["royal_mansion"] = user["inventory"].get("royal_mansion", 0) + 1
+        elif item_id == "акция_double_earn":
+            user["temp_multiplier"] = 2.0
+            user["multiplier_end"] = int((now + timedelta(hours=48)).timestamp())
+        elif item_id == "акция_luxury_flash":
+            user["balance"] = user.get("balance", 0) + 10000
+            user["inventory"] = user.setdefault("inventory", {})
+            user["inventory"]["gift_box"] = user["inventory"].get("gift_box", 0) + 1
+        elif item_id == "акция_seasonal_elite":
+            user["balance"] = user.get("balance", 0) + 15000
+            user["inventory"] = user.setdefault("inventory", {})
+            user["inventory"]["royal_mansion"] = user["inventory"].get("royal_mansion", 0) + 1
 
     @discord.ui.button(label="❌ Отмена", style=discord.ButtonStyle.red)
     async def cancel(self, interaction: "discord.Interaction", button: Button):
@@ -292,10 +357,15 @@ class InventoryView(View):
         user = economy_db.get_user(self.user_id)
         inventory = user.get("inventory", {})
 
-        usable_items = {
-            k: v for k, v in inventory.items()
-            if v > 0 and SHOP_ITEMS.get(k, {}).get("category") != "временные_акции"
-        }
+        usable_items = {}
+        for item_id, count in inventory.items():
+            if count <= 0:
+                continue
+            info = SHOP_ITEMS.get(item_id) or INVENTORY_ITEMS.get(item_id)
+            can_use, _ = get_inventory_use_reason(item_id, info)
+            if not can_use:
+                continue
+            usable_items[item_id] = count
 
         if not usable_items:
             return
@@ -331,6 +401,11 @@ class InventoryView(View):
         if inventory.get(item_id, 0) <= 0:
             return await interaction.response.send_message("❌ Предмета больше нет!", ephemeral=True)
 
+        info = SHOP_ITEMS.get(item_id) or INVENTORY_ITEMS.get(item_id)
+        can_use, reason = get_inventory_use_reason(item_id, info)
+        if not can_use:
+            return await interaction.response.send_message(f"❌ Нельзя использовать этот предмет: {reason}", ephemeral=True)
+
         await interaction.response.edit_message(content="🔄 **Используем предмет...**", embed=None, view=None)
 
         now = datetime.now(timezone.utc)
@@ -360,6 +435,18 @@ class InventoryView(View):
             inventory[item_id] -= 1
             user["work_boost"] = True
             msg = "🥤 Энергетик выпит! +50% к следующей работе."
+
+        elif item_id == "work_amplifier":
+            inventory[item_id] -= 1
+            user["temp_multiplier"] = 1.35
+            user["multiplier_end"] = int((now + timedelta(hours=24)).timestamp())
+            msg = "🧠 Аналитический усилитель активирован! +35% к следующей работе."
+
+        elif item_id == "fortune_cookie":
+            inventory[item_id] -= 1
+            reward = random.choice([800, 1200, 1800, 2500])
+            user["balance"] = user.get("balance", 0) + reward
+            msg = f"🍪 Печенье удачи сыграло! Вы получили **{format_number(reward)}** {ECONOMY_EMOJIS['coin']}"
 
         elif item_id == "акция_vip_24h":
             inventory[item_id] -= 1
@@ -454,9 +541,15 @@ class InventoryView(View):
                 continue
             info = SHOP_ITEMS.get(iid) or INVENTORY_ITEMS.get(iid)
             if info and info.get("category") == "временные_акции":
+                reason_text = "Эта акция активируется автоматически и не отображается как используемый предмет."
+                lines.append(f"{info.get('emoji', '⏰')} **{info['name']}** — `{count}` шт. ({reason_text})")
                 continue
             if info:
-                lines.append(f"{info.get('emoji', '📦')} **{info['name']}** — `{count}` шт.")
+                can_use, reason = get_inventory_use_reason(iid, info)
+                line = f"{info.get('emoji', '📦')} **{info['name']}** — `{count}` шт."
+                if not can_use and reason:
+                    line += f" — {reason}"
+                lines.append(line)
             else:
                 lines.append(f"❓ **{iid}** — `{count}` шт.")
 
@@ -821,6 +914,8 @@ class ShopView(View):
                 now = datetime.now(timezone.utc)
                 if info.get("bp_premium") and now < BP_SETTINGS["SEASON_START"]:
                     continue
+                if info.get("seasonal") and now < BP_SETTINGS["SEASON_START"]:
+                    continue
                 if iid in purchased_promos:
                     continue
                 total_seconds = duration_hours * 3600
@@ -969,35 +1064,61 @@ class CurrencySwitchView(View):
 
     @discord.ui.button(label="🌍 Реальные валюты", style=discord.ButtonStyle.gray, emoji="🌐")
     async def fiat_val(self, interaction: "discord.Interaction", button: Button):
+        rates = await fetch_fiat_rates()
+        usd_rub = rates.get("USD_RUB", 82.0)
+        usd_eur = rates.get("USD_EUR", 0.93)
+        eur_usd = 1 / usd_eur if usd_eur else 0
+        rub_eur = usd_rub * eur_usd
+        internal_per_usd = 82
+        internal_per_eur = int(internal_per_usd * eur_usd)
+        internal_per_rub = max(1, int(internal_per_usd / usd_rub))
+
+        updated = datetime.fromtimestamp(rates.get("timestamp", int(datetime.now(timezone.utc).timestamp())), timezone.utc)
+
         embed = discord.Embed(
             title="🌍 Реальные валюты на сервере",
             description=(
                 "**Справочные курсы для примерной оценки стоимости**\n\n"
-                "❗ Курсы обновлены на 13.05.2026 (ориентировочно)"
+                "❗ Курсы обновляются автоматически по данным exchangerate.host"
             ),
             color=0x9b59b6
         )
         embed.add_field(
             name="🇷🇺 Российский рубль",
-            value="`1 ₽ ≈ 1.4 🪙`\n`100 ₽ ≈ 140 🪙`\n`1000 ₽ ≈ 1,400 🪙`",
+            value=(
+                f"`1 $ ≈ {usd_rub:.2f} ₽`\n"
+                f"`1 € ≈ {rub_eur:.2f} ₽`\n"
+                f"`1 ₽ ≈ {internal_per_rub} 🪙`")
+            ,
             inline=True
         )
         embed.add_field(
             name="🇺🇸 Американский доллар",
-            value="`1 $ ≈ 82 🪙`\n`5 $ ≈ 410 🪙`\n`100 $ ≈ 8,200 🪙`",
+            value=(
+                f"`1 $ ≈ {usd_rub:.2f} ₽`\n"
+                f"`1 $ ≈ {usd_eur:.4f} €`\n"
+                f"`1 $ ≈ {internal_per_usd} 🪙`")
+            ,
             inline=True
         )
         embed.add_field(
             name="🇪🇺 Евро",
-            value="`1 € ≈ 92 🪙`\n`5 € ≈ 460 🪙`\n`100 € ≈ 9,200 🪙`",
+            value=(
+                f"`1 € ≈ {rub_eur:.2f} ₽`\n"
+                f"`1 € ≈ {eur_usd:.2f} $`\n"
+                f"`1 € ≈ {internal_per_eur} 🪙`")
+            ,
             inline=True
         )
         embed.add_field(
             name="💎 MortisCoin",
-            value="`1 💎 = 500 🪙`\n`10 💎 = 5,000 🪙`\n`100 💎 = 50,000 🪙`",
+            value=(
+                "`1 💎 = 500 🪙`\n"
+                "`10 💎 = 5,000 🪙`\n"
+                "`100 💎 = 50,000 🪙`"),
             inline=False
         )
-        embed.set_footer(text="Справочные курсы • Используются только внутри бота")
+        embed.set_footer(text=f"Курс обновлён: <t:{int(updated.timestamp())}:R>")
         await interaction.response.edit_message(embed=embed, view=self)
 
 

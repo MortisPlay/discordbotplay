@@ -52,7 +52,9 @@ class UtilityCog(commands.Cog):
             is_verified = user_data.get("is_verified", False)
 
             embed = discord.Embed(title=f"👤 Профиль: {target.display_name}", color=0x5865F2, timestamp=datetime.now(timezone.utc))
+            embed.set_author(name="Пользовательская карточка", icon_url=target.display_avatar.url)
             embed.set_thumbnail(url=target.display_avatar.url)
+            embed.description = f"{target.mention}"
 
             # Основная информация
             embed.add_field(
@@ -70,7 +72,7 @@ class UtilityCog(commands.Cog):
             embed.add_field(
                 name="📅 Даты",
                 value=(
-                    f"**Аккаунт создан:** <t:{int(target.created_at.timestamp())}:D>\n"
+                    f"**Аккаунт создан:** <t:{int(target.created_at.timestamp())}:R>\n"
                     f"**На сервере с:** <t:{int(guild_member.joined_at.timestamp())}:R>" if guild_member and guild_member.joined_at else "**На сервере с:** Неизвестно"
                 ),
                 inline=True

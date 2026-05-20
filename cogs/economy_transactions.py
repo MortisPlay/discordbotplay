@@ -39,13 +39,11 @@ class EconomyTransactions(commands.Cog):
         return choices[:25]
 
     # ====================== ПЕРЕВОД ======================
-    @app_commands.command(name="pay", description="💸 Передать валюту или предметы")
-    @app_commands.autocomplete(item_id=item_autocomplete)
+    @app_commands.command(name="pay", description="💸 Передать валюту")
     @app_commands.describe(
         member="Кому передать?",
         amount="Количество монет",
-        currency="Тип валюты",
-        item_id="Предмет из инвентаря"
+        currency="Тип валюты"
     )
     @app_commands.choices(currency=[
         app_commands.Choice(name="🪙 Монеты (5% комиссия)", value="balance"),
@@ -56,46 +54,34 @@ class EconomyTransactions(commands.Cog):
         interaction: "discord.Interaction", 
         member: "discord.Member", 
         amount: int = 0, 
-        currency: str = "balance",
-        item_id: str = None
+        currency: str = "balance"
     ):
         if member.id == interaction.user.id:
             return await interaction.response.send_message("❌ Нельзя отправлять себе.", ephemeral=True)
         if member.bot:
             return await interaction.response.send_message("❌ Ботам нельзя отправлять.", ephemeral=True)
-        if amount <= 0 and item_id is None:
-            return await interaction.response.send_message("❌ Укажите сумму или предмет.", ephemeral=True)
+        if amount <= 0:
+            return await interaction.response.send_message("❌ Укажите сумму.", ephemeral=True)
 
         sender = economy_db.get_user(interaction.user.id)
         receiver = economy_db.get_user(member.id)
         msg_parts = []
 
-        if amount > 0:
-            if sender.get(currency, 0) < amount:
-                return await interaction.response.send_message("❌ Недостаточно средств!", ephemeral=True)
+        if sender.get(currency, 0) < amount:
+            return await interaction.response.send_message("❌ Недостаточно средств!", ephemeral=True)
 
-            if currency == "balance":
-                commission = int(amount * 0.05)
-                receive = amount - commission
-                sender["balance"] -= amount
-                receiver["balance"] = receiver.get("balance", 0) + receive
-                msg_parts.append(f"**{format_number(receive)}** {ECONOMY_EMOJIS['coin']} (комиссия {commission})")
-            else:
-                if not sender.get("is_verified", False):
-                    return await interaction.response.send_message("❌ Для MortisCoin нужна верификация (/verify)", ephemeral=True)
-                sender["mortis_coins"] = sender.get("mortis_coins", 0) - amount
-                receiver["mortis_coins"] = receiver.get("mortis_coins", 0) + amount
-                msg_parts.append(f"**{amount}** 💎 MortisCoin")
-
-        if item_id:
-            inv = sender.get("inventory", {})
-            if inv.get(item_id, 0) <= 0:
-                return await interaction.response.send_message("❌ У вас нет этого предмета!", ephemeral=True)
-            
-            info = SHOP_ITEMS.get(item_id) or INVENTORY_ITEMS.get(item_id)
-            inv[item_id] -= 1
-            receiver.setdefault("inventory", {})[item_id] = receiver.get("inventory", {}).get(item_id, 0) + 1
-            msg_parts.append(f"{info.get('emoji', '')} **{info['name']}**")
+        if currency == "balance":
+            commission = int(amount * 0.05)
+            receive = amount - commission
+            sender["balance"] -= amount
+            receiver["balance"] = receiver.get("balance", 0) + receive
+            msg_parts.append(f"**{format_number(receive)}** {ECONOMY_EMOJIS['coin']} (комиссия {commission})")
+        else:
+            if not sender.get("is_verified", False):
+                return await interaction.response.send_message("❌ Для MortisCoin нужна верификация (/verify)", ephemeral=True)
+            sender["mortis_coins"] = sender.get("mortis_coins", 0) - amount
+            receiver["mortis_coins"] = receiver.get("mortis_coins", 0) + amount
+            msg_parts.append(f"**{amount}** 💎 MortisCoin")
 
         economy_db.update_user(interaction.user.id, sender)
         economy_db.update_user(member.id, receiver)

@@ -35,6 +35,26 @@ class AdminCog(commands.Cog):
             ephemeral=True
         )
 
+    @app_commands.command(name="takecoins", description="💸 Отнять монеты у пользователя (Админ)")
+    @app_commands.checks.has_permissions(administrator=True)
+    async def takecoins(self, interaction: "discord.Interaction", member: "discord.Member", amount: int):
+        user = economy_db.get_user(member.id)
+        if amount <= 0:
+            return await interaction.response.send_message("❌ Укажите положительное количество монет.", ephemeral=True)
+
+        old_balance = user.get("balance", 0)
+        if old_balance <= 0:
+            return await interaction.response.send_message("❌ У пользователя нет монет.", ephemeral=True)
+
+        user["balance"] = max(0, old_balance - amount)
+        economy_db.update_user(member.id, user)
+
+        await interaction.response.send_message(
+            f"✅ У пользователя {member.mention} отнято **{format_number(min(amount, old_balance))}** монет.\n"
+            f"💰 Новый баланс: **{format_number(user['balance'])}**",
+            ephemeral=True
+        )
+
     @app_commands.command(name="stats", description="� Статистика бота")
     async def statistics(self, interaction: "discord.Interaction"):
         if interaction.user.id != OWNER_ID:

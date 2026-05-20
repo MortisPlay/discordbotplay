@@ -44,10 +44,10 @@ class ModerationCog(commands.Cog):
         await channel.send(embed=embed, files=files or [])
 
     # ====================== СОБЫТИЯ ЛОГИРОВАНИЯ ======================
-    @commands.Cog.listener()
     def _create_text_file(self, filename: str, content: str) -> discord.File:
         return discord.File(io.BytesIO(content.encode('utf-8')), filename=filename)
 
+    @commands.Cog.listener()
     async def on_message_delete(self, message: discord.Message):
         if message.author.bot or not message.guild:
             return
